@@ -22,6 +22,7 @@ Esta parte reutiliza a inicialização da parte 01 e o padrão de view passiva j
 | domain | novo termo: `NavegadorAplicacao` - fronteira entre decisões de navegação e criação de forms |
 | stored data | nothing - a tela principal não lê nem altera registros |
 | UI | o `CadCli.exe` passa a ter a primeira form DevExpress e o menu obrigatório |
+| entrega | `CadCli.exe` passa a importar BPLs DevExpress trial e Embarcadero, distribuídas ao lado dele (AD-011); duas provas da Parte 01 são reescritas por esta parte (AD-012) |
 
 ## Relations
 
@@ -38,6 +39,7 @@ None - nothing consumed outside; a superfície é exclusivamente a tela principa
 | 1. par form/controlador principal | `TFormPrincipal : IVisaoPrincipal` possui exatamente `TControladorPrincipal`; a form não acessa repositórios nem cria outras forms | handlers com criação direta de telas seriam difíceis de testar e virariam precedente para as demais forms |
 | 2. navegação desacoplada | `INavegadorAplicacao.AbrirClientes`, `AbrirRelatorio` e `EncerrarAplicacao` | referenciar units de forms no controlador torna o teste dependente do VCL |
 | 3. menu público | barra horizontal `Sistema`, `Cadastros`, `Relatórios`; submenus `Sair`, `Cliente`, `Relatório` | toolbar exclusiva não satisfaz os rótulos e a hierarquia exigidos |
+| 4. entrega com runtime packages (AD-011) | `CadCli.dproj` e `tests/CadCli.Testes.dproj` com `DCC_UsePackage` restrito aos pacotes DevExpress RS29 usados e aos pacotes Embarcadero que eles exigem; o build Release copia para `bin\Win64\Release` exatamente o fechamento transitivo das BPLs importadas por `CadCli.exe`, e o exe abre com `PATH` sem diretórios do Delphi e do DevExpress | link estático exige `.dcu` do DevExpress, que a instalação trial não fornece (`F2613`); deixar as BPLs só no `PATH` da máquina de desenvolvimento faria o exe não abrir em outra máquina |
 
 - Nothing else in this change is hard to reverse.
 
@@ -71,8 +73,8 @@ O usuário alcança cada função obrigatória pelo shell.
 
 | Assumption | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| modo de abertura | forms funcionais modais e de instância única por acionamento | simplifica ciclo de vida e impede janelas duplicadas | n |
-| layout criativo | cabeçalho com nome do sistema, área central de boas-vindas e barra de status com versão | comunica identidade sem criar capacidade não solicitada | n |
+| modo de abertura | forms funcionais modais e de instância única por acionamento | simplifica ciclo de vida e impede janelas duplicadas | y |
+| layout criativo | cabeçalho com nome do sistema, área central de boas-vindas e barra de status com versão | comunica identidade sem criar capacidade não solicitada | y |
 
 **Open questions:** none - todas as decisões possuem default revisável acima.
 

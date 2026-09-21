@@ -15,7 +15,9 @@ Este arquivo contém as regras gerais do projeto CadCli. Ele se aplica a todo o 
 - Use Delphi 12 e VCL.
 - Mantenha somente o alvo Win64. Não crie configuração Win32.
 - A aplicação distribuída deve possuir um único executável: `CadCli.exe`.
-- Mantenha runtime packages desabilitados; não distribua BPLs da aplicação.
+- Linke com runtime packages somente os pacotes DevExpress e os pacotes Embarcadero exigidos por eles; todo o restante é linkado estaticamente (AD-011).
+- Distribua ao lado de `CadCli.exe` exatamente o fechamento transitivo das BPLs importadas por ele, nem mais nem menos; o executável deve abrir sem Delphi nem DevExpress no `PATH`.
+- Não crie pacotes próprios da aplicação; nenhuma BPL `CadCli*` é produzida ou distribuída.
 - O Firebird 3 x64 deve operar como serviço local instalado no Windows; não distribua DLLs do Firebird ao lado de `CadCli.exe`.
 - A biblioteca cliente usada pelo FireDAC deve ser fornecida pela instalação do Firebird e estar acessível no sistema.
 - Use componentes visuais DevExpress nas forms.
@@ -100,7 +102,7 @@ Este arquivo contém as regras gerais do projeto CadCli. Ele se aplica a todo o 
 - Inclua no setup o instalador oficial do Firebird 3 x64 e ofereça sua execução por um checkbox marcado por padrão.
 - Quando o checkbox estiver marcado, instale e inicie silenciosamente o Firebird como serviço local; quando estiver desmarcado, assuma que um serviço compatível já está instalado e configurado.
 - Instale `CadCli.exe` sem copiar DLLs do Firebird para o diretório da aplicação.
-- Não inclua build Win32, executável helper, BPL da aplicação ou arquivo SQL externo.
+- Não inclua build Win32, executável helper, BPL própria da aplicação ou arquivo SQL externo; inclua as BPLs DevExpress e Embarcadero distribuídas ao lado de `CadCli.exe` (AD-011).
 - Atualizações não podem sobrescrever o banco do usuário.
 - A desinstalação deve preservar `<diretório do CadCli.exe>\cadcli.fdb` por padrão.
 - O instalador e o executável devem usar o ICO multirresolução definido pelo projeto.
