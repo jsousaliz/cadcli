@@ -2,7 +2,7 @@
 
 ## Problem
 
-Mesmo funcional, o sistema ainda não possui identidade visual consistente nem uma entrega instalável que reúna o executável Win64 e a opção de preparar o serviço local de banco. Exigir instalação manual separada aumenta a chance de o serviço Firebird estar ausente, enquanto copiar seu runtime para a pasta da aplicação duplicaria a instalação nativa.
+Mesmo funcional, o sistema ainda não possui identidade visual consistente nem uma entrega instalável que reúna o executável Win64 e a opção de preparar o serviço local de banco. Exigir instalação manual separada aumenta a chance de o serviço Firebird estar ausente, enquanto copiar seus arquivos de execução para a pasta da aplicação duplicaria a instalação nativa.
 
 Quando esta parte estiver pronta, o produto terá ícone próprio, ícones SVG nos botões e um instalador Inno Setup reproduzível que instala `CadCli.exe` e oferece, por padrão, instalar o Firebird 3 x64 como serviço local.
 
@@ -11,7 +11,7 @@ Quando esta parte estiver pronta, o produto terá ícone próprio, ícones SVG n
 Esta parte reutiliza o `CadCli.exe` Release das partes anteriores e não cria outro executável de aplicação.
 
 1. fontes SVG originais -> `TcxImageCollection` DevExpress (new, door 1) - fornece ícones escaláveis às forms existentes
-2. marca SVG -> pipeline de assets (new, door 2) - gera `CadCli.ico` multirresolução para aplicação e setup
+2. marca SVG -> pipeline de recursos visuais (new, door 2) - gera `CadCli.ico` multirresolução para aplicação e instalador
 3. `CadCli.exe` + instalador oficial do Firebird 3 x64 -> script Inno Setup elevado (new, doors 3 e 5) - compõe o pacote e apresenta o checkbox `Instalar Firebird 3` marcado por padrão
 4. checkbox marcado -> instalador oficial do Firebird (exists, door 5) - instala e inicia silenciosamente o serviço e disponibiliza a biblioteca cliente no sistema
 5. checkbox desmarcado -> instalação somente do CadCli - preserva o serviço Firebird já instalado e configurado
@@ -24,8 +24,8 @@ Esta parte reutiliza o `CadCli.exe` Release das partes anteriores e não cria ou
 | domain | nothing - identidade e distribuição não alteram regras de cliente |
 | stored data | o instalador não entrega nem remove `cadcli.fdb`; a parte 01 continua dona da criação e migração |
 | UI | forms e botões recebem ícones SVG originais com rótulos textuais preservados |
-| distribution | surge um instalador Inno Setup Win64 elevado, com instalador oficial do Firebird incorporado, opção de serviço, desinstalação e atalhos |
-| runtime | nenhuma DLL do Firebird é instalada ao lado de `CadCli.exe`; serviço e biblioteca cliente pertencem à instalação do Firebird |
+| distribuição | surge um instalador Inno Setup Win64 elevado, com instalador oficial do Firebird incorporado, opção de serviço, desinstalação e atalhos |
+| ambiente de execução | nenhuma DLL do Firebird é instalada ao lado de `CadCli.exe`; serviço e biblioteca cliente pertencem à instalação do Firebird |
 
 ## Relations
 
@@ -33,7 +33,7 @@ None - no stored-data shape change.
 
 ## Surface
 
-None - nothing consumed as an API or external route; o contrato de comando do instalador, incluindo flags e códigos de saída, está enumerado em `Observable` e nos critérios.
+None - nothing consumed as an API or external route; o contrato de comando do instalador, incluindo opções de linha de comando e códigos de saída, está enumerado em `Observable` e nos critérios.
 
 ## Landing
 
@@ -41,7 +41,7 @@ None - nothing consumed as an API or external route; o contrato de comando do in
 | --- | --- | --- |
 | 1. conjunto de ícones de ação | SVGs próprios para as ações de inclusão, edição, salvamento, exclusão, pesquisa, cancelamento, relatório, saída e atualização; traço uniforme, `viewBox 0 0 24 24`, sem texto embutido | copiar biblioteca pública adicionaria obrigação de licença e atribuição sem necessidade para nove símbolos simples |
 | 2. ícone do produto | marca original em SVG e `CadCli.ico` com 16, 32, 48, 64 e 256 px, incorporado em `CadCli.exe` e usado por `SetupIconFile` | usar ícone padrão não identifica o produto; ICO de uma só resolução degrada no Windows |
-| 3. pacote Win64 | Inno Setup com `PrivilegesRequired=admin`, `ArchitecturesAllowed=x64compatible`, aplicação em `{localappdata}\Programs\CadCli`, `CadCli.exe` contendo as classes de migração, instalador oficial do Firebird 3 x64 incorporado ao setup e nenhum `.sql` externo ou DLL do Firebird no diretório da aplicação | instalação por usuário sem elevação não pode instalar um serviço do Windows; Firebird Embedded duplicaria o runtime na pasta do aplicativo |
+| 3. pacote Win64 | Inno Setup com `PrivilegesRequired=admin`, `ArchitecturesAllowed=x64compatible`, aplicação em `{localappdata}\Programs\CadCli`, `CadCli.exe` contendo as classes de migração, instalador oficial do Firebird 3 x64 incorporado ao instalador e nenhum `.sql` externo ou DLL do Firebird no diretório da aplicação | instalação por usuário sem elevação não pode instalar um serviço do Windows; Firebird Embedded duplicaria os arquivos de execução na pasta do aplicativo |
 | 4. preservação de dados | desinstalação remove binários e atalhos, mas preserva `{app}\cadcli.fdb`, criado ao lado de `CadCli.exe` | apagar dados silenciosamente torna a desinstalação destrutiva e irrecuperável |
 | 5. serviço Firebird opcional | página de tarefas do Inno Setup com checkbox `Instalar Firebird 3` marcado por padrão; marcado executa silenciosamente o instalador oficial x64, instala e inicia o serviço local e disponibiliza a biblioteca cliente; desmarcado não altera a instalação Firebird existente | obrigar a instalação sobrescreveria ou entraria em conflito com uma instância já configurada; deixar a opção desmarcada por padrão produziria instalações novas sem banco funcional |
 
@@ -55,11 +55,11 @@ O aplicativo deixa de depender de ícones genéricos sem sacrificar acessibilida
 
 **Acceptance Criteria**
 
-1. WHEN os assets forem gerados THEN o repositório SHALL conter a marca fonte em SVG, nove SVGs de ação e o ICO multirresolução definidos nos doors 1 e 2.
+1. WHEN os recursos visuais forem gerados THEN o repositório SHALL conter a marca fonte em SVG, nove SVGs de ação e o ICO multirresolução definidos nos doors 1 e 2.
 2. WHEN `CadCli.exe` for exibido no Explorer, barra de tarefas ou Alt+Tab THEN o sistema SHALL usar a marca do produto em resolução apropriada sem serrilhado visível.
 3. WHEN uma form exibir uma ação correspondente THEN o sistema SHALL usar o SVG correto por `TcxImageCollection` e manter rótulo textual ou hint correspondente à ação.
 4. WHILE a interface estiver em escala de 100%, 150% ou 200% THEN o sistema SHALL renderizar os SVGs sem corte, distorção ou fundo opaco inesperado.
-5. WHEN os assets forem auditados THEN o sistema SHALL possuir arquivos-fonte próprios e um registro `assets/README.md` declarando autoria do projeto, sem dependência de licença externa.
+5. WHEN os recursos visuais forem auditados THEN o sistema SHALL possuir arquivos-fonte próprios e um registro `assets/README.md` declarando autoria do projeto, sem dependência de licença externa.
 
 **Independent test:** conferir todos os SVGs em fundo claro/escuro, inspecionar os tamanhos internos do ICO e abrir as forms nas três escalas.
 
@@ -79,9 +79,9 @@ O avaliador instala, executa e remove o sistema sem montagem manual.
 13. WHEN uma versão mais nova for instalada sobre a anterior THEN o instalador SHALL substituir binários do aplicativo sem sobrescrever o banco do usuário.
 14. WHEN a desinstalação do CadCli for concluída THEN o sistema SHALL remover binários e atalhos, preservar `{app}\cadcli.fdb`, preservar a instalação do Firebird e informar no resumo o caminho em que o banco permaneceu.
 15. IF o sistema operacional não for compatível com x64 THEN o instalador SHALL recusar a instalação antes de copiar arquivos.
-16. WHEN o diretório instalado do CadCli for inspecionado THEN o sistema SHALL conter somente um executável de aplicação, `CadCli.exe`, nenhuma DLL do Firebird, nenhum instalador auxiliar persistido e nenhum build Win32.
+16. WHEN o diretório instalado do CadCli for inspecionado THEN o sistema SHALL conter somente um executável de aplicação, `CadCli.exe`, nenhuma DLL do Firebird, nenhum instalador auxiliar persistido e nenhuma compilação Win32.
 
-**Independent test:** compilar o setup; instalar em sandbox Windows x64 com a tarefa marcada e desmarcada; conferir serviço, biblioteca cliente e ausência de DLLs na pasta do CadCli; executar criação limpa; atualizar sobre uma base populada; rodar instalação silenciosa; e desinstalar confirmando a preservação do `.fdb` e do Firebird.
+**Independent test:** compilar o instalador; instalar em sandbox Windows x64 com a tarefa marcada e desmarcada; conferir serviço, biblioteca cliente e ausência de DLLs na pasta do CadCli; executar criação limpa; atualizar sobre uma base populada; rodar instalação silenciosa; e desinstalar confirmando a preservação do `.fdb` e do Firebird.
 
 ## Out of scope
 
@@ -98,8 +98,8 @@ O avaliador instala, executa e remove o sistema sem montagem manual.
 | Assumption | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
 | origem dos ícones | SVGs originais criados para o projeto | elimina incerteza de licença e permite coerência visual |
-| privilégio do setup | `PrivilegesRequired=admin`, mantendo a aplicação em `{localappdata}\Programs\CadCli` | a elevação é necessária para instalar o serviço; o diretório continua acessível ao usuário e ao serviço | y |
-| runtime Firebird | instalador oficial do Firebird 3 x64 incorporado ao setup, serviço local em `localhost:3050` e nenhuma DLL do Firebird ao lado de `CadCli.exe` | contrato confirmado para permitir instalação completa ou reaproveitar um serviço existente | y |
+| privilégio do instalador | `PrivilegesRequired=admin`, mantendo a aplicação em `{localappdata}\Programs\CadCli` | a elevação é necessária para instalar o serviço; o diretório continua acessível ao usuário e ao serviço | y |
+| instalação do Firebird | instalador oficial do Firebird 3 x64 incorporado ao instalador, serviço local em `localhost:3050` e nenhuma DLL do Firebird ao lado de `CadCli.exe` | contrato confirmado para permitir instalação completa ou reaproveitar um serviço existente | y |
 | credenciais locais | `SYSDBA`/`masterkey` | contrato confirmado para a conexão local desta entrega | y |
 
 **Open questions:** none - todas as decisões possuem default revisável acima.
@@ -124,6 +124,6 @@ O avaliador instala, executa e remove o sistema sem montagem manual.
 ## Sources
 
 - [Teste Programador Delphi 2026.md](../../Teste%20Programador%20Delphi%202026.md) - fonte vinculante para os arquivos necessários à execução.
-- [Inno Setup - SetupIconFile](https://jrsoftware.org/ishelp/topic_setup_setupiconfile.htm) - tamanhos recomendados do ICO e configuração do setup.
+- [Inno Setup - SetupIconFile](https://jrsoftware.org/ishelp/topic_setup_setupiconfile.htm) - tamanhos recomendados do ICO e configuração do instalador.
 - [Inno Setup - seção Files](https://jrsoftware.org/ishelp/topic_filessection.htm) - contrato de empacotamento e atualização de arquivos.
 - [Inno Setup - seção Tasks](https://jrsoftware.org/ishelp/topic_taskssection.htm) - contrato da tarefa opcional marcada por padrão.

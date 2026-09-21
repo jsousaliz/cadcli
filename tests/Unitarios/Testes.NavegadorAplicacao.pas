@@ -11,6 +11,12 @@ type
   TTestesNavegadorAplicacao = class
   private
     FFormPrincipal: TForm;
+    FPesquisasExibidas: Integer;
+    FPesquisaModal: Boolean;
+    FLinhasNaGrade: Integer;
+    FDialogosInesperados: Integer;
+    FFormsDuranteExibicao: Integer;
+    procedure InspecionarPesquisa(Sender: TObject; var ADone: Boolean);
   public
     [Setup]
     procedure Preparar;
@@ -26,6 +32,8 @@ type
     procedure EncerrarAplicacaoFechaFormPrincipalComCodigoZero;
     [Test]
     procedure DestinoSemTelaRegistradaFalhaSemCriarForm;
+    [Test]
+    procedure ClientesAbrePesquisaRealSobreABase;
   end;
 
 implementation
@@ -34,12 +42,18 @@ uses
   Winapi.Messages,
   Winapi.Windows,
   System.Classes,
+  System.IOUtils,
   System.Math,
   System.SysUtils,
+  Aplicacao.CatalogoMigracoes,
   Aplicacao.ControladorPrincipal,
   Aplicacao.NavegadorAplicacao,
+  Infraestrutura.CatalogoPadraoMigracoes,
+  Infraestrutura.InicializadorBancoFireDAC,
   Visao.ComposicaoAplicacao,
+  Visao.FormPesquisaCliente,
   Visao.NavegadorAplicacao,
+  Suporte.CaminhosTeste,
   Suporte.FakesFormPrincipal;
 
 type
@@ -213,33 +227,93 @@ var
   LControlador: TControladorPrincipal;
   LFormsAntes: Integer;
 begin
-  LNavegador := ComporNavegador(FFormPrincipal);
+  LNavegador := ComporNavegador(FFormPrincipal, nil);
   LFormsAntes := Screen.FormCount;
-  Assert.WillRaiseAny(
-    procedure
-    begin
-      LNavegador.AbrirClientes;
-    end);
-  Assert.WillRaiseAny(
+  Assert.WillRaise(
     procedure
     begin
       LNavegador.AbrirRelatorio;
-    end);
+    end, ENavegacaoSemTela);
   Assert.AreEqual(LFormsAntes, Screen.FormCount, 'Nenhuma form pode ser criada.');
 
   LVisaoObjeto := TVisaoPrincipalFake.Create;
   LVisao := LVisaoObjeto;
   LControlador := TControladorPrincipal.Create(LVisao, LNavegador);
   try
-    LControlador.Executar(apCliente);
     LControlador.Executar(apRelatorio);
   finally
     LControlador.Free;
   end;
-  Assert.AreEqual(2, LVisaoObjeto.Erros.Count);
-  Assert.AreEqual('Não foi possível abrir o cadastro de clientes.', LVisaoObjeto.Erros[0]);
-  Assert.AreEqual('Não foi possível abrir o relatório de clientes.', LVisaoObjeto.Erros[1]);
+  Assert.AreEqual(1, LVisaoObjeto.Erros.Count);
+  Assert.AreEqual('Não foi possível abrir o relatório de clientes.', LVisaoObjeto.Erros[0]);
   Assert.AreEqual(LFormsAntes, Screen.FormCount, 'Nenhuma form pode ser criada.');
+end;
+
+procedure TTestesNavegadorAplicacao.InspecionarPesquisa(Sender: TObject; var ADone: Boolean);
+var
+  I: Integer;
+  LForm: TForm;
+begin
+  for I := 0 to Screen.FormCount - 1 do
+  begin
+    LForm := Screen.Forms[I];
+    if not LForm.Visible then
+      Continue;
+    if LForm is TFormPesquisaCliente then
+    begin
+      Inc(FPesquisasExibidas);
+      FPesquisaModal := fsModal in LForm.FormState;
+      FLinhasNaGrade := TFormPesquisaCliente(LForm).ListaClientes.Items.Count;
+      FFormsDuranteExibicao := Screen.FormCount;
+      PostMessage(LForm.Handle, WM_CLOSE, 0, 0);
+      Exit;
+    end;
+    if LForm.ClassName = 'TMessageForm' then
+    begin
+      Inc(FDialogosInesperados);
+      PostMessage(LForm.Handle, WM_CLOSE, 0, 0);
+      Exit;
+    end;
+  end;
+end;
+
+procedure TTestesNavegadorAplicacao.ClientesAbrePesquisaRealSobreABase;
+var
+  LDiretorio: string;
+  LCatalogo: TCatalogoMigracoes;
+  LBanco: TInicializadorBanco;
+  LMensagem: string;
+  LNavegador: INavegadorAplicacao;
+  LFormsAntes: Integer;
+begin
+  LDiretorio := CriarDiretorioTemporario;
+  LCatalogo := CriarCatalogoPadrao;
+  LBanco := TInicializadorBanco.Create(TPath.Combine(LDiretorio, 'cadcli.fdb'), LCatalogo);
+  try
+    Assert.IsTrue(LBanco.Preparar(LMensagem), LMensagem);
+    LNavegador := ComporNavegador(FFormPrincipal, LBanco.Conexao);
+    LFormsAntes := Screen.FormCount;
+    FPesquisasExibidas := 0;
+    FDialogosInesperados := 0;
+    FLinhasNaGrade := -1;
+    Application.OnIdle := InspecionarPesquisa;
+    try
+      LNavegador.AbrirClientes;
+    finally
+      Application.OnIdle := nil;
+    end;
+    Assert.AreEqual(0, FDialogosInesperados, 'Nenhum diálogo de erro pode aparecer.');
+    Assert.AreEqual(1, FPesquisasExibidas, 'Deve ser exibida exatamente 1 TFormPesquisaCliente.');
+    Assert.IsTrue(FPesquisaModal, 'A pesquisa deve ser exibida modalmente.');
+    Assert.AreEqual(LFormsAntes + 1, FFormsDuranteExibicao, 'Somente a pesquisa pode ser criada.');
+    Assert.AreEqual(0, FLinhasNaGrade, 'A pesquisa deve listar os 0 clientes da base.');
+    Assert.AreEqual(LFormsAntes, Screen.FormCount, 'A pesquisa deve ser liberada ao fechar.');
+    LNavegador := nil;
+  finally
+    LBanco.Free;
+    LCatalogo.Free;
+    TDirectory.Delete(LDiretorio, True);
+  end;
 end;
 
 initialization

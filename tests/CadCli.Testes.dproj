@@ -49,6 +49,7 @@
     <DCCReference Include="Suporte\Suporte.CaminhosTeste.pas" />
     <DCCReference Include="Suporte\Suporte.FakesMigracao.pas" />
     <DCCReference Include="Suporte\Suporte.FakesFormPrincipal.pas" />
+    <DCCReference Include="Suporte\Suporte.FakesClientes.pas" />
     <DCCReference Include="Unitarios\Testes.CatalogoExecutor.pas" />
     <DCCReference Include="Unitarios\Testes.ControladorPrincipal.pas" />
     <DCCReference Include="Unitarios\Testes.EntregaRunner.pas" />
@@ -56,12 +57,30 @@
     <DCCReference Include="Unitarios\Testes.InicializadorAplicacao.pas" />
     <DCCReference Include="Unitarios\Testes.IntegracaoFirebird.pas" />
     <DCCReference Include="Unitarios\Testes.NavegadorAplicacao.pas" />
+    <DCCReference Include="Unitarios\Testes.FiltroCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.ValidacaoCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.ControladorPesquisaCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.ControladorCadastroCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.ServicoViaCep.pas" />
+    <DCCReference Include="Unitarios\Testes.RepositorioClienteFirebird.pas" />
+    <DCCReference Include="Unitarios\Testes.FormsClientes.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Migracao.pas" />
+    <DCCReference Include="..\src\Dominio\Dominio.Cliente.pas" />
+    <DCCReference Include="..\src\Dominio\Dominio.FiltroCliente.pas" />
+    <DCCReference Include="..\src\Dominio\Dominio.UnidadesFederativas.pas" />
+    <DCCReference Include="..\src\Dominio\Dominio.ValidacaoCliente.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.InicializadorAplicacao.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.NavegadorAplicacao.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.Confirmacao.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.ControladorCadastroCliente.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.ControladorPesquisaCliente.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.NavegadorClientes.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.RepositorioCliente.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.ServicoViaCep.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.Transacao.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas" />
@@ -77,6 +96,19 @@
     </DCCReference>
     <DCCReference Include="..\src\Visao\Visao.NavegadorAplicacao.pas" />
     <DCCReference Include="..\src\Visao\Visao.VersaoExecutavel.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas" />
+    <DCCReference Include="..\src\Visao\Visao.ConfirmacaoDialogo.pas" />
+    <DCCReference Include="..\src\Visao\Visao.FormPesquisaCliente.pas">
+        <Form>FormPesquisaCliente</Form>
+        <FormType>dfm</FormType>
+    </DCCReference>
+    <DCCReference Include="..\src\Visao\Visao.FormCadastroCliente.pas">
+        <Form>FormCadastroCliente</Form>
+        <FormType>dfm</FormType>
+    </DCCReference>
+    <DCCReference Include="..\src\Visao\Visao.NavegadorClientes.pas" />
     <BuildConfiguration Include="Debug">
       <Key>Cfg_1</Key>
       <CfgParent>Base</CfgParent>

@@ -12,8 +12,8 @@ Esta parte reutiliza o repositório e a conexão da parte 03, sem criar um segun
 
 1. menu `Relatórios > Relatório` -> `TFormFiltroRelatorioCliente` (new, door 1) - coleta um modo de filtro e delega a ação
 2. `TControladorRelatorioCliente` (new, door 1) - valida o filtro e solicita os dados ao repositório existente
-3. registros ordenados -> `IGeradorRelatorioCliente` (new, door 2) - adapta o dataset ao ReportBuilder
-4. out: preview ReportBuilder com o relatório ou estado vazio/erro na form de filtros
+3. registros ordenados -> `IGeradorRelatorioCliente` (new, door 2) - adapta o conjunto de dados ao ReportBuilder
+4. out: pré-visualização do ReportBuilder com o relatório ou estado vazio/erro na form de filtros
 
 ## Impact
 
@@ -68,11 +68,11 @@ O usuário visualiza exatamente os registros correspondentes.
 8. WHEN cidade/estado for solicitado sem cidade THEN o sistema SHALL listar somente clientes do estado selecionado.
 9. WHEN `Todos` for solicitado THEN o sistema SHALL listar todos os clientes.
 10. WHEN houver resultados THEN o relatório SHALL exibir título, data/hora de emissão, filtro aplicado, paginação e as sete colunas do door 3 em ID crescente.
-11. WHEN não houver resultados THEN o sistema SHALL manter a form de filtros aberta e exibir `Nenhum cliente encontrado para o filtro informado` sem abrir preview vazio.
+11. WHEN não houver resultados THEN o sistema SHALL manter a form de filtros aberta e exibir `Nenhum cliente encontrado para o filtro informado` sem abrir pré-visualização vazia.
 12. IF a consulta ou o ReportBuilder falhar THEN o sistema SHALL fechar o estado de carregamento, preservar o filtro e exibir uma mensagem de erro.
-13. WHEN o filtro mudar entre duas visualizações THEN o sistema SHALL resetar o relatório antes de gerar as páginas para não reutilizar dados anteriores.
+13. WHEN o filtro mudar entre duas visualizações THEN o sistema SHALL reiniciar o relatório antes de gerar as páginas para não reutilizar dados anteriores.
 
-**Independent test:** usar repositório e gerador falsos para provar os quatro resultados de filtro, vazio, erro e reset; depois conferir visualmente uma página do ReportBuilder.
+**Independent test:** usar repositório e gerador falsos para provar os quatro resultados de filtro, vazio, erro e reinício; depois conferir visualmente uma página do ReportBuilder.
 
 ## Out of scope
 
@@ -87,7 +87,7 @@ O usuário visualiza exatamente os registros correspondentes.
 | Assumption | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
 | cidade no modo Cidade/Estado | opcional após escolher o estado | permite relatório estadual e também a combinação específica sem inventar outro modo |
-| destino inicial | preview do ReportBuilder, de onde o usuário pode imprimir | evita impressão física inesperada durante avaliação |
+| destino inicial | pré-visualização do ReportBuilder, de onde o usuário pode imprimir | evita impressão física inesperada durante avaliação |
 | layout | A4 retrato com largura ajustada às sete colunas | é suficiente para os campos exigidos e simples de conferir |
 
 **Open questions:** none - todas as decisões possuem default revisável acima.
@@ -102,9 +102,9 @@ O usuário visualiza exatamente os registros correspondentes.
 | screen `FiltroRelatorioCliente` | unauthorised state | n/a - aplicação local não possui autenticação |
 | screen `FiltroRelatorioCliente` | density and ordering | AC 1 a AC 4 - modo antes dos campos condicionais e ação visualizar ao final |
 | screen `FiltroRelatorioCliente` | destructive action confirms | n/a - a tela não altera dados |
-| document `Relatório de Clientes` | structure, tone, depth and next action | AC 10 - cabeçalho, filtro, tabela, paginação e preview para impressão |
+| document `Relatório de Clientes` | structure, tone, depth and next action | AC 10 - cabeçalho, filtro, tabela, paginação e pré-visualização para impressão |
 
 ## Sources
 
 - [Teste Programador Delphi 2026.md](../../Teste%20Programador%20Delphi%202026.md) - fonte vinculante para componente, filtros e colunas.
-- [ReportBuilder Developer's Guide](https://www.digital-metaphors.com/download/pdf/RBuilder.pdf) - orienta reset do relatório quando o filtro/dataset muda.
+- [ReportBuilder Developer's Guide](https://www.digital-metaphors.com/download/pdf/RBuilder.pdf) - orienta o reinício do relatório quando o filtro ou o conjunto de dados muda.

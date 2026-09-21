@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 3,
+  "next_id": 5,
   "lessons": [
     {
       "id": "L-001",
@@ -40,6 +40,42 @@
       ],
       "created": "2026-09-21T17:36:26Z",
       "last_seen": "2026-09-21T17:36:26Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::for every optional key of an external response include a case that omits the key and asserts the response is still accepted",
+      "text": "For every optional key of an external response, include a case that omits the key and asserts the response is still accepted",
+      "signal": "surviving_mutant",
+      "scope": "integracoes-externas",
+      "status": "candidate",
+      "features": [
+        "parte-03-clientes-crud"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/Infraestrutura/Infraestrutura.ServicoViaCep.pas:32 (round 1, estado obrigatório) (integracoes-externas)"
+      ],
+      "created": "2026-09-21T23:38:08Z",
+      "last_seen": "2026-09-21T23:38:08Z"
+    },
+    {
+      "id": "L-004",
+      "key": "ac_gap::prove each event a passive view forwards to its controller on the real form not only in the controller tests",
+      "text": "Prove each event a passive view forwards to its controller on the real form, not only in the controller tests",
+      "signal": "ac_gap",
+      "scope": "visao-formularios",
+      "status": "candidate",
+      "features": [
+        "parte-03-clientes-crud"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/Visao/Visao.FormCadastroCliente.pas:178-192 (round 1, Test policy View passiva) (visao-formularios)"
+      ],
+      "created": "2026-09-21T23:38:09Z",
+      "last_seen": "2026-09-21T23:38:09Z"
     }
   ]
 }

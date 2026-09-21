@@ -25,24 +25,42 @@ uses
   Visao.ComposicaoAplicacao in 'src\Visao\Visao.ComposicaoAplicacao.pas',
   Visao.FormPrincipal in 'src\Visao\Visao.FormPrincipal.pas' {FormPrincipal},
   Visao.NavegadorAplicacao in 'src\Visao\Visao.NavegadorAplicacao.pas',
-  Visao.VersaoExecutavel in 'src\Visao\Visao.VersaoExecutavel.pas';
+  Visao.VersaoExecutavel in 'src\Visao\Visao.VersaoExecutavel.pas',
+  Infraestrutura.TransporteHttp in 'src\Infraestrutura\Infraestrutura.TransporteHttp.pas',
+  Infraestrutura.ServicoViaCep in 'src\Infraestrutura\Infraestrutura.ServicoViaCep.pas',
+  Infraestrutura.RepositorioClienteFireDAC in 'src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas',
+  Visao.ConfirmacaoDialogo in 'src\Visao\Visao.ConfirmacaoDialogo.pas',
+  Visao.FormPesquisaCliente in 'src\Visao\Visao.FormPesquisaCliente.pas' {FormPesquisaCliente},
+  Visao.FormCadastroCliente in 'src\Visao\Visao.FormCadastroCliente.pas' {FormCadastroCliente},
+  Visao.NavegadorClientes in 'src\Visao\Visao.NavegadorClientes.pas';
 
 type
   TAutorizadorInterfaceAplicacao = class(TInterfacedObject, IAutorizadorInterface)
+  private
+    FBanco: TInicializadorBanco;
   public
+    constructor Create(ABanco: TInicializadorBanco);
     procedure AutorizarAbertura;
   end;
+
+constructor TAutorizadorInterfaceAplicacao.Create(ABanco: TInicializadorBanco);
+begin
+  inherited Create;
+  FBanco := ABanco;
+end;
 
 procedure TAutorizadorInterfaceAplicacao.AutorizarAbertura;
 var
   LFormPrincipal: TFormPrincipal;
 begin
   Application.CreateForm(TFormPrincipal, LFormPrincipal);
-  LFormPrincipal.Conectar(ComporNavegador(LFormPrincipal), TApresentadorErroDialogo.Create);
+  LFormPrincipal.Conectar(ComporNavegador(LFormPrincipal, FBanco.Conexao),
+    TApresentadorErroDialogo.Create);
 end;
 
 var
   LCatalogo: TCatalogoMigracoes;
+  LBanco: TInicializadorBanco;
   LPersistencia: IInicializadorPersistencia;
   LAutorizador: IAutorizadorInterface;
   LInicializador: TInicializadorAplicacao;
@@ -53,8 +71,9 @@ begin
   Application.Title := 'CadCli';
   LCatalogo := CriarCatalogoPadrao;
   try
-    LPersistencia := TInicializadorBanco.Create(CaminhoBancoAplicacao, LCatalogo);
-    LAutorizador := TAutorizadorInterfaceAplicacao.Create;
+    LBanco := TInicializadorBanco.Create(CaminhoBancoAplicacao, LCatalogo);
+    LPersistencia := LBanco;
+    LAutorizador := TAutorizadorInterfaceAplicacao.Create(LBanco);
     LInicializador := TInicializadorAplicacao.Create(LPersistencia, LAutorizador);
     try
       if LInicializador.Inicializar(LMensagemErro) then

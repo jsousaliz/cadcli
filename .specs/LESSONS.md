@@ -26,6 +26,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: C27 - tests/Unitarios/Testes.FormPrincipal.pas:323,357 (visao-dialogos)
 - last seen: 2026-09-21T17:36:26Z
 
+### L-003 - For every optional key of an external response, include a case that omits the key and asserts the response is still accepted
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `integracoes-externas` · harmful: 0
+- features: parte-03-clientes-crud
+- evidence: src/Infraestrutura/Infraestrutura.ServicoViaCep.pas:32 (round 1, estado obrigatório) (integracoes-externas)
+- last seen: 2026-09-21T23:38:08Z
+
+### L-004 - Prove each event a passive view forwards to its controller on the real form, not only in the controller tests
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `visao-formularios` · harmful: 0
+- features: parte-03-clientes-crud
+- evidence: src/Visao/Visao.FormCadastroCliente.pas:178-192 (round 1, Test policy View passiva) (visao-formularios)
+- last seen: 2026-09-21T23:38:09Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

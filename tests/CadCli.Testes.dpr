@@ -1,4 +1,4 @@
-program CadCli.Testes;
+﻿program CadCli.Testes;
 
 {$APPTYPE CONSOLE}
 {$STRONGLINKTYPES ON}
@@ -23,15 +23,34 @@ uses
   Testes.InicializadorAplicacao in 'Unitarios\Testes.InicializadorAplicacao.pas',
   Testes.IntegracaoFirebird in 'Unitarios\Testes.IntegracaoFirebird.pas',
   Testes.NavegadorAplicacao in 'Unitarios\Testes.NavegadorAplicacao.pas',
+  Testes.FiltroCliente in 'Unitarios\Testes.FiltroCliente.pas',
+  Testes.ValidacaoCliente in 'Unitarios\Testes.ValidacaoCliente.pas',
+  Testes.ControladorPesquisaCliente in 'Unitarios\Testes.ControladorPesquisaCliente.pas',
+  Testes.ControladorCadastroCliente in 'Unitarios\Testes.ControladorCadastroCliente.pas',
   Suporte.CaminhosTeste in 'Suporte\Suporte.CaminhosTeste.pas',
   Suporte.FakesMigracao in 'Suporte\Suporte.FakesMigracao.pas',
   Suporte.FakesFormPrincipal in 'Suporte\Suporte.FakesFormPrincipal.pas',
+  Suporte.FakesClientes in 'Suporte\Suporte.FakesClientes.pas',
+  Testes.ServicoViaCep in 'Unitarios\Testes.ServicoViaCep.pas',
+  Testes.RepositorioClienteFirebird in 'Unitarios\Testes.RepositorioClienteFirebird.pas',
+  Testes.FormsClientes in 'Unitarios\Testes.FormsClientes.pas',
   Aplicacao.CatalogoMigracoes in '..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas',
   Aplicacao.ControladorPrincipal in '..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas',
   Aplicacao.ExecutorMigracoes in '..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas',
   Aplicacao.InicializadorAplicacao in '..\src\Aplicacao\Aplicacao.InicializadorAplicacao.pas',
   Aplicacao.NavegadorAplicacao in '..\src\Aplicacao\Aplicacao.NavegadorAplicacao.pas',
+  Aplicacao.Confirmacao in '..\src\Aplicacao\Aplicacao.Confirmacao.pas',
+  Aplicacao.ControladorCadastroCliente in '..\src\Aplicacao\Aplicacao.ControladorCadastroCliente.pas',
+  Aplicacao.ControladorPesquisaCliente in '..\src\Aplicacao\Aplicacao.ControladorPesquisaCliente.pas',
+  Aplicacao.NavegadorClientes in '..\src\Aplicacao\Aplicacao.NavegadorClientes.pas',
+  Aplicacao.RepositorioCliente in '..\src\Aplicacao\Aplicacao.RepositorioCliente.pas',
+  Aplicacao.ServicoViaCep in '..\src\Aplicacao\Aplicacao.ServicoViaCep.pas',
+  Aplicacao.Transacao in '..\src\Aplicacao\Aplicacao.Transacao.pas',
   Dominio.Migracao in '..\src\Dominio\Dominio.Migracao.pas',
+  Dominio.Cliente in '..\src\Dominio\Dominio.Cliente.pas',
+  Dominio.FiltroCliente in '..\src\Dominio\Dominio.FiltroCliente.pas',
+  Dominio.UnidadesFederativas in '..\src\Dominio\Dominio.UnidadesFederativas.pas',
+  Dominio.ValidacaoCliente in '..\src\Dominio\Dominio.ValidacaoCliente.pas',
   Infraestrutura.CaminhosAplicacao in '..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas',
   Infraestrutura.CatalogoPadraoMigracoes in '..\src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas',
   Infraestrutura.ContextoMigracaoFireDAC in '..\src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas',
@@ -43,7 +62,14 @@ uses
   Visao.ComposicaoAplicacao in '..\src\Visao\Visao.ComposicaoAplicacao.pas',
   Visao.FormPrincipal in '..\src\Visao\Visao.FormPrincipal.pas' {FormPrincipal},
   Visao.NavegadorAplicacao in '..\src\Visao\Visao.NavegadorAplicacao.pas',
-  Visao.VersaoExecutavel in '..\src\Visao\Visao.VersaoExecutavel.pas';
+  Visao.VersaoExecutavel in '..\src\Visao\Visao.VersaoExecutavel.pas',
+  Infraestrutura.TransporteHttp in '..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas',
+  Infraestrutura.ServicoViaCep in '..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas',
+  Infraestrutura.RepositorioClienteFireDAC in '..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas',
+  Visao.ConfirmacaoDialogo in '..\src\Visao\Visao.ConfirmacaoDialogo.pas',
+  Visao.FormPesquisaCliente in '..\src\Visao\Visao.FormPesquisaCliente.pas' {FormPesquisaCliente},
+  Visao.FormCadastroCliente in '..\src\Visao\Visao.FormCadastroCliente.pas' {FormCadastroCliente},
+  Visao.NavegadorClientes in '..\src\Visao\Visao.NavegadorClientes.pas';
 
 function QualificarTeste(const ANome: string): string;
 begin
@@ -60,6 +86,25 @@ begin
     Exit('Testes.ControladorPrincipal.' + Result);
   if StartsText('TTestesNavegadorAplicacao.', Result) then
     Exit('Testes.NavegadorAplicacao.' + Result);
+  if StartsText('TTestesFiltroCliente.', Result) then
+    Exit('Testes.FiltroCliente.' + Result);
+  if StartsText('TTestesValidacaoCliente.', Result) or
+     StartsText('TTestesTabelaUfs.', Result) then
+    Exit('Testes.ValidacaoCliente.' + Result);
+  if StartsText('TTestesControladorPesquisaCliente.', Result) then
+    Exit('Testes.ControladorPesquisaCliente.' + Result);
+  if StartsText('TTestesServicoViaCep.', Result) or
+     StartsText('TTestesTransporteHttp.', Result) then
+    Exit('Testes.ServicoViaCep.' + Result);
+  if StartsText('TTestesRepositorioClienteFirebird.', Result) then
+    Exit('Testes.RepositorioClienteFirebird.' + Result);
+  if StartsText('TTestesFormPesquisaCliente.', Result) or
+     StartsText('TTestesFormCadastroCliente.', Result) or
+     StartsText('TTestesNavegadorClientes.', Result) or
+     StartsText('TTestesArquiteturaClientes.', Result) then
+    Exit('Testes.FormsClientes.' + Result);
+  if StartsText('TTestesControladorCadastroCliente.', Result) then
+    Exit('Testes.ControladorCadastroCliente.' + Result);
   if StartsText('TTestesFormPrincipal.', Result) or
      StartsText('TTestesApresentadorErro.', Result) then
     Exit('Testes.FormPrincipal.' + Result);
