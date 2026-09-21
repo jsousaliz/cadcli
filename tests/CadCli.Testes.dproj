@@ -61,6 +61,7 @@
     <DCCReference Include="Unitarios\Testes.ValidacaoCliente.pas" />
     <DCCReference Include="Unitarios\Testes.ControladorPesquisaCliente.pas" />
     <DCCReference Include="Unitarios\Testes.ControladorCadastroCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.ServicoViaCep.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Migracao.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Cliente.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.FiltroCliente.pas" />
@@ -93,6 +94,8 @@
     </DCCReference>
     <DCCReference Include="..\src\Visao\Visao.NavegadorAplicacao.pas" />
     <DCCReference Include="..\src\Visao\Visao.VersaoExecutavel.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas" />
     <BuildConfiguration Include="Debug">
       <Key>Cfg_1</Key>
       <CfgParent>Base</CfgParent>
