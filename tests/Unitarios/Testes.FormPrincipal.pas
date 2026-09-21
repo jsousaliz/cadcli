@@ -39,6 +39,11 @@ type
 
   [TestFixture]
   TTestesApresentadorErro = class
+  private
+    FExibicoes: Integer;
+    FTituloJanela: string;
+    FMensagemExibida: string;
+    procedure CapturarDialogoExibido(Sender: TObject; var ADone: Boolean);
   public
     [Test]
     procedure DialogoDeErroTemTituloCadCliEMostraAMensagem;
@@ -310,7 +315,6 @@ const
 var
   LDialogo: TForm;
   LRotulo: TComponent;
-  LTitulo: string;
   LVigia: TThread;
   LApresentador: IApresentadorErro;
   LFormsAntes: Integer;
@@ -326,7 +330,9 @@ begin
   end;
 
   LFormsAntes := Screen.FormCount;
-  LTitulo := '';
+  FExibicoes := 0;
+  FTituloJanela := '';
+  FMensagemExibida := '';
   LVigia := TThread.CreateAnonymousThread(
     procedure
     var
@@ -335,27 +341,54 @@ begin
     begin
       for I := 1 to LIMITE_TENTATIVAS do
       begin
-        LJanela := JanelaDoProcesso(GetCurrentProcessId, 'TMessageForm', True);
-        if LJanela <> 0 then
-        begin
-          LTitulo := TextoJanela(LJanela);
-          PostMessage(LJanela, WM_CLOSE, 0, 0);
+        if FExibicoes > 0 then
           Exit;
-        end;
         Sleep(50);
       end;
+      LJanela := JanelaDoProcesso(GetCurrentProcessId, 'TMessageForm', True);
+      if LJanela <> 0 then
+        PostMessage(LJanela, WM_CLOSE, 0, 0);
     end);
   LVigia.FreeOnTerminate := False;
+  Application.OnIdle := CapturarDialogoExibido;
   LVigia.Start;
   try
     LApresentador := TApresentadorErroDialogo.Create;
     LApresentador.ApresentarErro(MENSAGEM);
     LVigia.WaitFor;
   finally
+    Application.OnIdle := nil;
     LVigia.Free;
   end;
-  Assert.AreEqual('CadCli', LTitulo, 'O diálogo real deve ser exibido com o título CadCli.');
+  Assert.AreEqual(1, FExibicoes, 'O diálogo real deve ser exibido exatamente uma vez.');
+  Assert.AreEqual('CadCli', FTituloJanela, 'O diálogo real deve ser exibido com o título CadCli.');
+  Assert.AreEqual(MENSAGEM, FMensagemExibida,
+    'O diálogo real deve exibir exatamente a mensagem recebida.');
   Assert.AreEqual(LFormsAntes, Screen.FormCount, 'O diálogo deve ser liberado ao fechar.');
+end;
+
+procedure TTestesApresentadorErro.CapturarDialogoExibido(Sender: TObject; var ADone: Boolean);
+var
+  I: Integer;
+  LForm: TForm;
+  LRotulo: TComponent;
+begin
+  if FExibicoes > 0 then
+    Exit;
+  for I := 0 to Screen.FormCount - 1 do
+  begin
+    LForm := Screen.Forms[I];
+    if (LForm.ClassName = 'TMessageForm') and LForm.Visible and (fsModal in LForm.FormState) then
+    begin
+      FTituloJanela := TextoJanela(LForm.Handle);
+      LRotulo := LForm.FindComponent('Message');
+      if LRotulo is TLabel then
+        FMensagemExibida := TLabel(LRotulo).Caption;
+      Inc(FExibicoes);
+      PostMessage(LForm.Handle, WM_CLOSE, 0, 0);
+      Exit;
+    end;
+  end;
 end;
 
 initialization
