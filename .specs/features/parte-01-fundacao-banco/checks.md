@@ -166,3 +166,7 @@ Cost: 24 checks nomeados; 4 provas novas (C16, C22, C23, C24) e 4 reescritas (C4
 - Pré-requisito para provas de integração: Firebird 3 x64 instalado como serviço, escutando em `localhost:3050`, com `SYSDBA`/`masterkey` e `fbclient.dll` acessível pelo sistema; a conta do serviço precisa gravar nos diretórios temporários dos testes. Sem o serviço, as provas de integração falham - não são puladas.
 - Remover das saídas locais os arquivos do Firebird Embedded copiados antes; C22 e C17 falham enquanto eles existirem ao lado do executável.
 - DUnitX do Delphi 12 e ReportBuilder Win32/Win64 foram localizados; DevExpress não foi localizado, mas não bloqueia a Parte 01 porque esta parte contém zero forms.
+
+- **Boundary:** C1-C24 fechados em `20c6e52` (base `5d49414`); suíte 29/29 verde contra o serviço Firebird 3.0.13 em `localhost:3050`.
+- **Settled mid-build:** a indisponibilidade do serviço é provada só no inicializador (C16); o executável não ganha porta configurável nem os testes param o serviço do Windows. O teste `ExecutavelReleaseSemFirebirdEncerraERegistraOErro` foi removido junto com a prova de executável de C16, conforme essa decisão.
+- **Abandoned:** nada.

@@ -16,12 +16,12 @@
 ## Handoff
 
 **Feature**: `parte-01-fundacao-banco`
-**Where**: checks da Parte 01 recriados para o serviço local do Firebird 3 (24 checks, `validate_checks.py` exit 0)
-**In progress**: `parte-01-fundacao-banco/plan.md` e `parte-05-identidade-instalador/plan.md` adaptados às decisões AD-007 e AD-008
-**Next step**: adaptar testes a partir de C4, C16, C17, C20 e C22-C24, depois o código, e despachar um Verifier novo
+**Where**: Parte 01 adaptada ao serviço local do Firebird 3 em `20c6e52` (branch `feat/parte-01-firebird-servico`), 29/29 testes verdes
+**In progress**: verificação independente da Parte 01 sobre `5d49414..HEAD`
+**Next step**: validar `verification.md` com `validate_verification.py`; depois seguir para a Parte 02
 **Blockers**: nenhum; as provas de integração exigem o serviço Firebird 3 x64 em `localhost:3050`
-**Uncommitted**: documentação de planejamento e decisões globais
-**Branch**: `master`
+**Uncommitted**: nenhum
+**Branch**: `feat/parte-01-firebird-servico`
 
 ### Observações do build
 
