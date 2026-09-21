@@ -1,0 +1,20 @@
+# Saídas de compilação Delphi
+bin/
+tests/bin/
+*.dcu
+*.identcache
+*.local
+*.tvsconfig
+*.stat
+*.rsm
+*.map
+*.drc
+*.res
+__history/
+__recovery/
+
+# Base de dados criada em tempo de execução
+cadcli.fdb
+
+# Área de trabalho temporária (runtime do Firebird baixado, provas descartáveis)
+tmp/
