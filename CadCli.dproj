@@ -111,6 +111,7 @@
         <DCCReference Include="src\Visao\Visao.VersaoExecutavel.pas"/>
         <DCCReference Include="src\Infraestrutura\Infraestrutura.TransporteHttp.pas"/>
         <DCCReference Include="src\Infraestrutura\Infraestrutura.ServicoViaCep.pas"/>
+        <DCCReference Include="src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

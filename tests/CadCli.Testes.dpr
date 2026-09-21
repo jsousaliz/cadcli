@@ -32,6 +32,7 @@ uses
   Suporte.FakesFormPrincipal in 'Suporte\Suporte.FakesFormPrincipal.pas',
   Suporte.FakesClientes in 'Suporte\Suporte.FakesClientes.pas',
   Testes.ServicoViaCep in 'Unitarios\Testes.ServicoViaCep.pas',
+  Testes.RepositorioClienteFirebird in 'Unitarios\Testes.RepositorioClienteFirebird.pas',
   Aplicacao.CatalogoMigracoes in '..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas',
   Aplicacao.ControladorPrincipal in '..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas',
   Aplicacao.ExecutorMigracoes in '..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas',
@@ -62,7 +63,8 @@ uses
   Visao.NavegadorAplicacao in '..\src\Visao\Visao.NavegadorAplicacao.pas',
   Visao.VersaoExecutavel in '..\src\Visao\Visao.VersaoExecutavel.pas',
   Infraestrutura.TransporteHttp in '..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas',
-  Infraestrutura.ServicoViaCep in '..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas';
+  Infraestrutura.ServicoViaCep in '..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas',
+  Infraestrutura.RepositorioClienteFireDAC in '..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas';
 
 function QualificarTeste(const ANome: string): string;
 begin
@@ -89,6 +91,8 @@ begin
   if StartsText('TTestesServicoViaCep.', Result) or
      StartsText('TTestesTransporteHttp.', Result) then
     Exit('Testes.ServicoViaCep.' + Result);
+  if StartsText('TTestesRepositorioClienteFirebird.', Result) then
+    Exit('Testes.RepositorioClienteFirebird.' + Result);
   if StartsText('TTestesControladorCadastroCliente.', Result) then
     Exit('Testes.ControladorCadastroCliente.' + Result);
   if StartsText('TTestesFormPrincipal.', Result) or

@@ -27,7 +27,8 @@ uses
   Visao.NavegadorAplicacao in 'src\Visao\Visao.NavegadorAplicacao.pas',
   Visao.VersaoExecutavel in 'src\Visao\Visao.VersaoExecutavel.pas',
   Infraestrutura.TransporteHttp in 'src\Infraestrutura\Infraestrutura.TransporteHttp.pas',
-  Infraestrutura.ServicoViaCep in 'src\Infraestrutura\Infraestrutura.ServicoViaCep.pas';
+  Infraestrutura.ServicoViaCep in 'src\Infraestrutura\Infraestrutura.ServicoViaCep.pas',
+  Infraestrutura.RepositorioClienteFireDAC in 'src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas';
 
 type
   TAutorizadorInterfaceAplicacao = class(TInterfacedObject, IAutorizadorInterface)
