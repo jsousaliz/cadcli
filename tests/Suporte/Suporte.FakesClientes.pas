@@ -149,6 +149,7 @@ type
     Resultado: TResultadoConsultaCep;
     Chamadas: Integer;
     UltimoCep: string;
+    AoConsultar: TProc;
     function Consultar(const ACep: string): TResultadoConsultaCep;
   end;
 
@@ -538,6 +539,8 @@ function TServicoViaCepFake.Consultar(const ACep: string): TResultadoConsultaCep
 begin
   Inc(Chamadas);
   UltimoCep := ACep;
+  if Assigned(AoConsultar) then
+    AoConsultar;
   Result := Resultado;
 end;
 

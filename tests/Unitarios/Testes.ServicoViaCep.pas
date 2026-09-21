@@ -99,6 +99,15 @@ begin
   Assert.AreEqual('São Paulo', LResultado.Endereco.Localidade);
   Assert.AreEqual('SP', LResultado.Endereco.UF);
   Assert.AreEqual('São Paulo', LResultado.Endereco.Estado);
+
+  LTransporteObjeto.Resposta := Resposta(srRespondida, 200,
+    CORPO_REAL_01001000.Replace('  "estado": "São Paulo",' + sLineBreak, ''));
+  Assert.IsFalse(LTransporteObjeto.Resposta.Corpo.Contains('"estado"'));
+  LResultado := LServico.Consultar('01001-000');
+  Assert.IsTrue(LResultado.Situacao = scEncontrado, 'Sem a chave estado o endereço continua encontrado.');
+  Assert.AreEqual('', LResultado.Endereco.Estado, 'Sem a chave estado o nome fica vazio para a tabela de UFs.');
+  Assert.AreEqual('Praça da Sé', LResultado.Endereco.Logradouro);
+  Assert.AreEqual('SP', LResultado.Endereco.UF);
 end;
 
 procedure TTestesServicoViaCep.TraduzCadaRespostaParaUmResultadoTipado;
@@ -145,7 +154,8 @@ begin
     Caso('sem logradouro', ctResponder, Resposta(srRespondida, 200, SemChave('logradouro')), scRespostaInvalida),
     Caso('sem bairro', ctResponder, Resposta(srRespondida, 200, SemChave('bairro')), scRespostaInvalida),
     Caso('sem localidade', ctResponder, Resposta(srRespondida, 200, SemChave('localidade')), scRespostaInvalida),
-    Caso('sem uf', ctResponder, Resposta(srRespondida, 200, SemChave('uf')), scRespostaInvalida)];
+    Caso('sem uf', ctResponder, Resposta(srRespondida, 200, SemChave('uf')), scRespostaInvalida),
+    Caso('sem estado', ctResponder, Resposta(srRespondida, 200, SemChave('estado')), scEncontrado)];
   for LCaso in LCasos do
   begin
     LTransporteObjeto := TTransporteHttpFake.Create;
@@ -162,7 +172,14 @@ begin
     Assert.AreEqual(1, Integer(Length(LTransporteObjeto.Urls)), LCaso.Descricao);
     Assert.AreEqual(Ord(LCaso.Esperado), Ord(LResultado.Situacao), LCaso.Descricao);
   end;
-  Assert.AreEqual(13, Integer(Length(LCasos)));
+  Assert.AreEqual(14, Integer(Length(LCasos)));
+
+  LTransporteObjeto := TTransporteHttpFake.Create;
+  LTransporte := LTransporteObjeto;
+  LServico := TServicoViaCep.Create(LTransporte);
+  Assert.AreEqual(Ord(scFormatoInvalido), Ord(LServico.Consultar('0100100').Situacao),
+    'CEP com 7 dígitos é formato inválido.');
+  Assert.AreEqual(0, Integer(Length(LTransporteObjeto.Urls)), 'Formato inválido não chama o transporte.');
 end;
 
 procedure TTestesTransporteHttp.ServidorLocalSemRespostaEsgotaEmDezSegundos;

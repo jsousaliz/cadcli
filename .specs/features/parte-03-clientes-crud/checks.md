@@ -280,4 +280,5 @@ Defaults derivados pelos checks, fixados com a aprovação deste arquivo:
 - Pré-requisitos: serviço Firebird 3 em `localhost:3050`; build como na Parte 02 (`rsvars.bat` + `MSBuild.exe` Release do `CadCli.dproj` e Debug do `tests\CadCli.Testes.dproj`); o aviso trial do DevExpress é tratado por AD-013.
 - O runner precisa mapear as 10 novas fixtures em `QualificarTeste` para que os filtros curtos dos `Proof:` resolvam.
 - Fontes Delphi novos em UTF-8 com BOM (AGENTS.md).
-- Estado do build (2026-09-21): C1-C52 fechados; as 57 provas passam isoladas (exit 0, 1 teste cada) e a suíte completa passa com 107/107. Falta a verificação independente.
+- Estado do build (2026-09-21): C1-C52 fechados; as 57 provas passam isoladas (exit 0, 1 teste cada) e a suíte completa passa com 107/107.
+- Verificação round 1 (bb5f82d): FAIL. Um mutante sobreviveu: exigir `estado` no JSON do ViaCEP não quebrava nenhuma prova. Além disso, a ligação CEP/UF da `TFormCadastroCliente` real não tinha prova. Correção só em testes, sem mudar checks: casos sem `estado` em C36/C37/C40 e o teste extra `TTestesFormCadastroCliente.CepEUfDaTelaAcionamOControlador`. Suíte 108/108.

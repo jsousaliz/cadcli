@@ -70,6 +70,8 @@ type
     procedure ArranjoCamposEBotoes;
     [Test]
     procedure EditoresRespeitamOTamanhoDasColunas;
+    [Test]
+    procedure CepEUfDaTelaAcionamOControlador;
   end;
 
   TAcaoCadastro = (acSalvar, acCancelar);
@@ -111,6 +113,7 @@ uses
   System.SysUtils,
   System.TypInfo,
   System.Types,
+  System.UITypes,
   Vcl.Controls,
   Vcl.Forms,
   cxButtons,
@@ -569,6 +572,67 @@ begin
   Assert.AreEqual('11222333000181', FRepositorioObjeto.UltimoIncluido.CpfCnpj, 'Grava 14 dígitos.');
   Assert.AreEqual('01001000', FRepositorioObjeto.UltimoIncluido.Cep, 'Grava 8 dígitos.');
   Assert.AreEqual('São Paulo', FRepositorioObjeto.UltimoEstado, 'Estado derivado da UF.');
+end;
+
+procedure TTestesFormCadastroCliente.CepEUfDaTelaAcionamOControlador;
+var
+  LViaCep: TServicoViaCepFake;
+  LIndicadorDuranteConsulta: Boolean;
+  LCarregamentoDuranteConsulta: Boolean;
+begin
+  Criar;
+  LViaCep := TServicoViaCepFake(FViaCep as TObject);
+  LViaCep.Resultado := ResultadoCep(scEncontrado);
+  LIndicadorDuranteConsulta := False;
+  LCarregamentoDuranteConsulta := False;
+  LViaCep.AoConsultar :=
+    procedure
+    begin
+      LIndicadorDuranteConsulta := FForm.RotuloConsultandoCep.Visible;
+      LCarregamentoDuranteConsulta := Screen.Cursor = crHourGlass;
+    end;
+  Assert.IsTrue(FForm.Abrir(mcInclusao));
+  FForm.Show;
+  Application.ProcessMessages;
+  FForm.EditorNumero.Text := '100';
+  FForm.EditorComplemento.Text := 'sala 2';
+
+  FForm.EditorCep.SetFocus;
+  Application.ProcessMessages;
+  FForm.EditorCep.Text := '01001-000';
+  FForm.EditorEndereco.SetFocus;
+  Application.ProcessMessages;
+  LViaCep.AoConsultar := nil;
+  Assert.AreEqual(1, LViaCep.Chamadas, 'Sair do CEP alterado na tela deve consultar o ViaCEP 1 vez.');
+  Assert.AreEqual('01001000', LViaCep.UltimoCep);
+  Assert.IsTrue(LIndicadorDuranteConsulta, 'Consultando CEP... deve aparecer durante a consulta.');
+  Assert.IsTrue(LCarregamentoDuranteConsulta, 'O cursor de espera deve aparecer durante a consulta.');
+  Assert.IsFalse(FForm.RotuloConsultandoCep.Visible, 'O indicador some ao fim da consulta.');
+  Assert.AreEqual('Praça da Sé', FForm.EditorEndereco.Text);
+  Assert.AreEqual('Sé', FForm.EditorBairro.Text);
+  Assert.AreEqual('São Paulo', FForm.EditorCidade.Text);
+  Assert.AreEqual('SP', FForm.EditorUf.Text);
+  Assert.AreEqual('São Paulo', FForm.EditorEstado.Text);
+  Assert.AreEqual('100', FForm.EditorNumero.Text, 'Número digitado permanece.');
+  Assert.AreEqual('sala 2', FForm.EditorComplemento.Text, 'Complemento digitado permanece.');
+
+  FForm.EditorCep.SetFocus;
+  Application.ProcessMessages;
+  FForm.EditorEndereco.SetFocus;
+  Application.ProcessMessages;
+  Assert.AreEqual(1, LViaCep.Chamadas, 'Sair do CEP sem alteração na tela não consulta.');
+
+  FForm.EditorCep.SetFocus;
+  Application.ProcessMessages;
+  FForm.EditorCep.Text := '0100100';
+  FForm.EditorEndereco.SetFocus;
+  Application.ProcessMessages;
+  Assert.AreEqual(1, LViaCep.Chamadas, 'CEP incompleto na tela não consulta.');
+  Assert.AreEqual('CEP inválido', FApresentadorObjeto.Mensagens.Text.Trim);
+
+  FForm.EditorUf.ItemIndex := FForm.EditorUf.Properties.Items.IndexOf('DF');
+  Application.ProcessMessages;
+  Assert.AreEqual('Distrito Federal', FForm.EditorEstado.Text, 'Trocar a UF na tela atualiza o Estado.');
 end;
 
 procedure TTestesNavegadorClientes.ConduzirCadastro(Sender: TObject; var ADone: Boolean);

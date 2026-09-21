@@ -70,7 +70,23 @@ implementation
 uses
   System.SysUtils,
   Dominio.Cliente,
-  Aplicacao.ServicoViaCep;
+  Aplicacao.ServicoViaCep,
+  Infraestrutura.ServicoViaCep,
+  Infraestrutura.TransporteHttp;
+
+type
+  TTransporteSemEstado = class(TInterfacedObject, ITransporteHttp)
+  public
+    function Obter(const AUrl: string): TRespostaHttp;
+  end;
+
+function TTransporteSemEstado.Obter(const AUrl: string): TRespostaHttp;
+begin
+  Result.Situacao := srRespondida;
+  Result.Codigo := 200;
+  Result.Corpo := '{"cep": "88015-600", "logradouro": "Rua Almirante Lamego", "complemento": "", ' +
+    '"bairro": "Centro", "localidade": "Florianópolis", "uf": "SC", "ibge": "4205407"}';
+end;
 
 procedure TTestesControladorCadastroCliente.Preparar;
 begin
@@ -443,6 +459,7 @@ end;
 procedure TTestesControladorCadastroCliente.NomeDoEstadoVemDoViaCepOuDaTabela;
 var
   LResultado: TResultadoConsultaCep;
+  LTransporte: ITransporteHttp;
 begin
   FControlador.Abrir(mcInclusao);
   LResultado := ResultadoCep(scEncontrado);
@@ -487,6 +504,24 @@ begin
   FControlador.Salvar;
   Assert.AreEqual('Distrito Federal', FRepositorioObjeto.UltimoEstado,
     'Sem estado informado, o nome vem da tabela fixa.');
+
+  FreeAndNil(FControlador);
+  LTransporte := TTransporteSemEstado.Create;
+  FControlador := TControladorCadastroCliente.Create(FVisaoObjeto, FRepositorioObjeto,
+    FTransacaoObjeto, TServicoViaCep.Create(LTransporte), FRelogioObjeto, FConfirmacaoObjeto);
+  FControlador.Abrir(mcInclusao);
+  FVisaoObjeto.Dados := DadosValidos;
+  FVisaoObjeto.Dados.Cep := '';
+  FVisaoObjeto.Dados.Estado := '';
+  FVisaoObjeto.Mensagens.Clear;
+  SairDoCepCom('88015-600');
+  Assert.AreEqual(0, FVisaoObjeto.Mensagens.Count, 'JSON sem estado não é resposta inválida.');
+  Assert.AreEqual('Florianópolis', FVisaoObjeto.Dados.Cidade);
+  Assert.AreEqual('SC', FVisaoObjeto.Dados.Uf);
+  Assert.AreEqual('Santa Catarina', FVisaoObjeto.Dados.Estado, 'JSON sem estado usa a tabela fixa.');
+  FControlador.Salvar;
+  Assert.AreEqual('Santa Catarina', FRepositorioObjeto.UltimoEstado,
+    'O estado inserido a partir de JSON sem estado vem da tabela fixa.');
 end;
 
 initialization
