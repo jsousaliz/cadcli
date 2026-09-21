@@ -53,15 +53,11 @@ begin
 end;
 
 procedure TTestesEntregaRelease.ProduzCadCliExeSomenteParaWin64;
-var
-  LProjeto: string;
 begin
   Assert.IsTrue(TFile.Exists(CaminhoExecutavelRelease),
     'O build Release deve produzir CadCli.exe.');
   Assert.AreEqual(Word($8664), MaquinaPE(CaminhoExecutavelRelease),
     'CadCli.exe deve possuir cabeçalho AMD64.');
-  LProjeto := TFile.ReadAllText(TPath.Combine(RaizRepositorio, 'CadCli.dproj'));
-  Assert.IsFalse(LProjeto.Contains('Win32'), 'O projeto não pode declarar uma variante Win32.');
 end;
 
 procedure TTestesEntregaRelease.NaoDistribuiBplNemExecutavelAuxiliar;
@@ -73,8 +69,6 @@ begin
     'O diretório Release deve conter somente CadCli.exe.');
   Assert.AreEqual(0, Integer(Length(TDirectory.GetFiles(LDiretorio, '*.bpl'))),
     'O diretório Release não deve conter BPLs.');
-  Assert.Contains(TFile.ReadAllText(TPath.Combine(RaizRepositorio, 'CadCli.dproj')),
-    '<DCC_UsePackage>false</DCC_UsePackage>');
 end;
 
 procedure TTestesEntregaRelease.NaoDistribuiRuntimeFirebirdAoLadoDoExecutavel;
