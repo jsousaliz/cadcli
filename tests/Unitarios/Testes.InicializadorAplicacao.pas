@@ -26,6 +26,7 @@ implementation
 
 uses
   System.IOUtils,
+  System.StrUtils,
   System.SysUtils,
   System.Types,
   Aplicacao.InicializadorAplicacao,
@@ -61,8 +62,13 @@ begin
 end;
 
 procedure TTestesArquiteturaFundacao.InicializaComFakesSemCarregarInterfaceOuAdaptadoresConcretos;
+const
+  PASTAS_PARTE_01: array[0..3] of string = ('src\Aplicacao', 'src\Dominio',
+    'src\Infraestrutura', 'src\Migracoes');
 var
-  LArquivosForm: TStringDynArray;
+  LPasta: string;
+  LArquivoForm: string;
+  LPastaVisao: string;
   LPersistenciaObjeto: TPersistenciaFake;
   LPersistencia: IInicializadorPersistencia;
   LAutorizador: IAutorizadorInterface;
@@ -70,8 +76,15 @@ var
   LCodigoInicializador: string;
   LMensagem: string;
 begin
-  LArquivosForm := TDirectory.GetFiles(RaizRepositorio, '*.dfm', TSearchOption.soAllDirectories);
-  Assert.AreEqual(0, Integer(Length(LArquivosForm)), 'A Parte 01 deve conter zero forms próprias.');
+  for LPasta in PASTAS_PARTE_01 do
+    Assert.AreEqual(0, Integer(Length(TDirectory.GetFiles(TPath.Combine(RaizRepositorio, LPasta),
+      '*.dfm', TSearchOption.soAllDirectories))),
+      'A Parte 01 deve conter zero forms próprias em ' + LPasta + '.');
+  LPastaVisao := IncludeTrailingPathDelimiter(TPath.Combine(RaizRepositorio, 'src\Visao'));
+  for LArquivoForm in TDirectory.GetFiles(TPath.Combine(RaizRepositorio, 'src'), '*.dfm',
+    TSearchOption.soAllDirectories) do
+    Assert.IsTrue(StartsText(LPastaVisao, LArquivoForm),
+      'Todo .dfm sob src deve estar em src\Visao: ' + LArquivoForm);
   LCodigoInicializador := UpperCase(TFile.ReadAllText(TPath.Combine(RaizRepositorio,
     'src\Aplicacao\Aplicacao.InicializadorAplicacao.pas')));
   Assert.IsFalse(LCodigoInicializador.Contains('VCL.'));

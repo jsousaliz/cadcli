@@ -72,6 +72,12 @@ type
     procedure ExecutavelReleaseCriaBaseCompletaAoLado;
     [Test]
     procedure ExecutavelReleaseRecusaVersaoFuturaERegistraOErro;
+    [Test]
+    procedure ExecutavelReleaseExibeShellEEncerraComCodigoZero;
+    [Test]
+    procedure ExecutavelReleaseRecusadoNaoExibeShell;
+    [Test]
+    procedure ExecutavelReleaseAbreSemDelphiNemDevExpressNoPath;
   end;
 
   [TestFixture]
@@ -99,19 +105,22 @@ type
 implementation
 
 uses
+  Winapi.Messages,
   Winapi.Windows,
   Winapi.Winsock2,
   System.Classes,
   System.DateUtils,
   System.IOUtils,
   System.RegularExpressions,
+  System.StrUtils,
   System.SysUtils,
   FireDAC.Comp.Client,
   Aplicacao.InicializadorAplicacao,
   Dominio.Migracao,
   Infraestrutura.CatalogoPadraoMigracoes,
   Suporte.CaminhosTeste,
-  Suporte.FakesMigracao;
+  Suporte.FakesMigracao,
+  Suporte.ProcessoAplicacao;
 
 const
   ARQUIVOS_RUNTIME_FIREBIRD: array[0..5] of string = ('fbclient.dll', 'ib_util.dll',
@@ -406,32 +415,43 @@ begin
   end;
 end;
 
-function ExecutarEAguardar(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
-  out ACodigoSaida: Cardinal; const AArgumentos: string = ''): Boolean;
-var
-  LInfo: TStartupInfo;
-  LProcesso: TProcessInformation;
-  LComando: string;
+procedure CopiarEntregaSemBase(const ADestino: string);
 begin
-  FillChar(LInfo, SizeOf(LInfo), 0);
-  LInfo.cb := SizeOf(LInfo);
-  FillChar(LProcesso, SizeOf(LProcesso), 0);
-  LComando := Trim('"' + ACaminho + '" ' + AArgumentos);
-  if not CreateProcess(nil, PChar(LComando), nil, nil, False, 0, nil,
-    PChar(ADiretorio), LInfo, LProcesso) then
-    RaiseLastOSError;
+  Assert.IsTrue(TFile.Exists(CaminhoExecutavelRelease),
+    'Compile a configuracao Release antes de executar esta prova.');
+  CopiarArvore(TPath.GetDirectoryName(CaminhoExecutavelRelease), ADestino, 'dcu');
+  Assert.IsFalse(TFile.Exists(TPath.Combine(ADestino, 'cadcli.fdb')),
+    'A copia da entrega nao pode conter cadcli.fdb.');
+end;
+
+procedure ExecutarAteShellEFechar(const AExecutavel, ADiretorio: string;
+  const AAmbiente: string = '');
+const
+  LIMITE_SHELL_MS = 60000;
+  LIMITE_ENCERRAMENTO_MS = 30000;
+var
+  LProcesso: TProcessInformation;
+  LShell: HWND;
+  LShellProcessoId: DWORD;
+  LCodigoSaida: Cardinal;
+begin
+  LProcesso := IniciarProcesso(AExecutavel, ADiretorio, '', AAmbiente);
   try
-    Result := WaitForSingleObject(LProcesso.hProcess, ALimiteMs) = WAIT_OBJECT_0;
-    if Result then
-      GetExitCodeProcess(LProcesso.hProcess, ACodigoSaida)
-    else
-    begin
-      ACodigoSaida := High(Cardinal);
-      TerminateProcess(LProcesso.hProcess, 1);
-    end;
+    LShell := AguardarShell(LProcesso, LIMITE_SHELL_MS);
+    Assert.IsTrue(LShell <> 0,
+      'CadCli.exe deve exibir uma janela visivel TFormPrincipal em ate 60 s.');
+    GetWindowThreadProcessId(LShell, LShellProcessoId);
+    Assert.AreEqual(LProcesso.dwProcessId, LShellProcessoId,
+      'A janela do shell deve pertencer ao processo do CadCli.exe.');
+    Assert.IsTrue(GetParent(LShell) = 0, 'O shell deve ser uma janela de topo.');
+    Assert.IsTrue(IsWindowVisible(LShell), 'O shell deve estar visivel.');
+    Assert.AreEqual('CadCli', TextoJanela(LShell), 'O titulo do shell deve ser CadCli.');
+    PostMessage(LShell, WM_CLOSE, 0, 0);
+    Assert.IsTrue(AguardarEncerramento(LProcesso, LIMITE_ENCERRAMENTO_MS, LCodigoSaida),
+      'CadCli.exe deve encerrar em ate 30 s depois de fechar o shell.');
+    Assert.AreEqual(Cardinal(0), LCodigoSaida, 'CadCli.exe deve encerrar com codigo 0.');
   finally
-    CloseHandle(LProcesso.hThread);
-    CloseHandle(LProcesso.hProcess);
+    LiberarProcesso(LProcesso);
   end;
 end;
 
@@ -700,7 +720,7 @@ begin
     Assert.IsFalse(TDirectory.Exists(TPath.Combine(FDiretorio, LPadrao)),
       'A copia da entrega nao pode conter o subdiretorio ' + LPadrao + '.');
 
-  LTerminou := ExecutarEAguardar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio,
+  LTerminou := ExecutarFechandoShell(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio,
     120000, LCodigoSaida);
   Assert.IsTrue(LTerminou,
     'CadCli.exe nao encerrou: a inicializacao travou, provavelmente em um dialogo de erro.');
@@ -868,7 +888,7 @@ begin
   LExecutavel := TPath.Combine(FDiretorio, 'CadCli.exe');
   LBanco := TPath.Combine(FDiretorio, 'cadcli.fdb');
 
-  LTerminou := ExecutarEAguardar(LExecutavel, FDiretorio, 120000, LCodigoSaida);
+  LTerminou := ExecutarFechandoShell(LExecutavel, FDiretorio, 120000, LCodigoSaida);
   Assert.IsTrue(LTerminou, 'CadCli.exe nao encerrou na primeira execucao.');
   Assert.AreEqual(Cardinal(0), LCodigoSaida);
 
@@ -908,6 +928,59 @@ begin
   Assert.IsTrue(CompareStr(LInstanteRegistro,
     FormatDateTime('yyyy-mm-dd hh:nn:ss', LFim)) <= 0,
     'O instante do log não pode ser posterior ao encerramento do processo.');
+end;
+
+procedure TTestesAplicacaoRelease.ExecutavelReleaseExibeShellEEncerraComCodigoZero;
+begin
+  CopiarEntregaSemBase(FDiretorio);
+  ExecutarAteShellEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio);
+end;
+
+procedure TTestesAplicacaoRelease.ExecutavelReleaseRecusadoNaoExibeShell;
+var
+  LCatalogo: TCatalogoMigracoes;
+  LInicializador: TInicializadorBanco;
+  LMensagem: string;
+  LProcesso: TProcessInformation;
+  LCodigoSaida: Cardinal;
+  LShellExistiu: Boolean;
+begin
+  CopiarEntregaSemBase(FDiretorio);
+  LCatalogo := CriarCatalogoPadrao;
+  try
+    LInicializador := TInicializadorBanco.Create(TPath.Combine(FDiretorio, 'cadcli.fdb'), LCatalogo);
+    try
+      Assert.IsTrue(LInicializador.Preparar(LMensagem), LMensagem);
+      LInicializador.Conexao.ExecSQL('INSERT INTO SCHEMA_VERSION (VERSAO, DESCRICAO, APLICADA_EM) ' +
+        'VALUES (999, ''versao de um CadCli mais novo'', CURRENT_TIMESTAMP)');
+      LInicializador.Conexao.Connected := False;
+    finally
+      LInicializador.Free;
+    end;
+  finally
+    LCatalogo.Free;
+  end;
+
+  LProcesso := IniciarProcesso(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio, '-sem-interacao');
+  try
+    Assert.IsTrue(AguardarEncerramento(LProcesso, 120000, LCodigoSaida, LShellExistiu),
+      'CadCli.exe recusado deve encerrar em ate 120 s.');
+  finally
+    LiberarProcesso(LProcesso);
+  end;
+  Assert.AreEqual(Cardinal(1), LCodigoSaida, 'Uma inicializacao recusada deve encerrar com codigo 1.');
+  Assert.IsFalse(LShellExistiu, 'Nenhuma janela TFormPrincipal pode existir quando a inicializacao e recusada.');
+end;
+
+procedure TTestesAplicacaoRelease.ExecutavelReleaseAbreSemDelphiNemDevExpressNoPath;
+var
+  LPath: string;
+begin
+  CopiarEntregaSemBase(FDiretorio);
+  LPath := PathSemDelphiNemDevExpress;
+  Assert.IsFalse(ContainsText(LPath, 'Embarcadero'), 'O PATH do filho nao pode conter Embarcadero.');
+  Assert.IsFalse(ContainsText(LPath, 'DevExpress'), 'O PATH do filho nao pode conter DevExpress.');
+  ExecutarAteShellEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio, AmbienteComPath(LPath));
 end;
 
 initialization

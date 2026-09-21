@@ -37,7 +37,16 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_UnitSearchPath>src\Dominio;src\Aplicacao;src\Infraestrutura;src\Migracoes;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>src\Dominio;src\Aplicacao;src\Infraestrutura;src\Migracoes;src\Visao;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <UsePackages>true</UsePackages>
+        <DCC_UsePackage>rtl;vcl;dxCoreRS29;dxComnRS29;dxGDIPlusRS29;cxLibraryRS29;dxBarRS29</DCC_UsePackage>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_MajorVer>1</VerInfo_MajorVer>
+        <VerInfo_MinorVer>0</VerInfo_MinorVer>
+        <VerInfo_Release>0</VerInfo_Release>
+        <VerInfo_Build>0</VerInfo_Build>
+        <VerInfo_Keys>CompanyName=;FileDescription=CadCli;FileVersion=1.0.0.0;InternalName=CadCli;LegalCopyright=;LegalTrademarks=;OriginalFilename=CadCli.exe;ProductName=CadCli;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Locale>1046</VerInfo_Locale>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Winapi;Vcl;$(DCC_Namespace)</DCC_Namespace>
         <DCC_ExeOutput>bin\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>bin\$(Platform)\$(Config)\dcu</DCC_DcuOutput>
@@ -70,14 +79,18 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <BT_BuildType>Debug</BT_BuildType>
+        <PostBuildEvent><![CDATA[powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\tools\CopiarBplsEntrega.ps1" -Executavel "$(MSBuildProjectDirectory)\$(DCC_ExeOutput)\$(MSBuildProjectName).exe" -Origens "$(BDS)\bin64;$(DXVCL)\Library\RS29\Win64"]]></PostBuildEvent>
+        <PostBuildEventCancelOnError>true</PostBuildEventCancelOnError>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="src\Aplicacao\Aplicacao.CatalogoMigracoes.pas"/>
+        <DCCReference Include="src\Aplicacao\Aplicacao.ControladorPrincipal.pas"/>
         <DCCReference Include="src\Aplicacao\Aplicacao.ExecutorMigracoes.pas"/>
         <DCCReference Include="src\Aplicacao\Aplicacao.InicializadorAplicacao.pas"/>
+        <DCCReference Include="src\Aplicacao\Aplicacao.NavegadorAplicacao.pas"/>
         <DCCReference Include="src\Dominio\Dominio.Migracao.pas"/>
         <DCCReference Include="src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas"/>
         <DCCReference Include="src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas"/>
@@ -85,6 +98,14 @@
         <DCCReference Include="src\Infraestrutura\Infraestrutura.RegistroErroInicializacao.pas"/>
         <DCCReference Include="src\Migracoes\Migracao.V001.EsquemaInicial.pas"/>
         <DCCReference Include="src\Migracoes\Migracao.V002.DadosReferencia.pas"/>
+        <DCCReference Include="src\Visao\Visao.ApresentadorErro.pas"/>
+        <DCCReference Include="src\Visao\Visao.ComposicaoAplicacao.pas"/>
+        <DCCReference Include="src\Visao\Visao.FormPrincipal.pas">
+            <Form>FormPrincipal</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="src\Visao\Visao.NavegadorAplicacao.pas"/>
+        <DCCReference Include="src\Visao\Visao.VersaoExecutavel.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
