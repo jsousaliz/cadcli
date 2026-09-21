@@ -2,132 +2,125 @@
 
 **Verdict**: PASS
 **Profile**: ui
-**Diff range**: 251ac8d..fab9a2f
-**Fix diff**: 2ff46ee..fab9a2f
-**Round**: 4 - scoped
+**Diff range**: 5d49414..a99e73a
+**Round**: 1 - full
 **Verifier**: independent sub-agent (author != verifier)
 
-O `HEAD` verificado foi `fab9a2f50f3604209335c682d0554b336df6c23d`. A reverificação foi delimitada pelo fix diff e pelos FAILs anteriores C4, C13, C14, C15, C16, C20, door 6/C21, três linhas de `Test policy`, fault injection e isolamento. Todas as provas foram reexecutadas em lote no novo `HEAD`; as conclusões não afetadas foram carregadas de `2ff46ee11bf405e2d0bb46adc6d4fa6569df5bfb` com suas provas novamente verdes.
+O `HEAD` verificado é `a99e73aaed620a38222e23dcf6de93279308ee09` na branch `feat/parte-01-firebird-servico`; a base da feature é `5d49414be49ce1e0762cd697a8e976b238de07cb` (implementação Embedded anterior mais a spec revisada). Este relatório substitui o relatório da era Embedded. Foram verificados todos os checks C1-C24 de `checks.md`, não apenas os alterados. O Verifier é um sub-agente independente, sem contexto herdado do autor; trabalhou somente leitura sobre o código, testes, plano e checks. Ambiente: serviço Firebird 3.0.13 x64 em `localhost:3050`, `fbclient.dll` em `System32`.
+
+Build no `HEAD`: `rsvars.bat` + `MSBuild.exe CadCli.dproj /t:Build /p:Config=Release /p:Platform=Win64` e `MSBuild.exe tests\CadCli.Testes.dproj /t:Build /p:Config=Debug /p:Platform=Win64`, código de saída 0 (somente hints H2443). O diretório `bin\Win64\Release` contém apenas `CadCli.exe` e `dcu\`.
 
 ## Binding sources
 
-*Verificado em `fab9a2f`; a troca do PDF pelo Markdown é parte do baseline do usuário e foi preservada.*
+*Verificado em `a99e73a`.*
 
 | Source | Opened | Contradiction | Uncovered |
 | --- | --- | --- | --- |
-| `.specs/Teste Programador Delphi 2026.md`, itens 1-4 e entregas | yes - arquivo inteiro aberto no real tree | none - permite Delphi 12, exige FireDAC, Firebird 3.0, DevExpress nas telas futuras e fixa os campos/tipos de `CLIENTE`, `ESTADO` e `CIDADE`; C1-C2, C4, C11 e C15 são compatíveis | - |
-| `.specs/Teste Programador Delphi 2026.md`, item 4, dados de referência | yes - tabela e lista abertas | none - exige os quatro estados e algumas cidades; C12 prova os quatro estados e as doze cidades escolhidas no plano | - |
+| `.specs/Teste Programador Delphi 2026.md`, item 4 (Firebird 3.0, `CLIENTE`, `ESTADO`, `CIDADE`) | yes - arquivo inteiro aberto no real tree | none - C4 prova motor 3.x e ODS 12; C11 reproduz os 10 campos de `CLIENTE`, 3 de `ESTADO` e 3 de `CIDADE` com os tipos e larguras exatos da tabela | - |
+| `.specs/Teste Programador Delphi 2026.md`, item 4, dados de referência | yes | none - os quatro estados exigidos e "algumas cidades" por estado; C12 prova 4 estados e 12 cidades, 3 por estado | - |
+| `.specs/Teste Programador Delphi 2026.md`, IDE, FireDAC, entregas | yes | none - Delphi 12 permitido (C1); FireDAC obrigatório (C23 prova `DriverID=FB`); "arquivos necessários (.exe, .dll, e outros)" não exige distribuir DLLs do Firebird, então C22 não contradiz a fonte | - |
+| `AGENTS.md` (Plataforma e entrega, Persistência, Migrações, Testes) | yes | none - serviço local em `localhost:3050` (C23), nenhuma DLL do Firebird ao lado de `CadCli.exe` (C22), base em `ExtractFilePath(ParamStr(0))` (`CadCli.dpr:42`, C17), credenciais fora de mensagens e logs (C16, C20, C24), sequências sem `MAX(ID)+1` (C14) | - |
+| `.specs/STATE.md` AD-007 | yes | none - serviço local `SYSDBA`/`masterkey`, sem DLL ao lado do executável: C22, C23, C24 | - |
+| `.specs/STATE.md` AD-008 | yes | none - trata do instalador Inno Setup, fora do escopo da Parte 01 (pertence à parte 05); nenhum check da Parte 01 o contradiz | - |
 
-Enumeração por tela: **no screen rows**. `plan.md` declara `Surface: None`; a Parte 01 não contém `.dfm` e C15 assere zero forms próprias em `tests/Unitarios/Testes.InicializadorAplicacao.pas:71`. Não há cópia, controles, ordem, contagem ou arranjo visual para enumerar. O walkthrough com o usuário é não aplicável a esta parte de infraestrutura.
+**Alteração externa da fonte vinculante durante a verificação.** A comparação acima foi feita contra `.specs/Teste Programador Delphi 2026.md` como está no `HEAD` `a99e73a` (linha da tabela `CLIENTE`: `FK - CIDADE`). Durante a execução, às 11:46:35, o arquivo no working tree foi alterado por outra origem, não pelo Verifier: a linha passou a `FK - CIDADEID`. A alteração não está commitada nem pertence ao diff `5d49414..HEAD`, e o Verifier não a reverteu. Se ela for adotada, passa a contradizer o door 4 do plano, a migração V001 e C11 (`Testes.IntegracaoFirebird.pas:762`, `CLIENTE.CIDADE:INTEGER:0`), e esta verificação precisa ser refeita.
 
-As URLs de documentação do plano não estão marcadas como fontes vinculantes e não integram esta comparação estreita.
+Enumeração por tela: **no screen rows**. `plan.md` declara `Surface: None`; a Parte 01 não contém `.dfm` e C15 assere zero forms próprias em `tests/Unitarios/Testes.InicializadorAplicacao.pas:74`. Não há controles, rótulos, ordem, contagem ou arranjo visual a enumerar; os itens 1-3 da especificação (tela principal, cadastro, relatório) pertencem às partes 02-04. O walkthrough com o usuário (passo 5) não se aplica a esta parte de infraestrutura. As URLs de documentação em `Sources` do plano não são marcadas como vinculantes.
 
 ## Checks
 
-*Provas reexecutadas em `fab9a2f`. A suíte integral encontrou e executou os 27 testes registrados: 27 passaram, 0 falharam, 0 tiveram erro, 0 foram ignorados e 0 vazaram. Os 25 seletores citados pelos 21 checks existem; seletores compartilhados por checks foram executados uma vez no lote.*
+*Provas executadas pelo Verifier em `a99e73a`.* Execução em lote: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --exitbehavior:Continue --run:<29 seletores separados por vírgula>` - Tests Found 29, Passed 29, Failed 0, Errored 0, exit 0. Como o logger de console do runner é silencioso por teste (`TDUnitXConsoleLogger.Create(True)` em `tests/CadCli.Testes.dpr`), cada um dos 29 seletores citados em `checks.md` também foi executado isoladamente: todos retornaram `Tests Found : 1`, `Tests Passed : 1`, exit 0, o que prova que cada nome existe e rodou (nenhum filtro vazio).
 
 | Check | Claim | Proof run | Evidence | Result |
 | --- | --- | --- | --- | --- |
-| C1 | Release produz somente `CadCli.exe` Win64/AMD64 e não declara Win32 | `TTestesEntregaRelease.ProduzCadCliExeSomenteParaWin64`, suite exit 0 | `tests/Unitarios/Testes.EntregaRunner.pas:57` - arquivo existe; `:59` - `Assert.AreEqual(Word($8664), ...)`; `:62` - `Assert.IsFalse(LProjeto.Contains('Win32'))` | PASS |
-| C2 | runtime packages desabilitados, zero BPL e zero executáveis auxiliares | `TTestesEntregaRelease.NaoDistribuiBplNemExecutavelAuxiliar`, suite exit 0 | `tests/Unitarios/Testes.EntregaRunner.pas:70` - um `.exe`; `:72` - zero `.bpl`; `:74` - projeto contém `DCC_UsePackage=false` | PASS |
-| C3 | runner Win64, código 0 e zero forms | `TTestesRunnerDUnitX.ExecutaEmWin64SemCriarForm`, suite exit 0 | `tests/Unitarios/Testes.EntregaRunner.pas:80` - PE AMD64; `:82` - `Assert.AreEqual(0, Screen.FormCount)`; execução integral exit 0 | PASS |
-| C4 | base ausente é criada ao lado do executável com Firebird 3, Dialect 3, UTF8 e versão atual | `TTestesInicializadorBanco.CriaBaseAoLadoDoExecutavelComConfiguracaoEsperada` e `TTestesAplicacaoRelease.ExecutavelReleaseCriaBaseCompletaAoLado`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:219` - arquivo no caminho informado; `:221-225` - motor 3, Dialect 3, UTF8 e versão 2; `:598-608` - o processo copia a entrega e cria `cadcli.fdb` ao lado de `CadCli.exe` | PASS |
-| C5 | uma linha por migração, com versão, descrição e instante real, na mesma transação | três seletores de C5, suite exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:142-144` - versão/descrição/instante; `:174-176` - rollback do registro; `tests/Unitarios/Testes.IntegracaoFirebird.pas:532-535` - instante persistido dentro da janela real | PASS |
-| C6 | catálogo rejeita duplicidade e ordena versões | `TTestesCatalogoMigracoes.RejeitaDuplicadasEOrdenaVersoes`, suite exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:100-102` - ordem 1/2; `:110` - duplicada rejeitada | PASS |
-| C7 | executa apenas pendentes, uma vez e em ordem crescente | dois seletores de C7, suite exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:221-227` - pendentes 2/4 uma vez e versão 1 ausente; `tests/Unitarios/Testes.IntegracaoFirebird.pas:458-462` - versões 1/2 no Firebird real | PASS |
-| C8 | aplicação só é autorizada depois da persistência | `TTestesInicializadorAplicacao.LiberaAplicacaoSomenteDepoisDasMigracoes`, suite exit 0 | `tests/Unitarios/Testes.InicializadorAplicacao.pas:49-55` - falha não autoriza e sucesso autoriza | PASS |
-| C9 | falha reverte alteração e registro e identifica a versão | dois seletores de C9, suite exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:258-260` - versão ausente, rollback e mensagem; `tests/Unitarios/Testes.IntegracaoFirebird.pas:482-502` - nenhuma tabela/versão da migração falha no Firebird | PASS |
-| C10 | versão futura fecha a conexão e orienta atualização | dois seletores de C10, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:236-239` - falso, conexão fechada e orientação; `:808-817` - processo encerra 1 e log identifica 999/`CadCli.exe` | PASS |
-| C11 | esquema exato com tabelas, campos, larguras, PKs, FKs e unicidades | `TTestesMigracaoInicial.CriaEsquemaComMetadadosExatos`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:697-702` - compara impressões digitais completas de colunas, restrições e referências | PASS |
-| C12 | quatro estados, doze cidades e três por estado | `TTestesMigracaoInicial.InsereEstadosECidadesDeReferencia`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:712-719` - compara os 12 pares exatos e quatro grupos com contagem 3 | PASS |
-| C13 | segunda inicialização executa zero DDL e não duplica dados/versões | `TTestesInicializadorBanco.SegundaExecucaoNaoAlteraEsquemaNemReferencia`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:253-261` - observador conta `CREATE/ALTER/DROP/RECREATE` e exige zero; `:262-264` - 4 estados, 12 cidades, 2 versões | PASS |
-| C14 | três sequências e nenhuma estratégia `MAX(ID) + 1` | `TTestesMigracaoInicial.CriaUmaSequenciaPorEntidadeSemMaxId`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:727-729` - três sequências; `:730-736` - regex case-insensitive tolerante a espaços proíbe `MAX\\s*\\(\\s*ID\\s*\\)\\s*\\+\\s*1` em todo `src` | PASS |
-| C15 | zero forms e inicializador de aplicação sem VCL/FireDAC/DevExpress/ReportBuilder, exercitado com fakes | `TTestesArquiteturaFundacao.InicializaComFakesSemCarregarInterfaceOuAdaptadoresConcretos`, suite exit 0 | `tests/Unitarios/Testes.InicializadorAplicacao.pas:71-78` - zero `.dfm` e ausência das quatro dependências no código do inicializador; `:79-86` - inicializa apenas com interfaces falsas | PASS |
-| C16 | ausência de `fbclient.dll` não entrega conexão nem autoriza UI e identifica Firebird no executável/log | dois seletores de C16, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:283-289` - inicializador de aplicação retorna falso, não autoriza, não cria conexão e nomeia a dependência; `:841-853` - `CadCli.exe` sem DLL encerra 1, não cria base e grava os dois identificadores no log | PASS |
-| C17 | executável entregue cria base completa ao lado, encerra 0 e preserva UTF8 | `TTestesAplicacaoRelease.ExecutavelReleaseCriaBaseCompletaAoLado`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:602-608` - término, exit 0 e arquivo; `:621-628` - 2 versões, 4 estados, 12 cidades, 0 clientes e `Uberlândia` | PASS |
-| C18 | units/classes seguem a convenção e ao menos duas versões estão compiladas | `TTestesConvencaoMigracoes.CadaVersaoTemUnitEClasseNoFormatoDefinido`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:560-574` - valida versão, descrição, classe derivada e quantidade mínima | PASS |
-| C19 | sequências continuam depois dos dados de referência | `TTestesMigracaoInicial.SequenciasContinuamDepoisDosDadosDeReferencia`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:747-756` - próximos ESTADO/CIDADE excedem máximos e CLIENTE é positiva | PASS |
-| C20 | recusa do executável encerra 1 e grava causa e instante real no log | `TTestesAplicacaoRelease.ExecutavelReleaseRecusaVersaoFuturaERegistraOErro`, suite exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:808-817` - encerra, exit 1, log, causa; `:818-826` - instante do log fica entre início e fim da execução recusada | PASS |
-| C21 | bootstrap cria somente `SCHEMA_VERSION` em transação própria, não registra versão e reverte na falha | dois seletores de C21, suite exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:60-64` - `INICIAR`, único `CREATE TABLE SCHEMA_VERSION`, `CONFIRMAR`, versão zero; `:83-86` - falha observada, rollback e versão zero | PASS |
+| C1 | Release gera `CadCli.exe` AMD64, sem variante Win32 | `--run:TTestesEntregaRelease.ProduzCadCliExeSomenteParaWin64` 1/1 exit 0 | `tests/Unitarios/Testes.EntregaRunner.pas:61` - `Assert.AreEqual(Word($8664), MaquinaPE(CaminhoExecutavelRelease))`; `:64` - `Assert.IsFalse(LProjeto.Contains('Win32'))` | PASS |
+| C2 | sem runtime packages, zero `.bpl`, só um `.exe` | `--run:TTestesEntregaRelease.NaoDistribuiBplNemExecutavelAuxiliar` 1/1 exit 0 | `tests/Unitarios/Testes.EntregaRunner.pas:72` - `Assert.AreEqual(1, Length(TDirectory.GetFiles(LDiretorio, '*.exe')))`; `:74` - `Assert.AreEqual(0, ... '*.bpl')`; `:76` - `Assert.Contains(..., '<DCC_UsePackage>false</DCC_UsePackage>')` | PASS |
+| C3 | runner Win64, exit 0, `Screen.FormCount = 0` | `--run:TTestesRunnerDUnitX.ExecutaEmWin64SemCriarForm` 1/1 exit 0 | `tests/Unitarios/Testes.EntregaRunner.pas:102` - `Assert.AreEqual(Word($8664), MaquinaPE(ParamStr(0)))`; `:104` - `Assert.AreEqual(0, Screen.FormCount)` | PASS |
+| C22 | nenhum arquivo do runtime Firebird ao lado do exe | `--run:TTestesEntregaRelease.NaoDistribuiRuntimeFirebirdAoLadoDoExecutavel` 1/1 exit 0 | `tests/Unitarios/Testes.EntregaRunner.pas:93` - `Assert.AreEqual(0, Length(TDirectory.GetFiles(LDiretorio, LPadrao)))` sobre os 6 padrões de `:82-83`; `:96` - `Assert.IsFalse(TDirectory.Exists(... LPadrao))` para `plugins` e `intl` | PASS |
+| C4 | serviço cria exatamente `<dir>\cadcli.fdb`, Dialect 3, UTF8, ODS 12, versão final | `--run:TTestesInicializadorBanco.CriaBaseAoLadoDoExecutavelComConfiguracaoEsperada` e `--run:TTestesAplicacaoRelease.ExecutavelReleaseCriaBaseCompletaAoLado` 1/1 cada, exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:278` - `SameText(FCaminhoBanco, ... 'SELECT MON$DATABASE_NAME FROM MON$DATABASE')`; `:282` - `Assert.AreEqual(3, ... MON$SQL_DIALECT)`; `:284` - `Assert.AreEqual(12, ... MON$ODS_MAJOR)`; `:286` - `Assert.AreEqual('UTF8', ... RDB$CHARACTER_SET_NAME)`; `:289` - `Assert.AreEqual(2, ... MAX(VERSAO))`; diretório do exe: `:708` - `Assert.IsTrue(TFile.Exists(LBanco))` | PASS |
+| C23 | conexão TCP loopback como `SYSDBA`; params `FB`/`localhost`/`3050`/`OpenOrCreate`, sem `VendorLib` | `--run:TTestesInicializadorBanco.ConectaPeloServicoLocalEmLocalhost3050` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:337` - `... MON$REMOTE_PROTOCOL ... .StartsWith('TCP')`; `:344` - `LEndereco.StartsWith('127.0.0.1') or LEndereco.StartsWith('::1')`; `:346` - `Assert.AreEqual('SYSDBA', ... MON$USER)`; `:348-351` - `DriverID='FB'`, `Server='localhost'`, `Port='3050'`, `OpenMode='OpenOrCreate'`; `:352` - `Assert.AreEqual('', ...Params.Values['VendorLib'])` | PASS |
+| C5 | uma linha em `SCHEMA_VERSION` com `VERSAO`, `DESCRICAO`, `APLICADA_EM` | `--run:TTestesExecutorMigracoes.RegistraUmaLinhaComMetadadosDaMigracao`, `...ReverteAlteracaoERegistroNaMesmaTransacao`, `--run:TTestesMigracaoNoFirebird.RegistraInstanteRealDaAplicacaoEmAplicadaEm` 1/1 cada, exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:143` - `Assert.AreEqual('REGISTRAR:1:migração um:2026-09-19 10:30:00', Operacoes[2])`; `:174` - `Assert.AreEqual(0, MaiorVersaoInstalada)` com falha no commit; `tests/Unitarios/Testes.IntegracaoFirebird.pas:626` e `:628` - `LRegistrado >= IncSecond(LAntes, -2)` e `LRegistrado <= IncSecond(LDepois, 2)` | PASS |
+| C6 | rejeita duplicadas e ordena versões | `--run:TTestesCatalogoMigracoes.RejeitaDuplicadasEOrdenaVersoes` 1/1 exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:100` - `Assert.AreEqual(1, LMigracao.Versao)`; `:102` - `Assert.AreEqual(2, LMigracao.Versao)`; `:110` - `Assert.IsTrue(LDuplicadaRejeitada)` | PASS |
+| C7 | só pendentes, uma vez, em ordem crescente | `--run:TTestesExecutorMigracoes.ExecutaSomentePendentesUmaVezEmOrdemCrescente` e `--run:TTestesMigracaoNoFirebird.AplicaSomenteAPendenteSobreBaseAnterior` 1/1 cada, exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:221` - `Assert.AreEqual` da sequência `EXECUTAR:2` seguida de `EXECUTAR:4` contra `SomenteExecucoes(...)`; `:223` - `Assert.AreEqual(0, TMigracaoTeste001.Execucoes)`; `tests/Unitarios/Testes.IntegracaoFirebird.pas:552` - `Assert.AreEqual` das linhas `1:cria alfa` seguida de `2:cria beta` em `SCHEMA_VERSION` | PASS |
+| C8 | persistência pronta só depois das migrações; antes disso não autoriza a interface | `--run:TTestesInicializadorAplicacao.LiberaAplicacaoSomenteDepoisDasMigracoes` 1/1 exit 0 | `tests/Unitarios/Testes.InicializadorAplicacao.pas:52` - `Assert.IsFalse(LAutorizadorObjeto.Autorizado)`; `:56` - `Assert.IsTrue(LAutorizadorObjeto.Autorizado)` | PASS |
+| C9 | falha reverte alterações e registro, erro cita a versão | `--run:TTestesExecutorMigracoes.ReverteAlteracaoERegistroEInformaVersaoNaFalha` e `--run:TTestesMigracaoNoFirebird.ReverteMigracaoInvalidaNoFirebirdEInformaVersao` 1/1 cada, exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:260` - `Assert.Contains(LErro, 'migração 3')`; `tests/Unitarios/Testes.IntegracaoFirebird.pas:578` - `Assert.Contains(LMensagem, 'migração 3')`; `:589` - `Assert.AreEqual(0, ... RDB$RELATION_NAME = 'GAMA')`; `:593` - `Assert.AreEqual(0, ... SCHEMA_VERSION WHERE VERSAO = 3)` | PASS |
+| C10 | versão futura: conexão não entregue, orienta atualizar `CadCli.exe` | `--run:TTestesInicializadorBanco.RecusaVersaoFuturaEOrientaAtualizacao` e `--run:TTestesAplicacaoRelease.ExecutavelReleaseRecusaVersaoFuturaERegistraOErro` 1/1 cada, exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:302` - `Assert.IsFalse(FInicializador.Conexao.Connected)`; `:304` - `Assert.Contains(LMensagem, 'Atualize o CadCli.exe')`; `:899` - `Assert.Contains(LConteudo, 'CadCli.exe')` | PASS |
+| C11 | nomes, larguras, PKs, FKs e unicidades exatos | `--run:TTestesMigracaoInicial.CriaEsquemaComMetadadosExatos` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:789` - `Assert.AreEqual(COLUNAS_ESPERADAS, LinhasSQL(..., SQL_COLUNAS))` (literal em `:757-766`); `:791` - `Assert.AreEqual(RESTRICOES_ESPERADAS, ...)` (`:774-779`); `:793` - `Assert.AreEqual(REFERENCIAS_ESPERADAS, ...)` (`:786-787`) | PASS |
+| C12 | 4 estados e 12 cidades, 3 por estado | `--run:TTestesMigracaoInicial.InsereEstadosECidadesDeReferencia` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:804` - `Assert.AreEqual` do literal com os 12 pares, de `Minas Gerais/MG:Belo Horizonte` a `Bahia/BA:Vitória da Conquista`, contra `LReferencias`; `:810` - `Assert.AreEqual(4, ... HAVING COUNT(*)=3)` | PASS |
+| C13 | segunda inicialização: zero DDL, referência intacta | `--run:TTestesInicializadorBanco.SegundaExecucaoNaoAlteraEsquemaNemReferencia` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:325` - `Assert.AreEqual(0, LQuantidadeDDL)`; `:327-329` - `Assert.AreEqual(4, ... ESTADO)`, `(12, ... CIDADE)`, `(2, ... SCHEMA_VERSION)` | PASS |
+| C14 | uma sequência por entidade, sem `MAX(ID)+1` | `--run:TTestesMigracaoInicial.CriaUmaSequenciaPorEntidadeSemMaxId` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:819` - `Assert.AreEqual(3, ... RDB$GENERATORS ... IN ('SEQ_CLIENTE','SEQ_ESTADO','SEQ_CIDADE'))`; `:826` - `Assert.IsFalse(TRegEx.IsMatch(LConteudo, 'MAX\s*\(\s*ID\s*\)\s*\+\s*1'))` | PASS |
+| C15 | zero forms; inicialização com fakes sem VCL/FireDAC/DevExpress/ReportBuilder | `--run:TTestesArquiteturaFundacao.InicializaComFakesSemCarregarInterfaceOuAdaptadoresConcretos` 1/1 exit 0 | `tests/Unitarios/Testes.InicializadorAplicacao.pas:74` - `Assert.AreEqual(0, Length(LArquivosForm))`; `:77-80` - `Assert.IsFalse(LCodigoInicializador.Contains('VCL.'/'FIREDAC.'/'DEVEXPRESS'/'REPORTBUILDER'))`; `:87` - `Assert.IsTrue(LInicializador.Inicializar(LMensagem))` | PASS |
+| C16 | serviço recusando conexão: nada entregue, interface bloqueada, mensagem `Firebird 3` + endpoint, sem credenciais | `--run:TTestesInicializadorBanco.InformaServicoFirebirdIndisponivelSemLiberarAplicacao` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:373` - `Assert.IsFalse(LInicializadorAplicacao.Inicializar(LMensagem))`; `:374` - `Assert.IsFalse(LAutorizadorObjeto.Autorizado)`; `:376` - `Assert.IsFalse(Assigned(Conexao) and Conexao.Connected)`; `:381` - `Assert.Contains(LMensagem, 'Firebird 3')`; `:382` - `Assert.Contains(LMensagem, 'localhost:' + IntToStr(LPorta))`; `:383` - `AssegurarSemCredenciais` (`:171-173` - `SYSDBA`, `masterkey`, `password=`) | PASS |
+| C17 | exe Release sem runtime local cria base completa, exit 0 | `--run:TTestesAplicacaoRelease.ExecutavelReleaseCriaBaseCompletaAoLado` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:697` e `:700` - cópia sem os 6 arquivos e 2 subdiretórios do runtime; `:705` - `Assert.IsTrue(LTerminou)`; `:707` - `Assert.AreEqual(Cardinal(0), LCodigoSaida)`; `:713` - `(2, ... SCHEMA_VERSION)`; `:715-717` - `(4, ESTADO)`, `(12, CIDADE)`, `(0, CLIENTE)`; `:718` - `Assert.AreEqual('Uberlândia', ...)` | PASS |
+| C18 | `Migracao.VNNN.Descricao.pas` com `TMigracaoNNNDescricao` derivada de `TMigracaoBanco`, pelo menos 2 versões | `--run:TTestesConvencaoMigracoes.CadaVersaoTemUnitEClasseNoFormatoDefinido` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:665` - `Assert.IsTrue(LConteudo.Contains(LClasseEsperada + ' = class(TMigracaoBanco)'))`; `:668` - `Assert.IsTrue(LQuantidade >= 2)`; compilação no executável corroborada por `:713` (C17: o exe registra 2 versões) | PASS |
+| C19 | sequências continuam após a referência; `SEQ_CLIENTE` positiva | `--run:TTestesMigracaoInicial.SequenciasContinuamDepoisDosDadosDeReferencia` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:839` - `LProximoEstado > MAX(ID) FROM ESTADO`; `:844` - `LProximaCidade > MAX(ID) FROM CIDADE`; `:847` - `NEXT VALUE FOR SEQ_CLIENTE > 0` | PASS |
+| C20 | recusa no exe: exit 1, sem diálogo, `cadcli-erro.log` com instante e causa, sem credenciais | `--run:TTestesAplicacaoRelease.ExecutavelReleaseRecusaVersaoFuturaERegistraOErro` 1/1 exit 0 | `tests/Unitarios/Testes.IntegracaoFirebird.pas:891` - `Assert.IsTrue(LTerminou)`; `:893` - `Assert.AreEqual(Cardinal(1), LCodigoSaida)`; `:895` - `Assert.IsTrue(TFile.Exists(LRegistro))`; `:898` - `Assert.Contains(LConteudo, '999')`; `:901` - `AssegurarSemCredenciais(LConteudo, ...)`; `:905` e `:908` - instante entre `LInicio` e `LFim` | PASS |
+| C21 | bootstrap cria só `SCHEMA_VERSION` em transação própria, sem registrar, reverte na falha | `--run:TTestesBootstrapTabelaVersoes.CriaTabelaEmTransacaoPropriaSemRegistrarVersao` e `...ReverteBootstrapQuandoCriacaoFalha` 1/1 cada, exit 0 | `tests/Unitarios/Testes.CatalogoExecutor.pas:60-62` - `'INICIAR'`, `StartsWith('CREATE TABLE SCHEMA_VERSION')`, `'CONFIRMAR'`; `:63` - `Assert.AreEqual(0, MaiorVersaoInstalada)`; `:84-86` - `(1, Operacoes.Count)`, `('REVERTER', Operacoes[0])`, `(0, MaiorVersaoInstalada)` | PASS |
+| C24 | produção sem `fbclient.dll`, `VendorLib`, `Embedded`; `masterkey` só na unit de conexão | `--run:TTestesArquiteturaFundacao.ProducaoNaoReferenciaRuntimeEmbeddedNemEspalhaCredenciais` 1/1 exit 0 | `tests/Unitarios/Testes.InicializadorAplicacao.pas:110` - `Assert.IsFalse(LConteudo.Contains('FBCLIENT.DLL'))`; `:112` - `...('VENDORLIB')`; `:114` - `...('EMBEDDED')`; `:119` - `Assert.AreEqual(UNIT_CONEXAO, TPath.GetFileName(LArquivo))`; `:123` - `Assert.AreEqual(1, LUnitsComSenha)` | PASS |
 
-Resultado: **21/21 checks provados com evidência localizada**. Os FAILs anteriores C4, C13, C14, C15, C16 e C20 estão fechados; C21 fecha o door 6.
+Provas ligadas ao diff: os testes novos ou reescritos em `5d49414..HEAD` são C4, C16, C17, C20, C22, C23 e C24 (`Testes.IntegracaoFirebird.pas`, `Testes.EntregaRunner.pas`, `Testes.InicializadorAplicacao.pas`); as demais provas não mudaram, mas todas passaram a construir `TInicializadorBanco` sem `VendorLib` e, portanto, exercitam o serviço no `HEAD`. Varredura de ausência: `grep -rn "masterkey\|SYSDBA" src CadCli.dpr` encontra somente `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:100-101`.
+
+Observações sem efeito sobre o veredito:
+
+- C18 afirma "compiladas no executável"; o teste citado conta units em `src/Migracoes` e não inspeciona o binário. A parte "compilada" fica provada em conjunto com C17 (`Testes.IntegracaoFirebird.pas:713`, o executável registra as duas versões). Não é lacuna, mas a prova de C18 sozinha não bastaria.
+- `Password=masterkey` do door 2 não tem asserção própria; fica provado indiretamente pela autenticação bem-sucedida como `SYSDBA` em `Testes.IntegracaoFirebird.pas:346` (uma senha errada impede a conexão e derruba `PrepararBanco` em `:265`).
+- AC 11 ("encerrar com código 1") no caso específico de serviço indisponível não é exercido no executável, conforme decisão registrada em `checks.md` (Handoff, "Settled mid-build"). O ramo de falha do executável não depende do tipo de erro: `CadCli.dpr:47-50` define `ExitCode := 1` e chama `RegistrarErroInicializacao` para qualquer `Inicializar = False`, e esse ramo é provado por C20; a mensagem de indisponibilidade é provada por C16. Aceito como coberto.
 
 ## Coverage
 
-*Recomputada em `fab9a2f` para as autoridades tocadas pelo fix; linhas não afetadas foram carregadas de `2ff46ee` após a suíte integral verde.*
+*Recomputado em `a99e73a` a partir da autoridade de cada conjunto.*
 
 | Set (size) | Recomputed from | Member -> proof | Unproven |
 | --- | --- | --- | --- |
-| artefato da aplicação (5) | door 1 + `CadCli.dproj` | Win64/AMD64/`CadCli.exe` C1; packages/BPL/auxiliar C2 | - |
-| configuração da base (7) | door 2 + `CadCli.dpr:41-44` + parâmetros FireDAC | `DriverID=FB`, Firebird 3, `OpenOrCreate`, Dialect 3, UTF8, `cadcli.fdb`, diretório do executável -> C4/C17 | - |
-| estados de inicialização (5) | `Flow` + S2 | ausente C4/C17; anterior C7; atual C13; falha C9; futura C10/C20 | - |
-| metadados de `SCHEMA_VERSION` (3) | doors 3/6 | `VERSAO`, `DESCRICAO`, `APLICADA_EM` -> C5/C7/C11 | - |
-| entidades de `Relations` (5) | `Relations` | ESTADO/CIDADE/CLIENTE/SCHEMA_VERSION C11; linha MIGRACAO_APLICADA C5 | - |
-| campos de `CLIENTE` (10) | Markdown vinculante, item 4 | dez campos, tipos e larguras -> C11 | - |
-| campos de `ESTADO` (3) | Markdown vinculante, item 4 | ID/NOME/UF -> C11 | - |
-| campos de `CIDADE` (3) | Markdown vinculante, item 4 | ID/NOME/ESTADOID -> C11 | - |
-| restrições relacionais (5) | `Relations` + door 4 | unicidades, duas FKs e versão única -> C11/C5 | - |
-| sequências (3) | assumption de IDs | SEQ_CLIENTE/SEQ_ESTADO/SEQ_CIDADE -> C14/C19 | - |
-| estados de referência (4) | Markdown vinculante, item 4 | MG/SP/RJ/BA -> C12 | - |
-| cidades de referência (12) | AC 9 | doze cidades exatas -> C12 | - |
-| assemblies de inicialização (2) | `CadCli.dpr` e `tests/CadCli.Testes.dpr` | entrada real C16/C17/C20; runner C3 | - |
-| resultados de falha (3) | `Flow out` | versão na falha C9; atualização C10/C20; dependência e não autorização C16 | - |
-| falha observável do executável (3) | C20 | exit 1, encerramento e log com causa/instante -> C20 | - |
-| one-way doors (6) | `Landing` | doors 1-5 -> C1/C2, C4/C17, C5/C18, C11, C15; door 6 -> C21 | - |
+| campos de `CLIENTE` (10) | `.specs/Teste Programador Delphi 2026.md`, item 4 | os 10 campos com tipo e largura em `COLUNAS_ESPERADAS` - C11 `Testes.IntegracaoFirebird.pas:789` | - |
+| campos de `ESTADO` (3) e `CIDADE` (3) | especificação, item 4 | `ID`/`NOME`/`UF` e `ID`/`NOME`/`ESTADOID` - C11 `Testes.IntegracaoFirebird.pas:789` | - |
+| estados de referência (4) | especificação, item 4 | MG, SP, RJ, BA - C12 `Testes.IntegracaoFirebird.pas:804` | - |
+| cidades de referência (12) | plano AC 9 | as 12 cidades nomeadas, 3 por estado - C12 `:804`, `:810` | - |
+| restrições relacionais (5) | plano `Relations` e door 4 | `UQ_ESTADO_UF`, `UQ_CIDADE_ESTADO_NOME`, `FK_CIDADE_ESTADO`, `FK_CLIENTE_CIDADE` - C11 `:791`/`:793`; versão única `PK_SCHEMA_VERSION` - C11 `:791` | - |
+| parâmetros de conexão do door 2 (10) | plano `Landing` door 2 e código `Infraestrutura.InicializadorBancoFireDAC.pas:96-104` | `DriverID` C23 `:348` · `Server` C23 `:349` · `Port` C23 `:350` · `User_Name` C23 `:346` · `Password` indireto C23 `:346` · `OpenMode` C23 `:351` · Dialect 3 C4 `:282` · UTF8 C4 `:286` · caminho absoluto C4 `:278` e `CadCli.dpr:42` via C17 `:708` · sem `VendorLib` C23 `:352`/C24 `:112` | - |
+| runtime Firebird ausente da entrega (8) | AD-007 e `AGENTS.md` | 6 padrões de arquivo e `plugins`/`intl` - C22 `Testes.EntregaRunner.pas:93`/`:96`; repetidos na cópia de C17 `Testes.IntegracaoFirebird.pas:697`/`:700` | - |
+| prova de acesso pelo serviço (3) | AD-007 | protocolo TCP C23 `:337` · loopback C23 `:344` · exe sem runtime local cria base C17 `:708` | - |
+| estados da inicialização (6) | plano AC 3, 5, 6, 7, 10, 11 e código `Infraestrutura.InicializadorBancoFireDAC.pas:129-155`, `Aplicacao.ExecutorMigracoes.pas:73-95` | ausente C4 `:272`/`:289` · anterior C7 `:552` · atual C13 `:325` · falha C9 `:589` · futura C10 `:302` · indisponível C16 `:373` | - |
+| critérios de aceitação (11) | plano `Criteria` | AC1 C1/C2 · AC2 C3 · AC3 C4/C17 · AC4 C5 · AC5 C6/C7/C8 · AC6 C9/C20 · AC7 C10/C20 · AC8 C11 · AC9 C12 · AC10 C13 · AC11 C16 (mensagem) + C20 (ramo de saída 1 compartilhado, `CadCli.dpr:49`) | - |
+| one-way doors de `Landing` (6) | plano `Landing` | door 1 C1/C2 · door 2 C4/C22/C23 · door 3 C5/C18 · door 4 C11 · door 5 C15 · door 6 C21 | - |
+| sequências de ID (3) e continuidade (3) | plano `Assumptions` | `SEQ_CLIENTE`/`SEQ_ESTADO`/`SEQ_CIDADE` C14 `:819`; continuidade C19 `:839`/`:844`/`:847` (código `Migracao.V002.DadosReferencia.pas:63-64`) | - |
+| credenciais nunca expostas (3) | `AGENTS.md` Persistência e plano `Observable` | mensagem de indisponibilidade C16 `:383` · `cadcli-erro.log` C20 `:901` · `masterkey` restrito C24 `Testes.InicializadorAplicacao.pas:119`/`:123` | - |
+| falha observável no executável (4) | plano `Flow` out e `Observable` | exit 1 C20 `:893` · sem diálogo travado C20 `:891` · log com instante e causa C20 `:895`/`:898`/`:905` · log sem credenciais C20 `:901` | - |
+| assemblies de inicialização (2) | `CadCli.dpr` e `tests/CadCli.Testes.dpr` lidos diretamente | `CadCli.dpr:41-43` monta `TInicializadorBanco` só com caminho e catálogo (porta padrão 3050), exercido por C17/C20; runner sem forms C3 `Testes.EntregaRunner.pas:104` | - |
+| metadados de `SCHEMA_VERSION` (3) | plano door 3 | `VERSAO`/`DESCRICAO`/`APLICADA_EM` - C5 `Testes.CatalogoExecutor.pas:143`, `APLICADA_EM` real C5 `Testes.IntegracaoFirebird.pas:626`/`:628`; tipos C11 `:765-766` | - |
 
-Não há conjunto de rota/status porque `Surface` é `None`.
+Varredura de conjuntos sem linha: `Surface` é `None`, então não há rotas ou status. As enumerações nomeadas em `Landing`, `Relations`, `Impact` e nas claims estão todas acima. Nenhum membro sem prova.
 
 ## Test policy rows
 
-*Rejulgadas em `fab9a2f`; as três linhas anteriormente não atendidas agora estão atendidas.*
+*Julgado em `a99e73a`.*
 
 | Row | Files it classifies | Required proof | Expectation met |
 | --- | --- | --- | --- |
-| Decide e é alcançado pela inicialização | executor e inicializador FireDAC | limite Firebird + próprio nível; ausente C4/C17, anterior C7, atual C13, falha C9, futura C10/C20 | yes |
-| Decide sem cruzar o Firebird | catálogo, executor e inicializador de aplicação | unitária por ramo; C6-C9 cobrem unicidade, ordem, pendência, rollback e liberação | yes |
-| Entrada que apenas delega | `CadCli.dpr` | sucesso C17, futura C20 e dependência C16 no próprio processo entregue | yes |
-| Instrumentação sem condição | registro de erro | consumidor C20 prova arquivo, causa e instante; C16 prova o conteúdo de dependência | yes |
-| Metadados persistidos | migrações + contexto FireDAC | C5, C11, C12, C14 e C19 consultam cada membro enumerado no Firebird real | yes |
+| Decide e é alcançado pela inicialização | `Infraestrutura.InicializadorBancoFireDAC.pas`, `Aplicacao.ExecutorMigracoes.pas` | limite do serviço: C4, C7, C9, C10, C13, C16 · próprio nível (fakes): C5, C7, C9, C21 · uma asserção por estado conforme a linha "estados da inicialização" em Coverage | yes |
+| Decide sem cruzar o Firebird | `Aplicacao.CatalogoMigracoes.pas`, `Aplicacao.ExecutorMigracoes.pas` (ordem e pendência), `Aplicacao.InicializadorAplicacao.pas` | unitária: catálogo C6 (duplicada e ordem), pendência e ordem C7, liberação C8 (ramos falso e verdadeiro em `Testes.InicializadorAplicacao.pas:52`/`:56`) | yes |
+| Entrada que apenas delega (`CadCli.exe`) | `CadCli.dpr` | artefato entregue: sucesso sem runtime local C17, recusa com código 1 e log C20; indisponibilidade provada no inicializador com FireDAC real C16 | yes |
+| Instrumentação sem condição | `Infraestrutura.RegistroErroInicializacao.pas`, observador SQL de `Infraestrutura.ContextoMigracaoFireDAC.pas` | coberta pelos consumidores C20 e C13 | yes |
+| Metadados persistidos | `Migracao.V001.EsquemaInicial.pas`, `Migracao.V002.DadosReferencia.pas` | consultas reais a `RDB$RELATION_FIELDS`, `RDB$RELATION_CONSTRAINTS`, `RDB$GENERATORS`: C11, C14, C19 | yes |
 
 ## Swept existing
 
-*Re-lido em `fab9a2f`; resultados não afetados carregados de `2ff46ee`.*
-
-| Dimension | Re-read | Result |
-| --- | --- | --- |
-| validation | catálogo, versão futura, esquema, convenção e regex de IDs | presente; C14 cobre grafias equivalentes com espaços/case |
-| failure modes | rollback, futura, dependência e saída | presente; C16 chega ao autorizador e ao executável |
-| idempotency | pendências e segunda inicialização | presente; C13 observa e exige zero DDL |
-| authorization | `n/a` aprovado | aplicação local sem autenticação |
-| concurrency | `n/a` aprovado | plano não promete inicialização simultânea |
-| data lifecycle | criação, reabertura, referência e sequências | presente |
-| dependency failure | Firebird ausente | presente no inicializador de aplicação e no executável entregue |
-| state transitions | ausente/anterior/atual/falha/futura | todos os membros exercitados nos níveis exigidos |
-| observability | mensagens, exit code e log | causa e instante do log provados |
+Nenhuma linha de `Swept` em `checks.md` resolve para `existing`: todas citam checks (validados acima) ou são `n/a` aprovados pelo usuário (authorization, concurrency). Nada a reler no código.
 
 ## Faults injected
 
-*Cinco mutações em worktree destacada de `fab9a2f`; cada arquivo foi restaurado entre experimentos e a worktree foi removida ao final.*
+Isolamento: `git worktree add --detach <scratchpad>\wt HEAD`; baseline de `git status --porcelain` do real tree vazio. Cada fault foi aplicado no worktree, seguido de rebuild completo (Release + testes, exit 0) e da prova mais estreita; depois `git checkout -- .` no worktree. Ao final, `git worktree remove --force` e `git status --porcelain` do real tree vazio, igual ao baseline.
 
 | Mutation | Location | Killed |
 | --- | --- | --- |
-| remove `IniciarTransacao` do bootstrap | `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:51` | yes - `TTestesBootstrapTabelaVersoes.CriaTabelaEmTransacaoPropriaSemRegistrarVersao` falhou: esperava `INICIAR` |
-| executa `ALTER TABLE SCHEMA_VERSION ...` depois das migrações, inclusive na segunda inicialização | `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:127` | yes - `TTestesInicializadorBanco.SegundaExecucaoNaoAlteraEsquemaNemReferencia` obteve DDL 1 em vez de 0 |
-| remove os identificadores `Firebird Embedded 3 x64` da mensagem de dependência | `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:139` | yes - `TTestesAplicacaoRelease.ExecutavelReleaseSemFirebirdEncerraERegistraOErro` não encontrou o identificador no log |
-| substitui `Now` por `2000-01-01` no instante de `cadcli-erro.log` | `src/Infraestrutura/Infraestrutura.RegistroErroInicializacao.pas:36` | yes - `TTestesAplicacaoRelease.ExecutavelReleaseRecusaVersaoFuturaERegistraOErro` rejeitou instante anterior à execução |
-| persiste `APLICADA_EM=2000-01-01` em vez do instante recebido | `src/Infraestrutura/Infraestrutura.ContextoMigracaoFireDAC.pas:133` | yes - `TTestesMigracaoNoFirebird.RegistraInstanteRealDaAplicacaoEmAplicadaEm` rejeitou instante anterior à janela |
+| reintroduz `Params.Values['VendorLib'] := <dir do exe>\fbclient.dll` | `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:104` (linha inserida) | yes - C24 vermelho ("não pode referenciar fbclient.dll") e C23 vermelho (`Expected [] but got [...\fbclient.dll]`) |
+| remove `Server` e `Port` da conexão | `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:97-98` | yes - C23 vermelho em `MON$REMOTE_PROTOCOL` ("deve chegar pelo serviço via TCP") |
+| vaza o usuário do serviço na mensagem de falha (`E.Message + ' (conectado como ' + User_Name + ')'`) | `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:152` | yes - C16 vermelho ("não pode expor o usuário do serviço") e C20 vermelho no `cadcli-erro.log` |
+| coloca `fbclient.dll` ao lado do `CadCli.exe` Release | `bin\Win64\Release\fbclient.dll` (worktree) | yes - C22 vermelho (`Expected [0] but got [1]`) e C17 vermelho na cópia da entrega |
+| troca `CharacterSet` `UTF8` -> `WIN1252` | `src/Infraestrutura/Infraestrutura.InicializadorBancoFireDAC.pas:104` | yes - C4 vermelho (`Expected [UTF8] but got [WIN1252]`) |
 
-## Baseline isolation
-
-Baseline do real tree antes da worktree: PDF removido; Markdown novo; `plan.md` das Partes 01-05 e `AGENTS.md` modificados; `verification.md` não rastreado. Após as cinco mutações e a remoção de `C:\Projetos\Jean\CadCli\.verifier-parte01`, `git status --porcelain=v1` retornou exatamente o mesmo conjunto. Nenhum arquivo do real tree foi restaurado ou alterado pelo Verifier além deste relatório.
+Cinco faults (limite do procedimento), todos no surface alterado pelo diff; cada um derrubou uma prova diferente (C24, C23, C16, C20, C22, C17, C4).
 
 ## Gate
 
-- `MSBuild.exe CadCli.dproj /t:Build /p:Config=Release /p:Platform=Win64` - exit 0, Delphi 12 Win64.
-- `MSBuild.exe tests/CadCli.Testes.dproj /t:Build /p:Config=Debug /p:Platform=Win64` - exit 0.
-- `.\\tests\\bin\\Win64\\Debug\\CadCli.Testes.exe` - exit 0, 27 found, 27 passed, 0 failed, 0 errored, 0 ignored, 0 leaked. A primeira tentativa dentro do sandbox foi inválida por `CreateFile: Acesso negado`; a execução oficial foi repetida fora do sandbox e passou.
-- `validate_verification.py parte-01-fundacao-banco` - exit 0, 0 errors, 0 warnings.
-
-## Ranked gaps
-
-None - todos os checks, membros de coverage, linhas de policy e mutantes estão fechados nesta rodada.
+`.\tests\bin\Win64\Debug\CadCli.Testes.exe --exitbehavior:Continue` no `HEAD` `a99e73a` - 29 passed, 0 failed, 0 errored, 0 ignored, 0 leaked, exit 0.
