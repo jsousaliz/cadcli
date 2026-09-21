@@ -15,11 +15,12 @@ implementation
 uses
   System.Classes,
   System.IOUtils,
-  System.SysUtils;
+  System.SysUtils,
+  Infraestrutura.CaminhosAplicacao;
 
 function CaminhoRegistroErro: string;
 begin
-  Result := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + ARQUIVO_REGISTRO_ERRO;
+  Result := DiretorioAplicacao + ARQUIVO_REGISTRO_ERRO;
 end;
 
 function ExibeDialogoDeErro: Boolean;

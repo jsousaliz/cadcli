@@ -1,4 +1,4 @@
-# Parte 02 - Shell principal e navegação
+# Parte 02 - Form principal e navegação
 
 ## Problem
 
@@ -10,7 +10,7 @@ Quando esta parte estiver pronta, uma tela principal DevExpress apresentará os 
 
 Esta parte reutiliza a inicialização da parte 01 e o padrão de view passiva já estabelecido.
 
-1. conclusão da inicialização -> `TFormPrincipal` (new, door 1) - exibe o shell e encaminha eventos
+1. conclusão da inicialização -> `TFormPrincipal` (new, door 1) - exibe a form principal e encaminha eventos
 2. evento de menu -> `TControladorPrincipal` (new, door 1) - decide entre sair, abrir clientes ou abrir relatório
 3. `INavegadorAplicacao` (new, door 2) - abre a form solicitada sem o controlador conhecer classes VCL concretas
 4. out: encerramento limpo ou uma única instância modal da funcionalidade escolhida
@@ -47,7 +47,7 @@ None - nothing consumed outside; a superfície é exclusivamente a tela principa
 
 ### S1: Navegação principal operável (P1)
 
-O usuário alcança cada função obrigatória pelo shell.
+O usuário alcança cada função obrigatória pela form principal.
 
 **Acceptance Criteria**
 
@@ -82,9 +82,9 @@ O usuário alcança cada função obrigatória pelo shell.
 
 | Surface | Decision | Landing |
 | --- | --- | --- |
-| screen `Principal` | empty state | AC 1 - shell sempre apresenta navegação e boas-vindas |
+| screen `Principal` | empty state | AC 1 - a form principal sempre apresenta navegação e boas-vindas |
 | screen `Principal` | loading state | existing - a inicialização da parte 01 ocorre antes da exibição |
-| screen `Principal` | error state | AC 6 - mensagem e shell preservado |
+| screen `Principal` | error state | AC 6 - mensagem e form principal preservada |
 | screen `Principal` | unauthorised state | n/a - aplicação local não possui autenticação |
 | screen `Principal` | density and ordering | AC 1 e door 3 - três menus na ordem especificada |
 | screen `Principal` | destructive action confirms | n/a - sair não descarta edição mantida pela tela principal |

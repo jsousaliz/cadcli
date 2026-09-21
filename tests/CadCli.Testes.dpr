@@ -3,30 +3,47 @@ program CadCli.Testes;
 {$APPTYPE CONSOLE}
 {$STRONGLINKTYPES ON}
 
+{$R *.res}
+
 uses
+  Suporte.AvisoTrialDevExpress in 'Suporte\Suporte.AvisoTrialDevExpress.pas',
+  Suporte.ProcessoAplicacao in 'Suporte\Suporte.ProcessoAplicacao.pas',
   System.Classes,
   System.StrUtils,
   System.SysUtils,
+  Vcl.Forms,
   DUnitX.FilterBuilder,
   DUnitX.Loggers.Console,
   DUnitX.TestFramework,
   FireDAC.Comp.Client,
   Testes.CatalogoExecutor in 'Unitarios\Testes.CatalogoExecutor.pas',
+  Testes.ControladorPrincipal in 'Unitarios\Testes.ControladorPrincipal.pas',
   Testes.EntregaRunner in 'Unitarios\Testes.EntregaRunner.pas',
+  Testes.FormPrincipal in 'Unitarios\Testes.FormPrincipal.pas',
   Testes.InicializadorAplicacao in 'Unitarios\Testes.InicializadorAplicacao.pas',
   Testes.IntegracaoFirebird in 'Unitarios\Testes.IntegracaoFirebird.pas',
+  Testes.NavegadorAplicacao in 'Unitarios\Testes.NavegadorAplicacao.pas',
   Suporte.CaminhosTeste in 'Suporte\Suporte.CaminhosTeste.pas',
   Suporte.FakesMigracao in 'Suporte\Suporte.FakesMigracao.pas',
+  Suporte.FakesFormPrincipal in 'Suporte\Suporte.FakesFormPrincipal.pas',
   Aplicacao.CatalogoMigracoes in '..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas',
+  Aplicacao.ControladorPrincipal in '..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas',
   Aplicacao.ExecutorMigracoes in '..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas',
   Aplicacao.InicializadorAplicacao in '..\src\Aplicacao\Aplicacao.InicializadorAplicacao.pas',
+  Aplicacao.NavegadorAplicacao in '..\src\Aplicacao\Aplicacao.NavegadorAplicacao.pas',
   Dominio.Migracao in '..\src\Dominio\Dominio.Migracao.pas',
+  Infraestrutura.CaminhosAplicacao in '..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas',
   Infraestrutura.CatalogoPadraoMigracoes in '..\src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas',
   Infraestrutura.ContextoMigracaoFireDAC in '..\src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas',
   Infraestrutura.InicializadorBancoFireDAC in '..\src\Infraestrutura\Infraestrutura.InicializadorBancoFireDAC.pas',
   Infraestrutura.RegistroErroInicializacao in '..\src\Infraestrutura\Infraestrutura.RegistroErroInicializacao.pas',
   Migracao.V001.EsquemaInicial in '..\src\Migracoes\Migracao.V001.EsquemaInicial.pas',
-  Migracao.V002.DadosReferencia in '..\src\Migracoes\Migracao.V002.DadosReferencia.pas';
+  Migracao.V002.DadosReferencia in '..\src\Migracoes\Migracao.V002.DadosReferencia.pas',
+  Visao.ApresentadorErro in '..\src\Visao\Visao.ApresentadorErro.pas',
+  Visao.ComposicaoAplicacao in '..\src\Visao\Visao.ComposicaoAplicacao.pas',
+  Visao.FormPrincipal in '..\src\Visao\Visao.FormPrincipal.pas' {FormPrincipal},
+  Visao.NavegadorAplicacao in '..\src\Visao\Visao.NavegadorAplicacao.pas',
+  Visao.VersaoExecutavel in '..\src\Visao\Visao.VersaoExecutavel.pas';
 
 function QualificarTeste(const ANome: string): string;
 begin
@@ -38,6 +55,14 @@ begin
   if StartsText('TTestesEntregaRelease.', Result) or
      StartsText('TTestesRunnerDUnitX.', Result) then
     Exit('Testes.EntregaRunner.' + Result);
+  if StartsText('TTestesControladorPrincipal.', Result) or
+     StartsText('TTestesArquiteturaFormPrincipal.', Result) then
+    Exit('Testes.ControladorPrincipal.' + Result);
+  if StartsText('TTestesNavegadorAplicacao.', Result) then
+    Exit('Testes.NavegadorAplicacao.' + Result);
+  if StartsText('TTestesFormPrincipal.', Result) or
+     StartsText('TTestesApresentadorErro.', Result) then
+    Exit('Testes.FormPrincipal.' + Result);
   if StartsText('TTestesInicializadorAplicacao.', Result) or
      StartsText('TTestesArquiteturaFundacao.', Result) then
     Exit('Testes.InicializadorAplicacao.' + Result);
@@ -77,6 +102,7 @@ var
   LLogger: ITestLogger;
 begin
   try
+    Application.ProcessMessages;
     TDUnitX.CheckCommandLine;
     QualificarFiltrosCurtos;
     TDUnitX.Filter := TDUnitXFilterBuilder.BuildFilter(TDUnitX.Options);

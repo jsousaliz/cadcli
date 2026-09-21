@@ -72,6 +72,12 @@ type
     procedure ExecutavelReleaseCriaBaseCompletaAoLado;
     [Test]
     procedure ExecutavelReleaseRecusaVersaoFuturaERegistraOErro;
+    [Test]
+    procedure ExecutavelReleaseExibeFormPrincipalEEncerraComCodigoZero;
+    [Test]
+    procedure ExecutavelReleaseRecusadoNaoExibeFormPrincipal;
+    [Test]
+    procedure ExecutavelReleaseAbreSemDelphiNemDevExpressNoPath;
   end;
 
   [TestFixture]
@@ -99,19 +105,22 @@ type
 implementation
 
 uses
+  Winapi.Messages,
   Winapi.Windows,
   Winapi.Winsock2,
   System.Classes,
   System.DateUtils,
   System.IOUtils,
   System.RegularExpressions,
+  System.StrUtils,
   System.SysUtils,
   FireDAC.Comp.Client,
   Aplicacao.InicializadorAplicacao,
   Dominio.Migracao,
   Infraestrutura.CatalogoPadraoMigracoes,
   Suporte.CaminhosTeste,
-  Suporte.FakesMigracao;
+  Suporte.FakesMigracao,
+  Suporte.ProcessoAplicacao;
 
 const
   ARQUIVOS_RUNTIME_FIREBIRD: array[0..5] of string = ('fbclient.dll', 'ib_util.dll',
@@ -381,6 +390,8 @@ begin
     Assert.Contains(LMensagem, 'Firebird 3');
     Assert.Contains(LMensagem, 'localhost:' + IntToStr(LPorta));
     AssegurarSemCredenciais(LMensagem, 'A mensagem de serviço indisponível');
+    Assert.IsFalse(LMensagem.Contains('[FireDAC]'),
+      'A mensagem de serviço indisponível não pode repassar o texto do FireDAC.');
   finally
     LInicializadorAplicacao.Free;
     LPersistencia := nil;
@@ -389,6 +400,8 @@ begin
 end;
 
 procedure CopiarArvore(const AOrigem, ADestino, ASubdiretorioIgnorado: string);
+const
+  ARQUIVOS_GERADOS_EM_EXECUCAO: array[0..1] of string = ('cadcli.fdb', 'cadcli-erro.log');
 var
   LArquivo: string;
   LSubdiretorio: string;
@@ -396,7 +409,12 @@ var
 begin
   TDirectory.CreateDirectory(ADestino);
   for LArquivo in TDirectory.GetFiles(AOrigem) do
-    TFile.Copy(LArquivo, TPath.Combine(ADestino, TPath.GetFileName(LArquivo)), True);
+  begin
+    LNome := TPath.GetFileName(LArquivo);
+    if MatchText(LNome, ARQUIVOS_GERADOS_EM_EXECUCAO) then
+      Continue;
+    TFile.Copy(LArquivo, TPath.Combine(ADestino, LNome), True);
+  end;
   for LSubdiretorio in TDirectory.GetDirectories(AOrigem) do
   begin
     LNome := TPath.GetFileName(LSubdiretorio);
@@ -406,32 +424,43 @@ begin
   end;
 end;
 
-function ExecutarEAguardar(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
-  out ACodigoSaida: Cardinal; const AArgumentos: string = ''): Boolean;
-var
-  LInfo: TStartupInfo;
-  LProcesso: TProcessInformation;
-  LComando: string;
+procedure CopiarEntregaSemBase(const ADestino: string);
 begin
-  FillChar(LInfo, SizeOf(LInfo), 0);
-  LInfo.cb := SizeOf(LInfo);
-  FillChar(LProcesso, SizeOf(LProcesso), 0);
-  LComando := Trim('"' + ACaminho + '" ' + AArgumentos);
-  if not CreateProcess(nil, PChar(LComando), nil, nil, False, 0, nil,
-    PChar(ADiretorio), LInfo, LProcesso) then
-    RaiseLastOSError;
+  Assert.IsTrue(TFile.Exists(CaminhoExecutavelRelease),
+    'Compile a configuracao Release antes de executar esta prova.');
+  CopiarArvore(TPath.GetDirectoryName(CaminhoExecutavelRelease), ADestino, 'dcu');
+  Assert.IsFalse(TFile.Exists(TPath.Combine(ADestino, 'cadcli.fdb')),
+    'A copia da entrega nao pode conter cadcli.fdb.');
+end;
+
+procedure ExecutarAteFormPrincipalEFechar(const AExecutavel, ADiretorio: string;
+  const AAmbiente: string = '');
+const
+  LIMITE_FORM_PRINCIPAL_MS = 60000;
+  LIMITE_ENCERRAMENTO_MS = 30000;
+var
+  LProcesso: TProcessInformation;
+  LFormPrincipal: HWND;
+  LFormPrincipalProcessoId: DWORD;
+  LCodigoSaida: Cardinal;
+begin
+  LProcesso := IniciarProcesso(AExecutavel, ADiretorio, '', AAmbiente);
   try
-    Result := WaitForSingleObject(LProcesso.hProcess, ALimiteMs) = WAIT_OBJECT_0;
-    if Result then
-      GetExitCodeProcess(LProcesso.hProcess, ACodigoSaida)
-    else
-    begin
-      ACodigoSaida := High(Cardinal);
-      TerminateProcess(LProcesso.hProcess, 1);
-    end;
+    LFormPrincipal := AguardarFormPrincipal(LProcesso, LIMITE_FORM_PRINCIPAL_MS);
+    Assert.IsTrue(LFormPrincipal <> 0,
+      'CadCli.exe deve exibir uma janela visivel TFormPrincipal em ate 60 s.');
+    GetWindowThreadProcessId(LFormPrincipal, LFormPrincipalProcessoId);
+    Assert.AreEqual(LProcesso.dwProcessId, LFormPrincipalProcessoId,
+      'A janela da form principal deve pertencer ao processo do CadCli.exe.');
+    Assert.IsTrue(GetParent(LFormPrincipal) = 0, 'A form principal deve ser uma janela de topo.');
+    Assert.IsTrue(IsWindowVisible(LFormPrincipal), 'A form principal deve estar visivel.');
+    Assert.AreEqual('CadCli', TextoJanela(LFormPrincipal), 'O titulo da form principal deve ser CadCli.');
+    PostMessage(LFormPrincipal, WM_CLOSE, 0, 0);
+    Assert.IsTrue(AguardarEncerramento(LProcesso, LIMITE_ENCERRAMENTO_MS, LCodigoSaida),
+      'CadCli.exe deve encerrar em ate 30 s depois de fechar a form principal.');
+    Assert.AreEqual(Cardinal(0), LCodigoSaida, 'CadCli.exe deve encerrar com codigo 0.');
   finally
-    CloseHandle(LProcesso.hThread);
-    CloseHandle(LProcesso.hProcess);
+    LiberarProcesso(LProcesso);
   end;
 end;
 
@@ -700,7 +729,7 @@ begin
     Assert.IsFalse(TDirectory.Exists(TPath.Combine(FDiretorio, LPadrao)),
       'A copia da entrega nao pode conter o subdiretorio ' + LPadrao + '.');
 
-  LTerminou := ExecutarEAguardar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio,
+  LTerminou := ExecutarFechandoFormPrincipal(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio,
     120000, LCodigoSaida);
   Assert.IsTrue(LTerminou,
     'CadCli.exe nao encerrou: a inicializacao travou, provavelmente em um dialogo de erro.');
@@ -868,7 +897,7 @@ begin
   LExecutavel := TPath.Combine(FDiretorio, 'CadCli.exe');
   LBanco := TPath.Combine(FDiretorio, 'cadcli.fdb');
 
-  LTerminou := ExecutarEAguardar(LExecutavel, FDiretorio, 120000, LCodigoSaida);
+  LTerminou := ExecutarFechandoFormPrincipal(LExecutavel, FDiretorio, 120000, LCodigoSaida);
   Assert.IsTrue(LTerminou, 'CadCli.exe nao encerrou na primeira execucao.');
   Assert.AreEqual(Cardinal(0), LCodigoSaida);
 
@@ -908,6 +937,59 @@ begin
   Assert.IsTrue(CompareStr(LInstanteRegistro,
     FormatDateTime('yyyy-mm-dd hh:nn:ss', LFim)) <= 0,
     'O instante do log não pode ser posterior ao encerramento do processo.');
+end;
+
+procedure TTestesAplicacaoRelease.ExecutavelReleaseExibeFormPrincipalEEncerraComCodigoZero;
+begin
+  CopiarEntregaSemBase(FDiretorio);
+  ExecutarAteFormPrincipalEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio);
+end;
+
+procedure TTestesAplicacaoRelease.ExecutavelReleaseRecusadoNaoExibeFormPrincipal;
+var
+  LCatalogo: TCatalogoMigracoes;
+  LInicializador: TInicializadorBanco;
+  LMensagem: string;
+  LProcesso: TProcessInformation;
+  LCodigoSaida: Cardinal;
+  LFormPrincipalExistiu: Boolean;
+begin
+  CopiarEntregaSemBase(FDiretorio);
+  LCatalogo := CriarCatalogoPadrao;
+  try
+    LInicializador := TInicializadorBanco.Create(TPath.Combine(FDiretorio, 'cadcli.fdb'), LCatalogo);
+    try
+      Assert.IsTrue(LInicializador.Preparar(LMensagem), LMensagem);
+      LInicializador.Conexao.ExecSQL('INSERT INTO SCHEMA_VERSION (VERSAO, DESCRICAO, APLICADA_EM) ' +
+        'VALUES (999, ''versao de um CadCli mais novo'', CURRENT_TIMESTAMP)');
+      LInicializador.Conexao.Connected := False;
+    finally
+      LInicializador.Free;
+    end;
+  finally
+    LCatalogo.Free;
+  end;
+
+  LProcesso := IniciarProcesso(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio, '-sem-interacao');
+  try
+    Assert.IsTrue(AguardarEncerramento(LProcesso, 120000, LCodigoSaida, LFormPrincipalExistiu),
+      'CadCli.exe recusado deve encerrar em ate 120 s.');
+  finally
+    LiberarProcesso(LProcesso);
+  end;
+  Assert.AreEqual(Cardinal(1), LCodigoSaida, 'Uma inicializacao recusada deve encerrar com codigo 1.');
+  Assert.IsFalse(LFormPrincipalExistiu, 'Nenhuma janela TFormPrincipal pode existir quando a inicializacao e recusada.');
+end;
+
+procedure TTestesAplicacaoRelease.ExecutavelReleaseAbreSemDelphiNemDevExpressNoPath;
+var
+  LPath: string;
+begin
+  CopiarEntregaSemBase(FDiretorio);
+  LPath := PathSemDelphiNemDevExpress;
+  Assert.IsFalse(ContainsText(LPath, 'Embarcadero'), 'O PATH do filho nao pode conter Embarcadero.');
+  Assert.IsFalse(ContainsText(LPath, 'DevExpress'), 'O PATH do filho nao pode conter DevExpress.');
+  ExecutarAteFormPrincipalEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio, AmbienteComPath(LPath));
 end;
 
 initialization

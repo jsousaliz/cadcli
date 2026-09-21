@@ -258,6 +258,8 @@ begin
     Assert.AreEqual(0, LContextoObjeto.MaiorVersaoInstalada);
     Assert.AreEqual('REVERTER', LContextoObjeto.Operacoes[0]);
     Assert.Contains(LErro, 'migração 3');
+    Assert.IsFalse(LErro.Contains('falha simulada'),
+      'O erro de migração não pode repassar o texto da exceção de infraestrutura.');
   finally
     LContexto := nil;
     LCatalogo.Free;

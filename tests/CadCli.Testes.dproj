@@ -19,9 +19,17 @@
     <Base>true</Base>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Base)'!=''">
-    <DCC_UnitSearchPath>Unitarios;Suporte;..\src\Dominio;..\src\Aplicacao;..\src\Infraestrutura;..\src\Migracoes;$(BDS)\source\DUnitX;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+    <DCC_UnitSearchPath>Unitarios;Suporte;..\src\Dominio;..\src\Aplicacao;..\src\Infraestrutura;..\src\Migracoes;..\src\Visao;$(BDS)\source\DUnitX;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
     <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Winapi;Vcl;$(DCC_Namespace)</DCC_Namespace>
-    <DCC_UsePackage>false</DCC_UsePackage>
+    <UsePackages>true</UsePackages>
+    <DCC_UsePackage>rtl;vcl;dxCoreRS29;dxComnRS29;dxGDIPlusRS29;cxLibraryRS29;dxBarRS29</DCC_UsePackage>
+    <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+    <VerInfo_MajorVer>0</VerInfo_MajorVer>
+    <VerInfo_MinorVer>2</VerInfo_MinorVer>
+    <VerInfo_Release>0</VerInfo_Release>
+    <VerInfo_Build>0</VerInfo_Build>
+    <VerInfo_Keys>CompanyName=;FileDescription=CadCli.Testes;FileVersion=0.2.0.0;InternalName=CadCli.Testes;LegalCopyright=;LegalTrademarks=;OriginalFilename=CadCli.Testes.exe;ProductName=CadCli.Testes;ProductVersion=0.2.0.0;Comments=</VerInfo_Keys>
+    <VerInfo_Locale>1046</VerInfo_Locale>
     <DCC_ExeOutput>bin\$(Platform)\$(Config)</DCC_ExeOutput>
     <DCC_DcuOutput>bin\$(Platform)\$(Config)\dcu</DCC_DcuOutput>
     <DCC_ConsoleTarget>true</DCC_ConsoleTarget>
@@ -36,22 +44,39 @@
     <DelphiCompile Include="$(MainSource)">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
+    <DCCReference Include="Suporte\Suporte.AvisoTrialDevExpress.pas" />
+    <DCCReference Include="Suporte\Suporte.ProcessoAplicacao.pas" />
     <DCCReference Include="Suporte\Suporte.CaminhosTeste.pas" />
     <DCCReference Include="Suporte\Suporte.FakesMigracao.pas" />
+    <DCCReference Include="Suporte\Suporte.FakesFormPrincipal.pas" />
     <DCCReference Include="Unitarios\Testes.CatalogoExecutor.pas" />
+    <DCCReference Include="Unitarios\Testes.ControladorPrincipal.pas" />
     <DCCReference Include="Unitarios\Testes.EntregaRunner.pas" />
+    <DCCReference Include="Unitarios\Testes.FormPrincipal.pas" />
     <DCCReference Include="Unitarios\Testes.InicializadorAplicacao.pas" />
     <DCCReference Include="Unitarios\Testes.IntegracaoFirebird.pas" />
+    <DCCReference Include="Unitarios\Testes.NavegadorAplicacao.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Migracao.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.InicializadorAplicacao.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.NavegadorAplicacao.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.InicializadorBancoFireDAC.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.RegistroErroInicializacao.pas" />
     <DCCReference Include="..\src\Migracoes\Migracao.V001.EsquemaInicial.pas" />
     <DCCReference Include="..\src\Migracoes\Migracao.V002.DadosReferencia.pas" />
+    <DCCReference Include="..\src\Visao\Visao.ApresentadorErro.pas" />
+    <DCCReference Include="..\src\Visao\Visao.ComposicaoAplicacao.pas" />
+    <DCCReference Include="..\src\Visao\Visao.FormPrincipal.pas">
+      <Form>FormPrincipal</Form>
+      <FormType>dfm</FormType>
+    </DCCReference>
+    <DCCReference Include="..\src\Visao\Visao.NavegadorAplicacao.pas" />
+    <DCCReference Include="..\src\Visao\Visao.VersaoExecutavel.pas" />
     <BuildConfiguration Include="Debug">
       <Key>Cfg_1</Key>
       <CfgParent>Base</CfgParent>
