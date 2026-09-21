@@ -8,7 +8,7 @@ Quando esta parte estiver pronta, pesquisa e edição funcionarão em forms DevE
 
 ## Flow
 
-Esta parte reutiliza conexão, migrações, entidades e o padrão de view passiva da parte 01, além da navegação da parte 02.
+Esta parte reutiliza conexão, migrações, entidades e o padrão de visão passiva da parte 01, além da navegação da parte 02.
 
 ```mermaid
 flowchart TD
@@ -51,7 +51,7 @@ None - nothing consumed outside; as superfícies são as duas forms e a chamada 
 | 1. um controlador por form | `TFormPesquisaCliente : IVisaoPesquisaCliente` + `TControladorPesquisaCliente`; `TFormCadastroCliente : IVisaoCadastroCliente` + `TControladorCadastroCliente` | um controlador compartilhado acumularia estado de duas telas e contrariaria a regra solicitada |
 | 2. fronteira de persistência | `IRepositorioCliente` expõe incluir, alterar, excluir, obter por ID e pesquisar por `TFiltroCliente`; implementação FireDAC usa somente parâmetros | datasets ligados diretamente aos controles misturam consulta, navegação e regra de negócio |
 | 3. fronteira de CEP | `IServicoViaCep.Consultar(CEP)` retorna encontrado/endereço ou erros tipados de formato, não encontrado e indisponível | HTTP dentro da form impede teste determinístico e tratamento consistente |
-| 4. regra de exclusão | conjunto imutável de IDs protegidos `{1, 5, 8, 10, 15}` validado pelo controlador antes da transação | trigger ocultaria a regra da UX e ainda exigiria tratamento posterior da exceção |
+| 4. regra de exclusão | conjunto imutável de IDs protegidos `{1, 5, 8, 10, 15}` validado pelo controlador antes da transação | trigger ocultaria a regra da interface e ainda exigiria tratamento posterior da exceção |
 
 - Nothing else in this change is hard to reverse.
 
@@ -86,7 +86,7 @@ O usuário mantém todos os dados obrigatórios sem lógica de negócio na form.
 12. WHEN houver alterações não salvas e o usuário cancelar ou fechar THEN o sistema SHALL pedir confirmação antes de descartá-las.
 13. IF a inclusão ou alteração falhar THEN o sistema SHALL reverter a transação, manter os valores editados e exibir uma mensagem sem detalhes de credenciais.
 
-**Independent test:** executar o controlador com view, relógio, repositório e transação falsos para cada validação, sucesso e rollback.
+**Independent test:** executar o controlador com visão, relógio, repositório e transação falsos para cada validação, sucesso e rollback.
 
 ### S3: CEP integrado e resiliente (P1)
 
@@ -132,7 +132,7 @@ O usuário exclui somente registros permitidos e confirma a perda.
 | combinação de filtros | todos opcionais e combinados por `AND` | é previsível e cobre pesquisa por qualquer campo sem criar vários modos |
 | obrigatoriedade | todos os campos, exceto `COMPLEMENTO`, são obrigatórios | produz cadastros úteis e preserva complemento como naturalmente opcional |
 | pesquisa de nome/cidade | contém, sem diferença entre maiúsculas/minúsculas | comportamento esperado para texto livre |
-| estado retornado pelo ViaCEP fora dos quatro seeds | inserir UF/estado e cidade sob as chaves únicas | permite atender CEPs nacionais sem violar os quatro registros iniciais exigidos |
+| estado retornado pelo ViaCEP fora dos quatro estados dos dados de referência | inserir UF/estado e cidade sob as chaves únicas | permite atender CEPs nacionais sem violar os quatro registros iniciais exigidos |
 
 **Open questions:** none - todas as decisões possuem default revisável acima.
 
