@@ -23,9 +23,9 @@
 ## Handoff
 
 **Feature**: `parte-03-clientes-crud`
-**Where**: build concluído com um único builder: C1-C52 com prova verde e suíte completa 107/107; door 5 e AD-015 registrados durante o build (grade trocada por `TcxMCListBox`)
-**In progress**: verificação independente
-**Next step**: verifier novo sobre `c436143..HEAD` com os 52 checks, escrevendo `verification.md`
-**Blockers**: nenhum; C39, C41, C47, C48, C51 e C52 exigem o serviço Firebird 3 em `localhost:3050`; `cxGrid` não compila neste ambiente (AD-015)
+**Where**: Parte 03 construída e verificada. O Verifier independente deu PASS no round 2 (`verification.md`, faixa c436143..0220fa2): 52/52 checks, 5/5 faltas mortas, suíte 108/108. Door 5 e AD-015 foram registrados durante o build (`TcxMCListBox` no lugar da grade)
+**In progress**: nada
+**Next step**: revisão do usuário e decisão sobre push/PR da branch; depois, a Parte 04
+**Blockers**: nenhum. C39, C41, C47, C48, C51 e C52 exigem o serviço Firebird 3 em `localhost:3050`. `cxGrid` não compila neste ambiente (AD-015). C25 (Enter/foco) falhou uma vez no round 2 e passou nas repetições; é sensível a outra janela tomar o foco
 **Uncommitted**: nada
 **Branch**: `feat/parte-03-clientes-crud`
