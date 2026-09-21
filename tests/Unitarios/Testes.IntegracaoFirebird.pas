@@ -390,6 +390,8 @@ begin
     Assert.Contains(LMensagem, 'Firebird 3');
     Assert.Contains(LMensagem, 'localhost:' + IntToStr(LPorta));
     AssegurarSemCredenciais(LMensagem, 'A mensagem de serviço indisponível');
+    Assert.IsFalse(LMensagem.Contains('[FireDAC]'),
+      'A mensagem de serviço indisponível não pode repassar o texto do FireDAC.');
   finally
     LInicializadorAplicacao.Free;
     LPersistencia := nil;

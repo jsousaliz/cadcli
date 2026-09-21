@@ -7,7 +7,6 @@
 uses
   System.SysUtils,
   Vcl.Forms,
-  Vcl.Dialogs,
   FireDAC.VCLUI.Wait,
   Aplicacao.CatalogoMigracoes in 'src\Aplicacao\Aplicacao.CatalogoMigracoes.pas',
   Aplicacao.ControladorPrincipal in 'src\Aplicacao\Aplicacao.ControladorPrincipal.pas',
@@ -65,8 +64,8 @@ begin
         ExitCode := 1;
         RegistrarErroInicializacao(LMensagemErro);
         if ExibeDialogoDeErro then
-          MessageDlg('Não foi possível inicializar o CadCli: ' + LMensagemErro,
-            mtError, [mbOK], 0);
+          (TApresentadorErroDialogo.Create as IApresentadorErro).ApresentarErro(
+            'Não foi possível inicializar o CadCli: ' + LMensagemErro);
       end;
     finally
       LInicializador.Free;

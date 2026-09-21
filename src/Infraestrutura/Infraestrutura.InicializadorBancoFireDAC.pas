@@ -110,11 +110,11 @@ begin
   try
     FConexao.Connected := True;
   except
-    on E: Exception do
+    on Exception do
       raise Exception.CreateFmt(
         'Não foi possível conectar ao serviço Firebird 3 em %s:%d. ' +
-        'Verifique se o serviço está instalado e em execução. Detalhe: %s',
-        [SERVIDOR_FIREBIRD, FPorta, E.Message]);
+        'Verifique se o serviço está instalado e em execução.',
+        [SERVIDOR_FIREBIRD, FPorta]);
   end;
 end;
 

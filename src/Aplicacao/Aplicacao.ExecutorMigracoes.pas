@@ -12,7 +12,7 @@ type
   private
     FVersao: Integer;
   public
-    constructor Create(AVersao: Integer; const AMensagem: string);
+    constructor Create(AVersao: Integer);
     property Versao: Integer read FVersao;
   end;
 
@@ -39,10 +39,10 @@ type
 
 implementation
 
-constructor EErroMigracao.Create(AVersao: Integer; const AMensagem: string);
+constructor EErroMigracao.Create(AVersao: Integer);
 begin
   FVersao := AVersao;
-  inherited CreateFmt('Falha ao aplicar a migração %d: %s', [AVersao, AMensagem]);
+  inherited CreateFmt('Falha ao aplicar a migração %d. A migração foi desfeita.', [AVersao]);
 end;
 
 function TRelogioSistema.Agora: TDateTime;
@@ -88,10 +88,10 @@ begin
       AContexto.RegistrarMigracao(LMigracao.Versao, LMigracao.Descricao, FRelogio.Agora);
       AContexto.ConfirmarTransacao;
     except
-      on E: Exception do
+      on Exception do
       begin
         AContexto.ReverterTransacao;
-        raise EErroMigracao.Create(LMigracao.Versao, E.Message);
+        raise EErroMigracao.Create(LMigracao.Versao);
       end;
     end;
   end;
