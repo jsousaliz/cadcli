@@ -63,6 +63,7 @@
     <DCCReference Include="Unitarios\Testes.ControladorCadastroCliente.pas" />
     <DCCReference Include="Unitarios\Testes.ServicoViaCep.pas" />
     <DCCReference Include="Unitarios\Testes.RepositorioClienteFirebird.pas" />
+    <DCCReference Include="Unitarios\Testes.FormsClientes.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Migracao.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Cliente.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.FiltroCliente.pas" />
@@ -98,6 +99,16 @@
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas" />
+    <DCCReference Include="..\src\Visao\Visao.ConfirmacaoDialogo.pas" />
+    <DCCReference Include="..\src\Visao\Visao.FormPesquisaCliente.pas">
+        <Form>FormPesquisaCliente</Form>
+        <FormType>dfm</FormType>
+    </DCCReference>
+    <DCCReference Include="..\src\Visao\Visao.FormCadastroCliente.pas">
+        <Form>FormCadastroCliente</Form>
+        <FormType>dfm</FormType>
+    </DCCReference>
+    <DCCReference Include="..\src\Visao\Visao.NavegadorClientes.pas" />
     <BuildConfiguration Include="Debug">
       <Key>Cfg_1</Key>
       <CfgParent>Base</CfgParent>

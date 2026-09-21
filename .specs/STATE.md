@@ -18,13 +18,14 @@
 | AD-012 | Os artefatos `.specs` da Parte 01 não são alterados; as duas provas da Parte 01 que a Parte 02 torna falsas são reescritas pela Parte 02 e passam a ser obrigações dela: `NaoDistribuiBplNemExecutavelAuxiliar` (zero BPL -> exatamente o fechamento de AD-011) e `InicializaComFakesSemCarregarInterfaceOuAdaptadoresConcretos` (zero `.dfm` no repositório -> zero `.dfm` nas pastas da Parte 01) | a Parte 01 já foi entregue e verificada e não será reexecutada; o claim "a Parte 01 contém zero forms" continua verdadeiro e só a regra de distribuição muda, por AD-011 | active | 2026-09-21 |
 | AD-013 | O aviso trial do DevExpress (`TfrmNewTrialDialog`, janela modal aberta na inicialização do pacote, antes do `begin` do programa) é fechado com `WM_CLOSE` somente pelos testes: no runner, `Suporte.AvisoTrialDevExpress` (primeira unit do `uses`) fecha o aviso do próprio processo e o runner processa mensagens antes de rodar, liberando a form do aviso; as provas de executável fecham o aviso do processo filho antes de procurar a form principal ou aguardar o encerramento. O `CadCli.exe` entregue continua mostrando o aviso ao usuário | sem isso o runner e toda prova de executável travam esperando uma pessoa; nenhuma asserção muda, e a form do aviso fica em `Screen.Forms` até a próxima rodada de mensagens, o que deixaria vermelha a Parte 01 C3 | active | 2026-09-21 |
 | AD-014 | Os artefatos `.specs` da Parte 02 não são alterados; a prova da Parte 02 C23 (`TTestesNavegadorAplicacao.DestinoSemTelaRegistradaFalhaSemCriarForm`), que a Parte 03 torna falsa ao registrar a tela real de clientes, é reescrita pela Parte 03 para asserir somente `AbrirRelatorio` sem tela, e a abertura de clientes passa a ser provada por `ClientesAbrePesquisaRealSobreABase` (Parte 03 C51); ambas são obrigações da Parte 03 | AD-010 previa o registro das telas reais pelas Partes 03 e 04; a asserção de clientes fica falsa por construção, e a de relatório continua verdadeira até a Parte 04 | active | 2026-09-21 |
+| AD-015 | A lista de resultados da pesquisa de clientes é um `TcxMCListBox` (door 5 da Parte 03), não uma grade `TcxGridTableView`; a Parte 03 C11 foi reescrita para esse controle | com o Delphi 12.1 instalado (29.0.51961) os `.dcp` do DevExpress 2026.1.4 trial exigem recompilar `cxLibraryRS29` em toda unit que dependa de `cxInplaceContainer` (`cxGrid`, `cxTreeList`, `cxVerticalGrid`, `cxListView`, `cxImage`), erro E2225; sem fontes do DevExpress não há recompilação | active | 2026-09-21 |
 
 ## Handoff
 
 **Feature**: `parte-03-clientes-crud`
-**Where**: `plan.md` e `checks.md` aprovados pelo usuário em 2026-09-21 (52 checks, perfil `ui`); Q1 decidida como AD-014
-**In progress**: nada
-**Next step**: build com um único builder a partir de `checks.md`, somente quando o usuário pedir
-**Blockers**: nenhum; C39, C41, C47, C48, C51 e C52 exigem o serviço Firebird 3 em `localhost:3050`
-**Uncommitted**: `plan.md`, `checks.md` e este arquivo
+**Where**: build concluído com um único builder: C1-C52 com prova verde e suíte completa 107/107; door 5 e AD-015 registrados durante o build (grade trocada por `TcxMCListBox`)
+**In progress**: verificação independente
+**Next step**: verifier novo sobre `c436143..HEAD` com os 52 checks, escrevendo `verification.md`
+**Blockers**: nenhum; C39, C41, C47, C48, C51 e C52 exigem o serviço Firebird 3 em `localhost:3050`; `cxGrid` não compila neste ambiente (AD-015)
+**Uncommitted**: nada
 **Branch**: `feat/parte-03-clientes-crud`

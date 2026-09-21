@@ -3,7 +3,7 @@
 Profile: ui
 Plan: `.specs/features/parte-03-clientes-crud/plan.md`
 
-52 checks em 5 slices · 4 one-way doors · 0 questões abertas (Q1 decidida em 2026-09-21: AD-014; checks aprovados pelo usuário em 2026-09-21)
+52 checks em 5 slices · 5 one-way doors · 0 questões abertas (Q1 decidida em 2026-09-21: AD-014; checks aprovados pelo usuário em 2026-09-21)
 
 Textos, rótulos e mensagens abaixo que o plano não fixou literalmente são defaults derivados, listados em `## Decisões`; todos ficam fixos com a aprovação deste arquivo.
 
@@ -43,7 +43,7 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesControladorPesqui
 
 ### S2 - Tela de pesquisa DevExpress
 
-**C11** - A grade de `TFormPesquisaCliente` é um `TcxGridTableView` não vinculado a dataset (não é `TcxGridDBTableView`), com `FilterRow.Visible = False`, `OptionsCustomize.ColumnFiltering = False` e o painel de busca da grade nunca exibido (door 2; S1, AC 2)
+**C11** - A lista de resultados de `TFormPesquisaCliente` é um `TcxMCListBox` (door 5), sem dataset, com exatamente 8 `HeaderSections`, `Sorted = False` e nenhuma seção com `AllowClick`; a form não contém `TcxGrid`, linha de filtro nem painel de busca de grade, e a ordem das linhas é a entregue pelo controlador: com o repositório falso devolvendo os IDs 8, 1 e 5, as linhas exibidas são 1, 5, 8 (door 2; door 5; S1, AC 2) — reescrito em 2026-09-21 com aprovação do usuário (AD-015)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPesquisaCliente.GradeNaoVinculadaComFiltrosPropriosDesligados`
 
 **C12** - Em um `TFormPesquisaCliente` real com controlador real e repositório falso de 5 clientes, table-driven sobre as 8 entradas do painel (ID, nome, CPF/CNPJ, CEP, cidade, estado, data de nascimento e `Buscar em todos os campos`), preencher uma entrada e clicar `Pesquisar` deixa na grade exatamente os IDs esperados para aquele valor, e o repositório registra 1 única chamada a `ListarTodos` (S1, AC 2, AC 3)
@@ -210,7 +210,7 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesAplicacaoRelease.
 | screen `CadastroCliente` - textos (25) | título inclusão C26 · título edição C26 · rótulo Nome C26 · rótulo CPF/CNPJ C26 · rótulo Data de nascimento C26 · rótulo CEP C26 · rótulo Endereço C26 · rótulo Número C26 · rótulo Complemento C26 · rótulo Bairro C26 · rótulo Cidade C26 · rótulo UF C26 · rótulo Estado C26 · botão Salvar C26 · botão Cancelar C26 · carregamento C26 · obrigatório C19 · CPF/CNPJ inválido C20 · nascimento futuro C21 · CEP inválido C22/C32 · erro ao salvar C23 · descarte C24 · CEP não encontrado C33 · CEP indisponível C34 · resposta inválida C35 | - |
 | screen `PesquisaCliente` - arranjo (4) | filtros `alTop` C15 · grade `alClient` C15 · ações `alBottom` C15 · ordem dos botões C15 | - |
 | screen `CadastroCliente` - arranjo (4) | editores na ordem de tabulação C27 · Estado ao lado de UF C27 · botões `alBottom` C27 · Salvar à esquerda de Cancelar C27 | - |
-| one-way doors de `Landing` (4) | par form/controlador C49 · persistência e filtragem em memória C6/C11/C12 · fronteira de CEP C36/C37/C42 · regra de exclusão C45/C49 | - |
+| one-way doors de `Landing` (5) | par form/controlador C49 · persistência e filtragem em memória C6/C11/C12 · fronteira de CEP C36/C37/C42 · regra de exclusão C45/C49 · lista `TcxMCListBox` C11/C14/C16 | - |
 | entidades de `Relations` (3) | ESTADO C39/C41 · CIDADE C39/C41/C48 · CLIENTE C47/C48 | - |
 | assemblies que compõem a navegação de clientes (2) | `CadCli.exe` C51/C52 · runner de testes C50/C51 | - |
 
@@ -274,8 +274,10 @@ Defaults derivados pelos checks, fixados com a aprovação deste arquivo:
 ## Handoff
 
 - Arquivos existentes tocados: `src/Visao/Visao.ComposicaoAplicacao.pas` 0,4 KB + `src/Visao/Visao.NavegadorAplicacao.pas` 2,1 KB + `CadCli.dpr` 2,3 KB + `CadCli.dproj` 6,3 KB + `tests/CadCli.Testes.dpr` 5,5 KB + `tests/CadCli.Testes.dproj` 5,7 KB + `tests/Unitarios/Testes.NavegadorAplicacao.pas` 7,8 KB + `tests/Unitarios/Testes.IntegracaoFirebird.pas` 38,1 KB (helpers de base temporária) = 68,2 KB; novos estimados: domínio (cliente, filtro, validação, UFs) ~15 KB + 2 controladores ~20 KB + repositório e conexão FireDAC ~12 KB + ViaCEP e transporte ~10 KB + 2 forms `.pas`/`.dfm` ~40 KB + navegador de clientes ~3 KB + 10 fixtures e fakes ~75 KB = ~175 KB; total ~243 KB / 4 = ~61k tokens, abaixo do budget de 150k - one builder.
-- Mechanism: one builder - o escopo cabe no orçamento; build somente quando o usuário pedir.
+- Mechanism: one builder - o escopo cabe no orçamento; build pedido pelo usuário em 2026-09-21.
+- Decidido durante o build: a grade `TcxGridTableView` não compila no ambiente (Delphi 12.1 + DevExpress 2026.1.4 trial, E2225 em `cxInplaceContainer`); o usuário escolheu `TcxMCListBox` (AD-015, door 5) e aprovou a reescrita de C11.
 - Branch: `feat/parte-03-clientes-crud` (atual).
 - Pré-requisitos: serviço Firebird 3 em `localhost:3050`; build como na Parte 02 (`rsvars.bat` + `MSBuild.exe` Release do `CadCli.dproj` e Debug do `tests\CadCli.Testes.dproj`); o aviso trial do DevExpress é tratado por AD-013.
 - O runner precisa mapear as 10 novas fixtures em `QualificarTeste` para que os filtros curtos dos `Proof:` resolvam.
 - Fontes Delphi novos em UTF-8 com BOM (AGENTS.md).
+- Estado do build (2026-09-21): C1-C52 fechados; as 57 provas passam isoladas (exit 0, 1 teste cada) e a suíte completa passa com 107/107. Falta a verificação independente.

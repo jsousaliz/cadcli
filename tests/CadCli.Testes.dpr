@@ -33,6 +33,7 @@ uses
   Suporte.FakesClientes in 'Suporte\Suporte.FakesClientes.pas',
   Testes.ServicoViaCep in 'Unitarios\Testes.ServicoViaCep.pas',
   Testes.RepositorioClienteFirebird in 'Unitarios\Testes.RepositorioClienteFirebird.pas',
+  Testes.FormsClientes in 'Unitarios\Testes.FormsClientes.pas',
   Aplicacao.CatalogoMigracoes in '..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas',
   Aplicacao.ControladorPrincipal in '..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas',
   Aplicacao.ExecutorMigracoes in '..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas',
@@ -64,7 +65,11 @@ uses
   Visao.VersaoExecutavel in '..\src\Visao\Visao.VersaoExecutavel.pas',
   Infraestrutura.TransporteHttp in '..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas',
   Infraestrutura.ServicoViaCep in '..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas',
-  Infraestrutura.RepositorioClienteFireDAC in '..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas';
+  Infraestrutura.RepositorioClienteFireDAC in '..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas',
+  Visao.ConfirmacaoDialogo in '..\src\Visao\Visao.ConfirmacaoDialogo.pas',
+  Visao.FormPesquisaCliente in '..\src\Visao\Visao.FormPesquisaCliente.pas' {FormPesquisaCliente},
+  Visao.FormCadastroCliente in '..\src\Visao\Visao.FormCadastroCliente.pas' {FormCadastroCliente},
+  Visao.NavegadorClientes in '..\src\Visao\Visao.NavegadorClientes.pas';
 
 function QualificarTeste(const ANome: string): string;
 begin
@@ -93,6 +98,11 @@ begin
     Exit('Testes.ServicoViaCep.' + Result);
   if StartsText('TTestesRepositorioClienteFirebird.', Result) then
     Exit('Testes.RepositorioClienteFirebird.' + Result);
+  if StartsText('TTestesFormPesquisaCliente.', Result) or
+     StartsText('TTestesFormCadastroCliente.', Result) or
+     StartsText('TTestesNavegadorClientes.', Result) or
+     StartsText('TTestesArquiteturaClientes.', Result) then
+    Exit('Testes.FormsClientes.' + Result);
   if StartsText('TTestesControladorCadastroCliente.', Result) then
     Exit('Testes.ControladorCadastroCliente.' + Result);
   if StartsText('TTestesFormPrincipal.', Result) or
