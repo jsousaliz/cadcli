@@ -13,6 +13,8 @@ type
     procedure ProduzCadCliExeSomenteParaWin64;
     [Test]
     procedure NaoDistribuiBplNemExecutavelAuxiliar;
+    [Test]
+    procedure NaoDistribuiRuntimeFirebirdAoLadoDoExecutavel;
   end;
 
   [TestFixture]
@@ -73,6 +75,26 @@ begin
     'O diretório Release não deve conter BPLs.');
   Assert.Contains(TFile.ReadAllText(TPath.Combine(RaizRepositorio, 'CadCli.dproj')),
     '<DCC_UsePackage>false</DCC_UsePackage>');
+end;
+
+procedure TTestesEntregaRelease.NaoDistribuiRuntimeFirebirdAoLadoDoExecutavel;
+const
+  ARQUIVOS_FIREBIRD: array[0..5] of string = ('fbclient.dll', 'ib_util.dll', 'icu*.dll',
+    'firebird.msg', 'firebird.conf', 'plugins.conf');
+  DIRETORIOS_FIREBIRD: array[0..1] of string = ('plugins', 'intl');
+var
+  LDiretorio: string;
+  LPadrao: string;
+begin
+  Assert.IsTrue(TFile.Exists(CaminhoExecutavelRelease),
+    'O build Release deve produzir CadCli.exe.');
+  LDiretorio := TPath.GetDirectoryName(CaminhoExecutavelRelease);
+  for LPadrao in ARQUIVOS_FIREBIRD do
+    Assert.AreEqual(0, Integer(Length(TDirectory.GetFiles(LDiretorio, LPadrao))),
+      'O diretório de CadCli.exe não pode conter ' + LPadrao + ' do runtime Firebird.');
+  for LPadrao in DIRETORIOS_FIREBIRD do
+    Assert.IsFalse(TDirectory.Exists(TPath.Combine(LDiretorio, LPadrao)),
+      'O diretório de CadCli.exe não pode conter o subdiretório ' + LPadrao + ' do Firebird.');
 end;
 
 procedure TTestesRunnerDUnitX.ExecutaEmWin64SemCriarForm;

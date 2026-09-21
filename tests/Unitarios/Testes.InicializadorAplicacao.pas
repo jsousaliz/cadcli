@@ -18,6 +18,8 @@ type
   public
     [Test]
     procedure InicializaComFakesSemCarregarInterfaceOuAdaptadoresConcretos;
+    [Test]
+    procedure ProducaoNaoReferenciaRuntimeEmbeddedNemEspalhaCredenciais;
   end;
 
 implementation
@@ -87,6 +89,39 @@ begin
   finally
     LInicializador.Free;
   end;
+end;
+
+procedure TTestesArquiteturaFundacao.ProducaoNaoReferenciaRuntimeEmbeddedNemEspalhaCredenciais;
+const
+  UNIT_CONEXAO = 'Infraestrutura.InicializadorBancoFireDAC.pas';
+var
+  LArquivos: TStringDynArray;
+  LArquivo: string;
+  LConteudo: string;
+  LUnitsComSenha: Integer;
+begin
+  LArquivos := TDirectory.GetFiles(TPath.Combine(RaizRepositorio, 'src'), '*.pas',
+    TSearchOption.soAllDirectories);
+  LArquivos := LArquivos + [TPath.Combine(RaizRepositorio, 'CadCli.dpr')];
+  LUnitsComSenha := 0;
+  for LArquivo in LArquivos do
+  begin
+    LConteudo := UpperCase(TFile.ReadAllText(LArquivo));
+    Assert.IsFalse(LConteudo.Contains('FBCLIENT.DLL'),
+      'O código de produção não pode referenciar fbclient.dll: ' + LArquivo);
+    Assert.IsFalse(LConteudo.Contains('VENDORLIB'),
+      'O código de produção não pode definir VendorLib: ' + LArquivo);
+    Assert.IsFalse(LConteudo.Contains('EMBEDDED'),
+      'O código de produção não pode citar o Firebird Embedded: ' + LArquivo);
+    if LConteudo.Contains('MASTERKEY') then
+    begin
+      Inc(LUnitsComSenha);
+      Assert.AreEqual(UNIT_CONEXAO, TPath.GetFileName(LArquivo),
+        'A senha do serviço só pode aparecer na unit que monta a conexão.');
+    end;
+  end;
+  Assert.AreEqual(1, LUnitsComSenha,
+    'A senha do serviço deve aparecer exatamente na unit que monta a conexão.');
 end;
 
 initialization

@@ -28,7 +28,9 @@ type
     [Test]
     procedure SegundaExecucaoNaoAlteraEsquemaNemReferencia;
     [Test]
-    procedure InformaDependenciaFirebirdAusenteSemLiberarAplicacao;
+    procedure ConectaPeloServicoLocalEmLocalhost3050;
+    [Test]
+    procedure InformaServicoFirebirdIndisponivelSemLiberarAplicacao;
   end;
 
   [TestFixture]
@@ -70,8 +72,6 @@ type
     procedure ExecutavelReleaseCriaBaseCompletaAoLado;
     [Test]
     procedure ExecutavelReleaseRecusaVersaoFuturaERegistraOErro;
-    [Test]
-    procedure ExecutavelReleaseSemFirebirdEncerraERegistraOErro;
   end;
 
   [TestFixture]
@@ -100,6 +100,7 @@ implementation
 
 uses
   Winapi.Windows,
+  Winapi.Winsock2,
   System.Classes,
   System.DateUtils,
   System.IOUtils,
@@ -112,9 +113,64 @@ uses
   Suporte.CaminhosTeste,
   Suporte.FakesMigracao;
 
-function BibliotecaFirebird: string;
+const
+  ARQUIVOS_RUNTIME_FIREBIRD: array[0..5] of string = ('fbclient.dll', 'ib_util.dll',
+    'icu*.dll', 'firebird.msg', 'firebird.conf', 'plugins.conf');
+  DIRETORIOS_RUNTIME_FIREBIRD: array[0..1] of string = ('plugins', 'intl');
+
+function ConectarPeloServico(const ABanco: string): TFDConnection;
 begin
-  Result := TPath.Combine(ExtractFilePath(ParamStr(0)), 'fbclient.dll');
+  Result := TFDConnection.Create(nil);
+  try
+    Result.LoginPrompt := False;
+    Result.Params.Values['DriverID'] := 'FB';
+    Result.Params.Values['Server'] := 'localhost';
+    Result.Params.Values['Port'] := '3050';
+    Result.Params.Values['Database'] := ABanco;
+    Result.Params.Values['User_Name'] := 'SYSDBA';
+    Result.Params.Values['Password'] := 'masterkey';
+    Result.Params.Values['OpenMode'] := 'Open';
+    Result.Params.Values['CharacterSet'] := 'UTF8';
+    Result.Connected := True;
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
+function PortaLocalSemServico: Integer;
+var
+  LDados: TWSAData;
+  LSocket: TSocket;
+  LEndereco: TSockAddrIn;
+  LTamanho: Integer;
+begin
+  Assert.AreEqual(0, WSAStartup($0202, LDados), 'Winsock indisponível.');
+  try
+    LSocket := socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    Assert.IsTrue(LSocket <> INVALID_SOCKET, 'Não foi possível criar o socket de sondagem.');
+    try
+      FillChar(LEndereco, SizeOf(LEndereco), 0);
+      LEndereco.sin_family := AF_INET;
+      LEndereco.sin_addr.S_addr := htonl(INADDR_LOOPBACK);
+      LEndereco.sin_port := 0;
+      Assert.AreEqual(0, bind(LSocket, PSockAddr(@LEndereco)^, SizeOf(LEndereco)));
+      LTamanho := SizeOf(LEndereco);
+      Assert.AreEqual(0, getsockname(LSocket, PSockAddr(@LEndereco)^, LTamanho));
+      Result := ntohs(LEndereco.sin_port);
+    finally
+      closesocket(LSocket);
+    end;
+  finally
+    WSACleanup;
+  end;
+end;
+
+procedure AssegurarSemCredenciais(const ATexto, AContexto: string);
+begin
+  Assert.IsFalse(ATexto.Contains('SYSDBA'), AContexto + ' não pode expor o usuário do serviço.');
+  Assert.IsFalse(ATexto.ToLower.Contains('masterkey'), AContexto + ' não pode expor a senha do serviço.');
+  Assert.IsFalse(ATexto.ToLower.Contains('password='), AContexto + ' não pode expor a string de conexão.');
 end;
 
 function InteiroSQL(AConexao: TFDConnection; const ASql: string): Integer;
@@ -205,7 +261,7 @@ procedure TTestesInicializadorBanco.PrepararBanco;
 var
   LMensagem: string;
 begin
-  FInicializador := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo, BibliotecaFirebird);
+  FInicializador := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo);
   Assert.IsTrue(FInicializador.Preparar(LMensagem), LMensagem);
 end;
 
@@ -213,14 +269,23 @@ procedure TTestesInicializadorBanco.CriaBaseAoLadoDoExecutavelComConfiguracaoEsp
 var
   LVersaoMotor: string;
 begin
+  Assert.IsFalse(TFile.Exists(FCaminhoBanco), 'A prova deve partir sem cadcli.fdb.');
   PrepararBanco;
   LVersaoMotor := TextoSQL(FInicializador.Conexao,
     'SELECT RDB$GET_CONTEXT(''SYSTEM'', ''ENGINE_VERSION'') FROM RDB$DATABASE');
   Assert.IsTrue(TFile.Exists(FCaminhoBanco),
     'cadcli.fdb deve ser criado exatamente no diretório informado pela inicialização.');
+  Assert.IsTrue(SameText(FCaminhoBanco, TextoSQL(FInicializador.Conexao,
+    'SELECT MON$DATABASE_NAME FROM MON$DATABASE')),
+    'O serviço deve ter aberto exatamente o caminho absoluto de cadcli.fdb.');
   Assert.IsTrue(LVersaoMotor.StartsWith('3.'), 'O motor deve ser Firebird 3.');
-  Assert.AreEqual('3', FInicializador.Conexao.Params.Values['SQLDialect']);
-  Assert.AreEqual('UTF8', FInicializador.Conexao.Params.Values['CharacterSet']);
+  Assert.AreEqual(3, InteiroSQL(FInicializador.Conexao,
+    'SELECT MON$SQL_DIALECT FROM MON$DATABASE'), 'A base deve estar em Dialect 3.');
+  Assert.AreEqual(12, InteiroSQL(FInicializador.Conexao,
+    'SELECT MON$ODS_MAJOR FROM MON$DATABASE'), 'A base deve usar a ODS 12 do Firebird 3.');
+  Assert.AreEqual('UTF8', TextoSQL(FInicializador.Conexao,
+    'SELECT RDB$CHARACTER_SET_NAME FROM RDB$DATABASE'),
+    'O charset padrão da base deve ser UTF8.');
   Assert.AreEqual(2, InteiroSQL(FInicializador.Conexao,
     'SELECT MAX(VERSAO) FROM SCHEMA_VERSION'));
 end;
@@ -250,7 +315,7 @@ begin
   FInicializador.Conexao.Connected := False;
   FreeAndNil(FInicializador);
   LQuantidadeDDL := 0;
-  FInicializador := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo, BibliotecaFirebird,
+  FInicializador := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo,
     procedure(const ASql: string)
     begin
       if TRegEx.IsMatch(ASql, '^\s*(CREATE|ALTER|DROP|RECREATE)\b', [roIgnoreCase]) then
@@ -264,8 +329,33 @@ begin
   Assert.AreEqual(2, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM SCHEMA_VERSION'));
 end;
 
-procedure TTestesInicializadorBanco.InformaDependenciaFirebirdAusenteSemLiberarAplicacao;
+procedure TTestesInicializadorBanco.ConectaPeloServicoLocalEmLocalhost3050;
 var
+  LEndereco: string;
+begin
+  PrepararBanco;
+  Assert.IsTrue(TextoSQL(FInicializador.Conexao,
+    'SELECT MON$REMOTE_PROTOCOL FROM MON$ATTACHMENTS ' +
+    'WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION').StartsWith('TCP'),
+    'A conexão deve chegar pelo serviço via TCP, não pelo runtime local.');
+  LEndereco := TextoSQL(FInicializador.Conexao,
+    'SELECT MON$REMOTE_ADDRESS FROM MON$ATTACHMENTS ' +
+    'WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION');
+  Assert.IsTrue(LEndereco.StartsWith('127.0.0.1') or LEndereco.StartsWith('::1'),
+    'A conexão deve partir do loopback: ' + LEndereco);
+  Assert.AreEqual('SYSDBA', TextoSQL(FInicializador.Conexao,
+    'SELECT MON$USER FROM MON$ATTACHMENTS WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION'));
+  Assert.AreEqual('FB', FInicializador.Conexao.Params.Values['DriverID']);
+  Assert.AreEqual('localhost', FInicializador.Conexao.Params.Values['Server']);
+  Assert.AreEqual('3050', FInicializador.Conexao.Params.Values['Port']);
+  Assert.AreEqual('OpenOrCreate', FInicializador.Conexao.Params.Values['OpenMode']);
+  Assert.AreEqual('', FInicializador.Conexao.Params.Values['VendorLib'],
+    'A biblioteca cliente deve vir da instalação do Firebird, não do diretório do executável.');
+end;
+
+procedure TTestesInicializadorBanco.InformaServicoFirebirdIndisponivelSemLiberarAplicacao;
+var
+  LPorta: Integer;
   LInicializadorObjeto: TInicializadorBanco;
   LPersistencia: IInicializadorPersistencia;
   LAutorizadorObjeto: TAutorizadorInterfaceFake;
@@ -273,8 +363,8 @@ var
   LInicializadorAplicacao: TInicializadorAplicacao;
   LMensagem: string;
 begin
-  LInicializadorObjeto := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo,
-    TPath.Combine(FDiretorio, 'fbclient.dll'));
+  LPorta := PortaLocalSemServico;
+  LInicializadorObjeto := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo, nil, LPorta);
   LPersistencia := LInicializadorObjeto;
   LAutorizadorObjeto := TAutorizadorInterfaceFake.Create;
   LAutorizador := LAutorizadorObjeto;
@@ -282,11 +372,15 @@ begin
   try
     Assert.IsFalse(LInicializadorAplicacao.Inicializar(LMensagem));
     Assert.IsFalse(LAutorizadorObjeto.Autorizado,
-      'A interface não pode ser autorizada sem a dependência Firebird.');
-    Assert.IsFalse(Assigned(LInicializadorObjeto.Conexao),
-      'A conexão não deve ser criada quando fbclient.dll está ausente.');
-    Assert.Contains(LMensagem, 'Firebird Embedded 3 x64');
-    Assert.Contains(LMensagem, 'fbclient.dll');
+      'A interface não pode ser autorizada com o serviço Firebird indisponível.');
+    Assert.IsFalse(Assigned(LInicializadorObjeto.Conexao) and
+      LInicializadorObjeto.Conexao.Connected,
+      'Nenhuma conexão pode ser entregue com o serviço indisponível.');
+    Assert.IsFalse(TFile.Exists(FCaminhoBanco),
+      'Nenhuma base pode ser criada sem o serviço.');
+    Assert.Contains(LMensagem, 'Firebird 3');
+    Assert.Contains(LMensagem, 'localhost:' + IntToStr(LPorta));
+    AssegurarSemCredenciais(LMensagem, 'A mensagem de serviço indisponível');
   finally
     LInicializadorAplicacao.Free;
     LPersistencia := nil;
@@ -426,7 +520,7 @@ function TTestesMigracaoNoFirebird.PrepararCom(ACatalogo: TCatalogoMigracoes;
 var
   LInicializador: TInicializadorBanco;
 begin
-  LInicializador := TInicializadorBanco.Create(FCaminhoBanco, ACatalogo, BibliotecaFirebird);
+  LInicializador := TInicializadorBanco.Create(FCaminhoBanco, ACatalogo);
   try
     Result := LInicializador.Preparar(AMensagem);
   finally
@@ -452,7 +546,7 @@ begin
   try
     LCatalogo.Registrar(TMigracaoRealBeta);
     LCatalogo.Registrar(TMigracaoRealAlfa);
-    LInicializador := TInicializadorBanco.Create(FCaminhoBanco, LCatalogo, BibliotecaFirebird);
+    LInicializador := TInicializadorBanco.Create(FCaminhoBanco, LCatalogo);
     try
       Assert.IsTrue(LInicializador.Preparar(LMensagem), LMensagem);
       Assert.AreEqual('1:cria alfa|2:cria beta', LinhasSQL(LInicializador.Conexao,
@@ -489,7 +583,7 @@ begin
   LCatalogo := TCatalogoMigracoes.Create;
   try
     LCatalogo.Registrar(TMigracaoRealAlfa);
-    LInicializador := TInicializadorBanco.Create(FCaminhoBanco, LCatalogo, BibliotecaFirebird);
+    LInicializador := TInicializadorBanco.Create(FCaminhoBanco, LCatalogo);
     try
       Assert.IsTrue(LInicializador.Preparar(LMensagem), LMensagem);
       Assert.AreEqual(0, InteiroSQL(LInicializador.Conexao,
@@ -523,7 +617,7 @@ begin
   try
     LCatalogo.Registrar(TMigracaoRealAlfa);
     LAntes := Now;
-    LInicializador := TInicializadorBanco.Create(FCaminhoBanco, LCatalogo, BibliotecaFirebird);
+    LInicializador := TInicializadorBanco.Create(FCaminhoBanco, LCatalogo);
     try
       Assert.IsTrue(LInicializador.Preparar(LMensagem), LMensagem);
       LDepois := Now;
@@ -592,12 +686,19 @@ var
   LTerminou: Boolean;
   LConexao: TFDConnection;
   LBanco: string;
+  LPadrao: string;
 begin
   Assert.IsTrue(TFile.Exists(CaminhoExecutavelRelease),
     'Compile a configuracao Release antes de executar esta prova.');
   CopiarArvore(TPath.GetDirectoryName(CaminhoExecutavelRelease), FDiretorio, 'dcu');
   LBanco := TPath.Combine(FDiretorio, 'cadcli.fdb');
   Assert.IsFalse(TFile.Exists(LBanco), 'A copia da entrega nao pode conter cadcli.fdb.');
+  for LPadrao in ARQUIVOS_RUNTIME_FIREBIRD do
+    Assert.AreEqual(0, Integer(Length(TDirectory.GetFiles(FDiretorio, LPadrao))),
+      'A copia da entrega nao pode conter ' + LPadrao + '.');
+  for LPadrao in DIRETORIOS_RUNTIME_FIREBIRD do
+    Assert.IsFalse(TDirectory.Exists(TPath.Combine(FDiretorio, LPadrao)),
+      'A copia da entrega nao pode conter o subdiretorio ' + LPadrao + '.');
 
   LTerminou := ExecutarEAguardar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio,
     120000, LCodigoSaida);
@@ -607,17 +708,8 @@ begin
   Assert.IsTrue(TFile.Exists(LBanco),
     'CadCli.exe deve criar cadcli.fdb ao lado do executavel.');
 
-  LConexao := TFDConnection.Create(nil);
+  LConexao := ConectarPeloServico(LBanco);
   try
-    LConexao.LoginPrompt := False;
-    LConexao.Params.Values['DriverID'] := 'FB';
-    LConexao.Params.Values['Database'] := LBanco;
-    LConexao.Params.Values['User_Name'] := 'SYSDBA';
-    LConexao.Params.Values['Password'] := 'masterkey';
-    LConexao.Params.Values['OpenMode'] := 'Open';
-    LConexao.Params.Values['CharacterSet'] := 'UTF8';
-    LConexao.Params.Values['VendorLib'] := BibliotecaFirebird;
-    LConexao.Connected := True;
     Assert.AreEqual(2, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM SCHEMA_VERSION'),
       'A base criada pelo executavel deve registrar as duas migracoes.');
     Assert.AreEqual(4, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM ESTADO'));
@@ -638,7 +730,7 @@ begin
   FDiretorio := CriarDiretorioTemporario;
   FCaminhoBanco := TPath.Combine(FDiretorio, 'cadcli.fdb');
   FCatalogo := CriarCatalogoPadrao;
-  FInicializador := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo, BibliotecaFirebird);
+  FInicializador := TInicializadorBanco.Create(FCaminhoBanco, FCatalogo);
   Assert.IsTrue(FInicializador.Preparar(LMensagem), LMensagem);
 end;
 
@@ -780,17 +872,8 @@ begin
   Assert.IsTrue(LTerminou, 'CadCli.exe nao encerrou na primeira execucao.');
   Assert.AreEqual(Cardinal(0), LCodigoSaida);
 
-  LConexao := TFDConnection.Create(nil);
+  LConexao := ConectarPeloServico(LBanco);
   try
-    LConexao.LoginPrompt := False;
-    LConexao.Params.Values['DriverID'] := 'FB';
-    LConexao.Params.Values['Database'] := LBanco;
-    LConexao.Params.Values['User_Name'] := 'SYSDBA';
-    LConexao.Params.Values['Password'] := 'masterkey';
-    LConexao.Params.Values['OpenMode'] := 'Open';
-    LConexao.Params.Values['CharacterSet'] := 'UTF8';
-    LConexao.Params.Values['VendorLib'] := BibliotecaFirebird;
-    LConexao.Connected := True;
     LConexao.ExecSQL('INSERT INTO SCHEMA_VERSION (VERSAO, DESCRICAO, APLICADA_EM) ' +
       'VALUES (999, ''versao de um CadCli mais novo'', CURRENT_TIMESTAMP)');
   finally
@@ -815,6 +898,7 @@ begin
   Assert.Contains(LConteudo, '999', 'O registro deve identificar a versao encontrada.');
   Assert.Contains(LConteudo, 'CadCli.exe',
     'O registro deve orientar a atualizacao do CadCli.exe.');
+  AssegurarSemCredenciais(LConteudo, 'O cadcli-erro.log');
   if (LConteudo <> '') and (Ord(LConteudo[1]) = $FEFF) then
     Delete(LConteudo, 1, 1);
   LInstanteRegistro := Copy(LConteudo, 1, 19);
@@ -824,33 +908,6 @@ begin
   Assert.IsTrue(CompareStr(LInstanteRegistro,
     FormatDateTime('yyyy-mm-dd hh:nn:ss', LFim)) <= 0,
     'O instante do log não pode ser posterior ao encerramento do processo.');
-end;
-
-procedure TTestesAplicacaoRelease.ExecutavelReleaseSemFirebirdEncerraERegistraOErro;
-var
-  LCodigoSaida: Cardinal;
-  LTerminou: Boolean;
-  LExecutavel: string;
-  LRegistro: string;
-  LConteudo: string;
-begin
-  Assert.IsTrue(TFile.Exists(CaminhoExecutavelRelease),
-    'Compile a configuracao Release antes de executar esta prova.');
-  CopiarArvore(TPath.GetDirectoryName(CaminhoExecutavelRelease), FDiretorio, 'dcu');
-  LExecutavel := TPath.Combine(FDiretorio, 'CadCli.exe');
-  TFile.Delete(TPath.Combine(FDiretorio, 'fbclient.dll'));
-  LTerminou := ExecutarEAguardar(LExecutavel, FDiretorio, 120000, LCodigoSaida,
-    '-sem-interacao');
-  Assert.IsTrue(LTerminou,
-    'CadCli.exe não pode ficar preso em diálogo sem a dependência Firebird.');
-  Assert.AreEqual(Cardinal(1), LCodigoSaida);
-  Assert.IsFalse(TFile.Exists(TPath.Combine(FDiretorio, 'cadcli.fdb')),
-    'A persistência não pode ser liberada sem fbclient.dll.');
-  LRegistro := TPath.Combine(FDiretorio, 'cadcli-erro.log');
-  Assert.IsTrue(TFile.Exists(LRegistro));
-  LConteudo := TFile.ReadAllText(LRegistro, TEncoding.UTF8);
-  Assert.Contains(LConteudo, 'Firebird Embedded 3 x64');
-  Assert.Contains(LConteudo, 'fbclient.dll');
 end;
 
 initialization

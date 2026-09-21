@@ -40,8 +40,7 @@ begin
   try
     LPersistencia := TInicializadorBanco.Create(
       IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'cadcli.fdb',
-      LCatalogo,
-      IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'fbclient.dll');
+      LCatalogo);
     LAutorizador := TAutorizadorInterfaceAplicacao.Create;
     LInicializador := TInicializadorAplicacao.Create(LPersistencia, LAutorizador);
     try

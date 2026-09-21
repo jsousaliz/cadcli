@@ -11,6 +11,10 @@ uses
   Dominio.Migracao,
   Infraestrutura.ContextoMigracaoFireDAC;
 
+const
+  SERVIDOR_FIREBIRD = 'localhost';
+  PORTA_FIREBIRD = 3050;
+
 type
   TBootstrapTabelaVersoes = class
   public
@@ -20,15 +24,16 @@ type
   TInicializadorBanco = class(TInterfacedObject, IInicializadorPersistencia)
   private
     FCaminhoBanco: string;
-    FBibliotecaCliente: string;
+    FPorta: Integer;
     FCatalogo: TCatalogoMigracoes;
     FConexao: TFDConnection;
     FObservadorSql: TObservadorSql;
     procedure ConfigurarConexao;
     procedure GarantirTabelaVersoes;
+    procedure Conectar;
   public
     constructor Create(const ACaminhoBanco: string; ACatalogo: TCatalogoMigracoes;
-      const ABibliotecaCliente: string = ''; AObservadorSql: TObservadorSql = nil);
+      AObservadorSql: TObservadorSql = nil; APorta: Integer = PORTA_FIREBIRD);
     destructor Destroy; override;
     function Preparar(out AMensagemErro: string): Boolean;
     property Conexao: TFDConnection read FConexao;
@@ -63,8 +68,7 @@ begin
 end;
 
 constructor TInicializadorBanco.Create(const ACaminhoBanco: string;
-  ACatalogo: TCatalogoMigracoes; const ABibliotecaCliente: string;
-  AObservadorSql: TObservadorSql);
+  ACatalogo: TCatalogoMigracoes; AObservadorSql: TObservadorSql; APorta: Integer);
 begin
   inherited Create;
   if Trim(ACaminhoBanco) = '' then
@@ -72,7 +76,7 @@ begin
   if not Assigned(ACatalogo) then
     raise EArgumentNilException.Create('O catálogo de migrações deve ser informado.');
   FCaminhoBanco := ExpandFileName(ACaminhoBanco);
-  FBibliotecaCliente := ABibliotecaCliente;
+  FPorta := APorta;
   FCatalogo := ACatalogo;
   FObservadorSql := AObservadorSql;
 end;
@@ -90,14 +94,28 @@ begin
   FConexao.LoginPrompt := False;
   FConexao.Params.Clear;
   FConexao.Params.Values['DriverID'] := 'FB';
+  FConexao.Params.Values['Server'] := SERVIDOR_FIREBIRD;
+  FConexao.Params.Values['Port'] := IntToStr(FPorta);
   FConexao.Params.Values['Database'] := FCaminhoBanco;
   FConexao.Params.Values['User_Name'] := 'SYSDBA';
   FConexao.Params.Values['Password'] := 'masterkey';
   FConexao.Params.Values['OpenMode'] := 'OpenOrCreate';
   FConexao.Params.Values['SQLDialect'] := '3';
   FConexao.Params.Values['CharacterSet'] := 'UTF8';
-  if FBibliotecaCliente <> '' then
-    FConexao.Params.Values['VendorLib'] := FBibliotecaCliente;
+end;
+
+procedure TInicializadorBanco.Conectar;
+begin
+  ConfigurarConexao;
+  try
+    FConexao.Connected := True;
+  except
+    on E: Exception do
+      raise Exception.CreateFmt(
+        'Não foi possível conectar ao serviço Firebird 3 em %s:%d. ' +
+        'Verifique se o serviço está instalado e em execução. Detalhe: %s',
+        [SERVIDOR_FIREBIRD, FPorta, E.Message]);
+  end;
 end;
 
 procedure TInicializadorBanco.GarantirTabelaVersoes;
@@ -116,10 +134,7 @@ begin
   Result := False;
   AMensagemErro := '';
   try
-    if (FBibliotecaCliente <> '') and not FileExists(FBibliotecaCliente) then
-      raise Exception.Create('fbclient.dll x64 não foi encontrada em ' + FBibliotecaCliente);
-    ConfigurarConexao;
-    FConexao.Connected := True;
+    Conectar;
     GarantirTabelaVersoes;
     LContexto := TContextoMigracaoFireDAC.Create(FConexao, FObservadorSql);
     LExecutor := TExecutorMigracoes.Create(FCatalogo, TRelogioSistema.Create);
@@ -134,11 +149,7 @@ begin
     begin
       if Assigned(FConexao) and FConexao.Connected then
         FConexao.Connected := False;
-      if (Pos('fbclient', LowerCase(E.Message)) > 0) or
-         (Pos('vendor lib', LowerCase(E.Message)) > 0) then
-        AMensagemErro := 'A dependência Firebird Embedded 3 x64 (fbclient.dll) não foi encontrada ou não pôde ser carregada: ' + E.Message
-      else
-        AMensagemErro := E.Message;
+      AMensagemErro := E.Message;
     end;
   end;
 end;
