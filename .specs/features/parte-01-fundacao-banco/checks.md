@@ -103,10 +103,10 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaFundac
 | estados da inicialização/migração (6) | base ausente C4 · base anterior C7 · base atual C13 · migração falha C9 · versão futura C10 · serviço indisponível C16 | - |
 | metadados de `SCHEMA_VERSION` (3) | `VERSAO` C5/C7 · `DESCRICAO` C5/C7 · `APLICADA_EM` C5 no limite real | - |
 | entidades de `Relations` (5) | `ESTADO` C11 · `CIDADE` C11 · `CLIENTE` C11 · `SCHEMA_VERSION` C5 · `MIGRACAO_APLICADA` como linha de `SCHEMA_VERSION` C5 | - |
-| campos de `CLIENTE` (10) | `ID` C11 · `NOME` C11 · `CEP` C11 · `CPF_CNPJ` C11 · `ENDERECO` C11 · `NUMERO` C11 · `COMPLEMENTO` C11 · `BAIRRO` C11 · `CIDADE` C11 · `DATANASCIMENTO` C11 | - |
+| campos de `CLIENTE` (10) | `ID` C11 · `NOME` C11 · `CEP` C11 · `CPF_CNPJ` C11 · `ENDERECO` C11 · `NUMERO` C11 · `COMPLEMENTO` C11 · `BAIRRO` C11 · `CIDADEID` C11 · `DATANASCIMENTO` C11 | - |
 | campos de `ESTADO` (3) | `ID` INTEGER C11 · `NOME` VARCHAR(50) C11 · `UF` CHAR(2) C11 | - |
 | campos de `CIDADE` (3) | `ID` INTEGER C11 · `NOME` VARCHAR(50) C11 · `ESTADOID` INTEGER C11 | - |
-| restrições relacionais (5) | `ESTADO.UF` única C11 · `CIDADE(ESTADOID,NOME)` única C11 · FK `CIDADE.ESTADOID` C11 · FK `CLIENTE.CIDADE` C11 · versão de migração única C5 | - |
+| restrições relacionais (5) | `ESTADO.UF` única C11 · `CIDADE(ESTADOID,NOME)` única C11 · FK `CIDADE.ESTADOID` C11 · FK `CLIENTE.CIDADEID` C11 · versão de migração única C5 | - |
 | sequências de ID (3) | `CLIENTE` C14 · `ESTADO` C14 · `CIDADE` C14 | - |
 | continuidade das sequências após a referência (3) | `SEQ_ESTADO` livre C19 · `SEQ_CIDADE` livre C19 · `SEQ_CLIENTE` positiva C19 | - |
 | estados de referência (4) | Minas Gerais/MG C12 · São Paulo/SP C12 · Rio de Janeiro/RJ C12 · Bahia/BA C12 | - |

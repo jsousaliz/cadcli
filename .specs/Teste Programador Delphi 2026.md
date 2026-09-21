@@ -71,7 +71,7 @@ ID, NOME, CPF ou CNPJ, CEP, BAIRRO, CIDADE, ESTADO);
 | NUMERO         | VARCHAR(20)  |
 | COMPLEMENTO    | VARCHAR(60)  |
 | BAIRRO         | VARCHAR(100) |
-| FK - CIDADE    | INTEGER      |
+| FK - CIDADEID  | INTEGER      |
 | DATANASCIMENTO | DATE         |
 
 - Criar a tabela ESTADO e inserir diretamente via banco ("Minas Gerais", "São Paulo", "Rio de Janeiro", "Bahia")
