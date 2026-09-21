@@ -15,6 +15,7 @@ uses
   Aplicacao.InicializadorAplicacao in 'src\Aplicacao\Aplicacao.InicializadorAplicacao.pas',
   Aplicacao.NavegadorAplicacao in 'src\Aplicacao\Aplicacao.NavegadorAplicacao.pas',
   Dominio.Migracao in 'src\Dominio\Dominio.Migracao.pas',
+  Infraestrutura.CaminhosAplicacao in 'src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas',
   Infraestrutura.CatalogoPadraoMigracoes in 'src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas',
   Infraestrutura.ContextoMigracaoFireDAC in 'src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas',
   Infraestrutura.InicializadorBancoFireDAC in 'src\Infraestrutura\Infraestrutura.InicializadorBancoFireDAC.pas',
@@ -53,9 +54,7 @@ begin
   Application.Title := 'CadCli';
   LCatalogo := CriarCatalogoPadrao;
   try
-    LPersistencia := TInicializadorBanco.Create(
-      IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'cadcli.fdb',
-      LCatalogo);
+    LPersistencia := TInicializadorBanco.Create(CaminhoBancoAplicacao, LCatalogo);
     LAutorizador := TAutorizadorInterfaceAplicacao.Create;
     LInicializador := TInicializadorAplicacao.Create(LPersistencia, LAutorizador);
     try

@@ -62,6 +62,7 @@
     <DCCReference Include="..\src\Aplicacao\Aplicacao.InicializadorAplicacao.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.NavegadorAplicacao.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.InicializadorBancoFireDAC.pas" />

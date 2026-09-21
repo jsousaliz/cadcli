@@ -32,6 +32,7 @@ uses
   Aplicacao.InicializadorAplicacao in '..\src\Aplicacao\Aplicacao.InicializadorAplicacao.pas',
   Aplicacao.NavegadorAplicacao in '..\src\Aplicacao\Aplicacao.NavegadorAplicacao.pas',
   Dominio.Migracao in '..\src\Dominio\Dominio.Migracao.pas',
+  Infraestrutura.CaminhosAplicacao in '..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas',
   Infraestrutura.CatalogoPadraoMigracoes in '..\src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas',
   Infraestrutura.ContextoMigracaoFireDAC in '..\src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas',
   Infraestrutura.InicializadorBancoFireDAC in '..\src\Infraestrutura\Infraestrutura.InicializadorBancoFireDAC.pas',

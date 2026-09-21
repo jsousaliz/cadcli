@@ -39,7 +39,7 @@
     <PropertyGroup Condition="'$(Base)'!=''">
         <DCC_UnitSearchPath>src\Dominio;src\Aplicacao;src\Infraestrutura;src\Migracoes;src\Visao;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <UsePackages>true</UsePackages>
-        <DCC_UsePackage>rtl;vcl;dxCoreRS29;dxComnRS29;dxGDIPlusRS29;cxLibraryRS29;dxBarRS29</DCC_UsePackage>
+        <DCC_UsePackage>rtl;vcl;dxCoreRS29;dxComnRS29;dxGDIPlusRS29;cxLibraryRS29;dxBarRS29;$(DCC_UsePackage)</DCC_UsePackage>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_MajorVer>1</VerInfo_MajorVer>
         <VerInfo_MinorVer>0</VerInfo_MinorVer>
@@ -81,6 +81,8 @@
         <BT_BuildType>Debug</BT_BuildType>
         <PostBuildEvent><![CDATA[powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\tools\CopiarBplsEntrega.ps1" -Executavel "$(MSBuildProjectDirectory)\$(DCC_ExeOutput)\$(MSBuildProjectName).exe" -Origens "$(BDS)\bin64;$(DXVCL)\Library\RS29\Win64"]]></PostBuildEvent>
         <PostBuildEventCancelOnError>true</PostBuildEventCancelOnError>
+        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+        <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -92,6 +94,7 @@
         <DCCReference Include="src\Aplicacao\Aplicacao.InicializadorAplicacao.pas"/>
         <DCCReference Include="src\Aplicacao\Aplicacao.NavegadorAplicacao.pas"/>
         <DCCReference Include="src\Dominio\Dominio.Migracao.pas"/>
+        <DCCReference Include="src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas"/>
         <DCCReference Include="src\Infraestrutura\Infraestrutura.CatalogoPadraoMigracoes.pas"/>
         <DCCReference Include="src\Infraestrutura\Infraestrutura.ContextoMigracaoFireDAC.pas"/>
         <DCCReference Include="src\Infraestrutura\Infraestrutura.InicializadorBancoFireDAC.pas"/>
@@ -126,6 +129,9 @@
                 <Platforms>
                     <Platform value="Win64">True</Platform>
                 </Platforms>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp290.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
                 <Platform value="Win32">False</Platform>
@@ -135,4 +141,12 @@
         <ProjectFileVersion>12</ProjectFileVersion>
     </ProjectExtensions>
     <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Win64'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent><![CDATA[powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\tools\CopiarBplsEntrega.ps1" -Executavel "$(MSBuildProjectDirectory)\$(DCC_ExeOutput)\$(MSBuildProjectName).exe" -Origens "$(BDS)\bin64;$(DXVCL)\Library\RS29\Win64"]]></PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
 </Project>
