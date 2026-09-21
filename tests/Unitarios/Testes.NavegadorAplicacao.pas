@@ -10,7 +10,7 @@ type
   [TestFixture]
   TTestesNavegadorAplicacao = class
   private
-    FShell: TForm;
+    FFormPrincipal: TForm;
   public
     [Setup]
     procedure Preparar;
@@ -23,7 +23,7 @@ type
     [Test]
     procedure AcionamentosConsecutivosNuncaMantemDuasInstancias;
     [Test]
-    procedure EncerrarAplicacaoFechaShellComCodigoZero;
+    procedure EncerrarAplicacaoFechaFormPrincipalComCodigoZero;
     [Test]
     procedure DestinoSemTelaRegistradaFalhaSemCriarForm;
   end;
@@ -40,7 +40,7 @@ uses
   Aplicacao.NavegadorAplicacao,
   Visao.ComposicaoAplicacao,
   Visao.NavegadorAplicacao,
-  Suporte.FakesShell;
+  Suporte.FakesFormPrincipal;
 
 type
   TTelaDestinoTeste = class(TForm)
@@ -49,34 +49,34 @@ type
   protected
     procedure DoShow; override;
   public
-    class var Shell: HWND;
+    class var FormPrincipal: HWND;
     class var Criadas: Integer;
     class var Vivas: Integer;
     class var MaximoVivas: Integer;
     class var Exibicoes: Integer;
-    class var ShellHabilitadoDuranteExibicao: Boolean;
+    class var FormPrincipalHabilitadoDuranteExibicao: Boolean;
     class var ModalDuranteExibicao: Boolean;
     class var SeriesExibidas: string;
-    class procedure Reiniciar(AShell: HWND);
+    class procedure Reiniciar(AFormPrincipal: HWND);
     constructor Criar;
     destructor Destroy; override;
   end;
 
-  TShellTeste = class(TForm)
+  TFormPrincipalTeste = class(TForm)
   protected
     procedure DoClose(var AAcao: TCloseAction); override;
   public
     Fechamentos: Integer;
   end;
 
-class procedure TTelaDestinoTeste.Reiniciar(AShell: HWND);
+class procedure TTelaDestinoTeste.Reiniciar(AFormPrincipal: HWND);
 begin
-  Shell := AShell;
+  FormPrincipal := AFormPrincipal;
   Criadas := 0;
   Vivas := 0;
   MaximoVivas := 0;
   Exibicoes := 0;
-  ShellHabilitadoDuranteExibicao := True;
+  FormPrincipalHabilitadoDuranteExibicao := True;
   ModalDuranteExibicao := False;
   SeriesExibidas := '';
 end;
@@ -100,13 +100,13 @@ procedure TTelaDestinoTeste.DoShow;
 begin
   inherited;
   Inc(Exibicoes);
-  ShellHabilitadoDuranteExibicao := IsWindowEnabled(Shell);
+  FormPrincipalHabilitadoDuranteExibicao := IsWindowEnabled(FormPrincipal);
   ModalDuranteExibicao := fsModal in FormState;
   SeriesExibidas := SeriesExibidas + IntToStr(FSerie) + ';';
   PostMessage(Handle, WM_CLOSE, 0, 0);
 end;
 
-procedure TShellTeste.DoClose(var AAcao: TCloseAction);
+procedure TFormPrincipalTeste.DoClose(var AAcao: TCloseAction);
 begin
   Inc(Fechamentos);
   inherited;
@@ -119,14 +119,14 @@ end;
 
 procedure TTestesNavegadorAplicacao.Preparar;
 begin
-  FShell := TShellTeste.CreateNew(nil);
-  FShell.Show;
-  TTelaDestinoTeste.Reiniciar(FShell.Handle);
+  FFormPrincipal := TFormPrincipalTeste.CreateNew(nil);
+  FFormPrincipal.Show;
+  TTelaDestinoTeste.Reiniciar(FFormPrincipal.Handle);
 end;
 
 procedure TTestesNavegadorAplicacao.Limpar;
 begin
-  FreeAndNil(FShell);
+  FreeAndNil(FFormPrincipal);
 end;
 
 procedure TTestesNavegadorAplicacao.AbrirClientesExibeUmaInstanciaModalELibera;
@@ -135,7 +135,7 @@ var
   LNavegador: INavegadorAplicacao;
   LFormsAntes: Integer;
 begin
-  LNavegadorObjeto := TNavegadorAplicacao.Create(FShell);
+  LNavegadorObjeto := TNavegadorAplicacao.Create(FFormPrincipal);
   LNavegador := LNavegadorObjeto;
   LNavegadorObjeto.RegistrarTelaClientes(CriarTelaDestino);
   LFormsAntes := Screen.FormCount;
@@ -143,8 +143,8 @@ begin
   Assert.AreEqual(1, TTelaDestinoTeste.Criadas, 'Deve ser criada exatamente uma tela.');
   Assert.AreEqual(1, TTelaDestinoTeste.Exibicoes, 'A tela deve ser exibida uma vez.');
   Assert.IsTrue(TTelaDestinoTeste.ModalDuranteExibicao, 'A tela deve ser exibida modalmente.');
-  Assert.IsFalse(TTelaDestinoTeste.ShellHabilitadoDuranteExibicao,
-    'O shell deve ficar desabilitado durante a exibição modal.');
+  Assert.IsFalse(TTelaDestinoTeste.FormPrincipalHabilitadoDuranteExibicao,
+    'A form principal deve ficar desabilitada durante a exibição modal.');
   Assert.AreEqual(0, TTelaDestinoTeste.Vivas, 'A tela deve ser destruída ao fechar.');
   Assert.AreEqual(LFormsAntes, Screen.FormCount);
 end;
@@ -155,7 +155,7 @@ var
   LNavegador: INavegadorAplicacao;
   LFormsAntes: Integer;
 begin
-  LNavegadorObjeto := TNavegadorAplicacao.Create(FShell);
+  LNavegadorObjeto := TNavegadorAplicacao.Create(FFormPrincipal);
   LNavegador := LNavegadorObjeto;
   LNavegadorObjeto.RegistrarTelaRelatorio(CriarTelaDestino);
   LFormsAntes := Screen.FormCount;
@@ -163,8 +163,8 @@ begin
   Assert.AreEqual(1, TTelaDestinoTeste.Criadas, 'Deve ser criada exatamente uma tela.');
   Assert.AreEqual(1, TTelaDestinoTeste.Exibicoes, 'A tela deve ser exibida uma vez.');
   Assert.IsTrue(TTelaDestinoTeste.ModalDuranteExibicao, 'A tela deve ser exibida modalmente.');
-  Assert.IsFalse(TTelaDestinoTeste.ShellHabilitadoDuranteExibicao,
-    'O shell deve ficar desabilitado durante a exibição modal.');
+  Assert.IsFalse(TTelaDestinoTeste.FormPrincipalHabilitadoDuranteExibicao,
+    'A form principal deve ficar desabilitada durante a exibição modal.');
   Assert.AreEqual(0, TTelaDestinoTeste.Vivas, 'A tela deve ser destruída ao fechar.');
   Assert.AreEqual(LFormsAntes, Screen.FormCount);
 end;
@@ -174,7 +174,7 @@ var
   LNavegadorObjeto: TNavegadorAplicacao;
   LNavegador: INavegadorAplicacao;
 begin
-  LNavegadorObjeto := TNavegadorAplicacao.Create(FShell);
+  LNavegadorObjeto := TNavegadorAplicacao.Create(FFormPrincipal);
   LNavegador := LNavegadorObjeto;
   LNavegadorObjeto.RegistrarTelaClientes(CriarTelaDestino);
   LNavegador.AbrirClientes;
@@ -187,7 +187,7 @@ begin
   Assert.AreEqual(0, TTelaDestinoTeste.Vivas);
 end;
 
-procedure TTestesNavegadorAplicacao.EncerrarAplicacaoFechaShellComCodigoZero;
+procedure TTestesNavegadorAplicacao.EncerrarAplicacaoFechaFormPrincipalComCodigoZero;
 var
   LNavegador: INavegadorAplicacao;
   LCodigoAnterior: Integer;
@@ -195,10 +195,10 @@ begin
   LCodigoAnterior := ExitCode;
   try
     ExitCode := 7;
-    LNavegador := TNavegadorAplicacao.Create(FShell);
+    LNavegador := TNavegadorAplicacao.Create(FFormPrincipal);
     LNavegador.EncerrarAplicacao;
-    Assert.AreEqual(1, TShellTeste(FShell).Fechamentos, 'O shell entregue deve ser fechado.');
-    Assert.IsFalse(FShell.Visible, 'O shell deve deixar de estar visível.');
+    Assert.AreEqual(1, TFormPrincipalTeste(FFormPrincipal).Fechamentos, 'A form principal entregue deve ser fechada.');
+    Assert.IsFalse(FFormPrincipal.Visible, 'A form principal deve deixar de estar visível.');
     Assert.AreEqual(0, ExitCode, 'O encerramento deve deixar código de saída 0.');
   finally
     ExitCode := LCodigoAnterior;
@@ -213,7 +213,7 @@ var
   LControlador: TControladorPrincipal;
   LFormsAntes: Integer;
 begin
-  LNavegador := ComporNavegador(FShell);
+  LNavegador := ComporNavegador(FFormPrincipal);
   LFormsAntes := Screen.FormCount;
   Assert.WillRaiseAny(
     procedure

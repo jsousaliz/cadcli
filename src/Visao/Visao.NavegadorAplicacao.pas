@@ -14,12 +14,12 @@ type
 
   TNavegadorAplicacao = class(TInterfacedObject, INavegadorAplicacao)
   private
-    FShell: TForm;
+    FFormPrincipal: TForm;
     FCriadorClientes: TCriadorTela;
     FCriadorRelatorio: TCriadorTela;
     procedure AbrirModal(const ACriador: TCriadorTela; const ADestino: string);
   public
-    constructor Create(AShell: TForm);
+    constructor Create(AFormPrincipal: TForm);
     procedure RegistrarTelaClientes(const ACriador: TCriadorTela);
     procedure RegistrarTelaRelatorio(const ACriador: TCriadorTela);
     procedure AbrirClientes;
@@ -33,12 +33,12 @@ const
 
 implementation
 
-constructor TNavegadorAplicacao.Create(AShell: TForm);
+constructor TNavegadorAplicacao.Create(AFormPrincipal: TForm);
 begin
   inherited Create;
-  if not Assigned(AShell) then
-    raise EArgumentNilException.Create('O shell da aplicação deve ser informado.');
-  FShell := AShell;
+  if not Assigned(AFormPrincipal) then
+    raise EArgumentNilException.Create('A form principal da aplicação deve ser informada.');
+  FFormPrincipal := AFormPrincipal;
 end;
 
 procedure TNavegadorAplicacao.RegistrarTelaClientes(const ACriador: TCriadorTela);
@@ -78,7 +78,7 @@ end;
 procedure TNavegadorAplicacao.EncerrarAplicacao;
 begin
   ExitCode := 0;
-  FShell.Close;
+  FFormPrincipal.Close;
 end;
 
 end.

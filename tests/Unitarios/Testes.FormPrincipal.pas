@@ -5,7 +5,7 @@ interface
 uses
   DUnitX.TestFramework,
   Visao.FormPrincipal,
-  Suporte.FakesShell;
+  Suporte.FakesFormPrincipal;
 
 type
   [TestFixture]
@@ -30,11 +30,11 @@ type
     [Test]
     procedure TodosOsControlesSaoDevExpress;
     [Test]
-    procedure TextosDoShellSaoOsDefinidos;
+    procedure TextosDoFormPrincipalSaoOsDefinidos;
     [Test]
     procedure ArranjoCabecalhoCentroEStatus;
     [Test]
-    procedure FalhaDeAberturaMostraErroEMantemShellUtilizavel;
+    procedure FalhaDeAberturaMostraErroEMantemFormPrincipalUtilizavel;
   end;
 
   [TestFixture]
@@ -159,9 +159,9 @@ end;
 
 procedure TTestesFormPrincipal.CadaSubmenuDelegaSomenteAoControlador;
 var
-  LFormsComShell: Integer;
+  LFormsComFormPrincipal: Integer;
 begin
-  LFormsComShell := Screen.FormCount;
+  LFormsComFormPrincipal := Screen.FormCount;
   FForm.ItemSair.Click;
   Assert.AreEqual(1, FNavegadorObjeto.ChamadasEncerrar);
   Assert.AreEqual(0, FNavegadorObjeto.ChamadasClientes);
@@ -174,8 +174,8 @@ begin
   Assert.AreEqual(1, FNavegadorObjeto.ChamadasEncerrar);
   Assert.AreEqual(1, FNavegadorObjeto.ChamadasClientes);
   Assert.AreEqual(1, FNavegadorObjeto.ChamadasRelatorio);
-  Assert.AreEqual(LFormsComShell, Screen.FormCount,
-    'Acionar os menus não pode criar nenhuma form além do shell.');
+  Assert.AreEqual(LFormsComFormPrincipal, Screen.FormCount,
+    'Acionar os menus não pode criar nenhuma form além da form principal.');
 end;
 
 function UnitDevExpress(AClasse: TClass): Boolean;
@@ -255,7 +255,7 @@ begin
   Result := Trim(LValor);
 end;
 
-procedure TTestesFormPrincipal.TextosDoShellSaoOsDefinidos;
+procedure TTestesFormPrincipal.TextosDoFormPrincipalSaoOsDefinidos;
 var
   LVersao: string;
 begin
@@ -293,7 +293,7 @@ begin
     'As boas-vindas devem ficar acima da barra de status.');
 end;
 
-procedure TTestesFormPrincipal.FalhaDeAberturaMostraErroEMantemShellUtilizavel;
+procedure TTestesFormPrincipal.FalhaDeAberturaMostraErroEMantemFormPrincipalUtilizavel;
 begin
   FNavegadorObjeto.FalharClientes := True;
   FForm.Show;
@@ -301,11 +301,11 @@ begin
   FForm.ItemCliente.Click;
   Assert.AreEqual(1, FApresentadorObjeto.Mensagens.Count, 'A falha deve ser apresentada uma vez.');
   Assert.AreEqual('Não foi possível abrir o cadastro de clientes.', FApresentadorObjeto.Mensagens[0]);
-  Assert.IsTrue(FForm.Visible, 'O shell deve continuar visível.');
-  Assert.IsTrue(IsWindowEnabled(FForm.Handle), 'O shell deve continuar habilitado.');
+  Assert.IsTrue(FForm.Visible, 'A form principal deve continuar visível.');
+  Assert.IsTrue(IsWindowEnabled(FForm.Handle), 'A form principal deve continuar habilitada.');
   FForm.ItemRelatorio.Click;
   Assert.AreEqual(1, FNavegadorObjeto.ChamadasRelatorio,
-    'O shell deve continuar navegando depois da falha.');
+    'A form principal deve continuar navegando depois da falha.');
 end;
 
 procedure TTestesApresentadorErro.DialogoDeErroTemTituloCadCliEMostraAMensagem;

@@ -7,7 +7,7 @@ uses
 
 const
   CLASSE_AVISO_TRIAL = 'TfrmNewTrialDialog';
-  CLASSE_SHELL = 'TFormPrincipal';
+  CLASSE_FORM_PRINCIPAL = 'TFormPrincipal';
 
 function JanelaDoProcesso(AProcessoId: DWORD; const AClasse: string;
   ASomenteVisivel: Boolean): HWND;
@@ -16,14 +16,14 @@ function TextoJanela(AJanela: HWND): string;
 function IniciarProcesso(const ACaminho, ADiretorio: string; const AArgumentos: string = '';
   const AAmbiente: string = ''): TProcessInformation;
 procedure LiberarProcesso(var AProcesso: TProcessInformation);
-function AguardarShell(const AProcesso: TProcessInformation; ALimiteMs: Cardinal): HWND;
+function AguardarFormPrincipal(const AProcesso: TProcessInformation; ALimiteMs: Cardinal): HWND;
 function AguardarEncerramento(const AProcesso: TProcessInformation; ALimiteMs: Cardinal;
-  out ACodigoSaida: Cardinal; out AShellExistiu: Boolean): Boolean; overload;
+  out ACodigoSaida: Cardinal; out AFormPrincipalExistiu: Boolean): Boolean; overload;
 function AguardarEncerramento(const AProcesso: TProcessInformation; ALimiteMs: Cardinal;
   out ACodigoSaida: Cardinal): Boolean; overload;
 function ExecutarEAguardar(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
   out ACodigoSaida: Cardinal; const AArgumentos: string = ''): Boolean;
-function ExecutarFechandoShell(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
+function ExecutarFechandoFormPrincipal(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
   out ACodigoSaida: Cardinal): Boolean;
 function PathSemDelphiNemDevExpress: string;
 function AmbienteComPath(const APath: string): string;
@@ -138,14 +138,14 @@ begin
   FillChar(AProcesso, SizeOf(AProcesso), 0);
 end;
 
-function AguardarShell(const AProcesso: TProcessInformation; ALimiteMs: Cardinal): HWND;
+function AguardarFormPrincipal(const AProcesso: TProcessInformation; ALimiteMs: Cardinal): HWND;
 var
   LInicio: UInt64;
 begin
   LInicio := GetTickCount64;
   repeat
     FecharAvisoTrial(AProcesso.dwProcessId);
-    Result := JanelaDoProcesso(AProcesso.dwProcessId, CLASSE_SHELL, True);
+    Result := JanelaDoProcesso(AProcesso.dwProcessId, CLASSE_FORM_PRINCIPAL, True);
     if Result <> 0 then
       Exit;
     if WaitForSingleObject(AProcesso.hProcess, INTERVALO_SONDAGEM_MS) = WAIT_OBJECT_0 then
@@ -155,16 +155,16 @@ begin
 end;
 
 function AguardarEncerramento(const AProcesso: TProcessInformation; ALimiteMs: Cardinal;
-  out ACodigoSaida: Cardinal; out AShellExistiu: Boolean): Boolean;
+  out ACodigoSaida: Cardinal; out AFormPrincipalExistiu: Boolean): Boolean;
 var
   LInicio: UInt64;
 begin
-  AShellExistiu := False;
+  AFormPrincipalExistiu := False;
   LInicio := GetTickCount64;
   repeat
     FecharAvisoTrial(AProcesso.dwProcessId);
-    if JanelaDoProcesso(AProcesso.dwProcessId, CLASSE_SHELL, False) <> 0 then
-      AShellExistiu := True;
+    if JanelaDoProcesso(AProcesso.dwProcessId, CLASSE_FORM_PRINCIPAL, False) <> 0 then
+      AFormPrincipalExistiu := True;
     if WaitForSingleObject(AProcesso.hProcess, INTERVALO_SONDAGEM_MS) = WAIT_OBJECT_0 then
     begin
       GetExitCodeProcess(AProcesso.hProcess, ACodigoSaida);
@@ -178,9 +178,9 @@ end;
 function AguardarEncerramento(const AProcesso: TProcessInformation; ALimiteMs: Cardinal;
   out ACodigoSaida: Cardinal): Boolean;
 var
-  LShellExistiu: Boolean;
+  LFormPrincipalExistiu: Boolean;
 begin
-  Result := AguardarEncerramento(AProcesso, ALimiteMs, ACodigoSaida, LShellExistiu);
+  Result := AguardarEncerramento(AProcesso, ALimiteMs, ACodigoSaida, LFormPrincipalExistiu);
 end;
 
 function ExecutarEAguardar(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
@@ -196,17 +196,17 @@ begin
   end;
 end;
 
-function ExecutarFechandoShell(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
+function ExecutarFechandoFormPrincipal(const ACaminho, ADiretorio: string; ALimiteMs: Cardinal;
   out ACodigoSaida: Cardinal): Boolean;
 var
   LProcesso: TProcessInformation;
-  LShell: HWND;
+  LFormPrincipal: HWND;
 begin
   LProcesso := IniciarProcesso(ACaminho, ADiretorio);
   try
-    LShell := AguardarShell(LProcesso, ALimiteMs);
-    if LShell <> 0 then
-      PostMessage(LShell, WM_CLOSE, 0, 0);
+    LFormPrincipal := AguardarFormPrincipal(LProcesso, ALimiteMs);
+    if LFormPrincipal <> 0 then
+      PostMessage(LFormPrincipal, WM_CLOSE, 0, 0);
     Result := AguardarEncerramento(LProcesso, ALimiteMs, ACodigoSaida);
   finally
     LiberarProcesso(LProcesso);

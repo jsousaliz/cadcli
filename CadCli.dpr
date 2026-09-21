@@ -35,10 +35,10 @@ type
 
 procedure TAutorizadorInterfaceAplicacao.AutorizarAbertura;
 var
-  LShell: TFormPrincipal;
+  LFormPrincipal: TFormPrincipal;
 begin
-  Application.CreateForm(TFormPrincipal, LShell);
-  LShell.Conectar(ComporNavegador(LShell), TApresentadorErroDialogo.Create);
+  Application.CreateForm(TFormPrincipal, LFormPrincipal);
+  LFormPrincipal.Conectar(ComporNavegador(LFormPrincipal), TApresentadorErroDialogo.Create);
 end;
 
 var

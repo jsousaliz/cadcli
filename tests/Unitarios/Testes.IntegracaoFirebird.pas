@@ -73,9 +73,9 @@ type
     [Test]
     procedure ExecutavelReleaseRecusaVersaoFuturaERegistraOErro;
     [Test]
-    procedure ExecutavelReleaseExibeShellEEncerraComCodigoZero;
+    procedure ExecutavelReleaseExibeFormPrincipalEEncerraComCodigoZero;
     [Test]
-    procedure ExecutavelReleaseRecusadoNaoExibeShell;
+    procedure ExecutavelReleaseRecusadoNaoExibeFormPrincipal;
     [Test]
     procedure ExecutavelReleaseAbreSemDelphiNemDevExpressNoPath;
   end;
@@ -426,31 +426,31 @@ begin
     'A copia da entrega nao pode conter cadcli.fdb.');
 end;
 
-procedure ExecutarAteShellEFechar(const AExecutavel, ADiretorio: string;
+procedure ExecutarAteFormPrincipalEFechar(const AExecutavel, ADiretorio: string;
   const AAmbiente: string = '');
 const
-  LIMITE_SHELL_MS = 60000;
+  LIMITE_FORM_PRINCIPAL_MS = 60000;
   LIMITE_ENCERRAMENTO_MS = 30000;
 var
   LProcesso: TProcessInformation;
-  LShell: HWND;
-  LShellProcessoId: DWORD;
+  LFormPrincipal: HWND;
+  LFormPrincipalProcessoId: DWORD;
   LCodigoSaida: Cardinal;
 begin
   LProcesso := IniciarProcesso(AExecutavel, ADiretorio, '', AAmbiente);
   try
-    LShell := AguardarShell(LProcesso, LIMITE_SHELL_MS);
-    Assert.IsTrue(LShell <> 0,
+    LFormPrincipal := AguardarFormPrincipal(LProcesso, LIMITE_FORM_PRINCIPAL_MS);
+    Assert.IsTrue(LFormPrincipal <> 0,
       'CadCli.exe deve exibir uma janela visivel TFormPrincipal em ate 60 s.');
-    GetWindowThreadProcessId(LShell, LShellProcessoId);
-    Assert.AreEqual(LProcesso.dwProcessId, LShellProcessoId,
-      'A janela do shell deve pertencer ao processo do CadCli.exe.');
-    Assert.IsTrue(GetParent(LShell) = 0, 'O shell deve ser uma janela de topo.');
-    Assert.IsTrue(IsWindowVisible(LShell), 'O shell deve estar visivel.');
-    Assert.AreEqual('CadCli', TextoJanela(LShell), 'O titulo do shell deve ser CadCli.');
-    PostMessage(LShell, WM_CLOSE, 0, 0);
+    GetWindowThreadProcessId(LFormPrincipal, LFormPrincipalProcessoId);
+    Assert.AreEqual(LProcesso.dwProcessId, LFormPrincipalProcessoId,
+      'A janela da form principal deve pertencer ao processo do CadCli.exe.');
+    Assert.IsTrue(GetParent(LFormPrincipal) = 0, 'A form principal deve ser uma janela de topo.');
+    Assert.IsTrue(IsWindowVisible(LFormPrincipal), 'A form principal deve estar visivel.');
+    Assert.AreEqual('CadCli', TextoJanela(LFormPrincipal), 'O titulo da form principal deve ser CadCli.');
+    PostMessage(LFormPrincipal, WM_CLOSE, 0, 0);
     Assert.IsTrue(AguardarEncerramento(LProcesso, LIMITE_ENCERRAMENTO_MS, LCodigoSaida),
-      'CadCli.exe deve encerrar em ate 30 s depois de fechar o shell.');
+      'CadCli.exe deve encerrar em ate 30 s depois de fechar a form principal.');
     Assert.AreEqual(Cardinal(0), LCodigoSaida, 'CadCli.exe deve encerrar com codigo 0.');
   finally
     LiberarProcesso(LProcesso);
@@ -722,7 +722,7 @@ begin
     Assert.IsFalse(TDirectory.Exists(TPath.Combine(FDiretorio, LPadrao)),
       'A copia da entrega nao pode conter o subdiretorio ' + LPadrao + '.');
 
-  LTerminou := ExecutarFechandoShell(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio,
+  LTerminou := ExecutarFechandoFormPrincipal(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio,
     120000, LCodigoSaida);
   Assert.IsTrue(LTerminou,
     'CadCli.exe nao encerrou: a inicializacao travou, provavelmente em um dialogo de erro.');
@@ -890,7 +890,7 @@ begin
   LExecutavel := TPath.Combine(FDiretorio, 'CadCli.exe');
   LBanco := TPath.Combine(FDiretorio, 'cadcli.fdb');
 
-  LTerminou := ExecutarFechandoShell(LExecutavel, FDiretorio, 120000, LCodigoSaida);
+  LTerminou := ExecutarFechandoFormPrincipal(LExecutavel, FDiretorio, 120000, LCodigoSaida);
   Assert.IsTrue(LTerminou, 'CadCli.exe nao encerrou na primeira execucao.');
   Assert.AreEqual(Cardinal(0), LCodigoSaida);
 
@@ -932,20 +932,20 @@ begin
     'O instante do log não pode ser posterior ao encerramento do processo.');
 end;
 
-procedure TTestesAplicacaoRelease.ExecutavelReleaseExibeShellEEncerraComCodigoZero;
+procedure TTestesAplicacaoRelease.ExecutavelReleaseExibeFormPrincipalEEncerraComCodigoZero;
 begin
   CopiarEntregaSemBase(FDiretorio);
-  ExecutarAteShellEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio);
+  ExecutarAteFormPrincipalEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio);
 end;
 
-procedure TTestesAplicacaoRelease.ExecutavelReleaseRecusadoNaoExibeShell;
+procedure TTestesAplicacaoRelease.ExecutavelReleaseRecusadoNaoExibeFormPrincipal;
 var
   LCatalogo: TCatalogoMigracoes;
   LInicializador: TInicializadorBanco;
   LMensagem: string;
   LProcesso: TProcessInformation;
   LCodigoSaida: Cardinal;
-  LShellExistiu: Boolean;
+  LFormPrincipalExistiu: Boolean;
 begin
   CopiarEntregaSemBase(FDiretorio);
   LCatalogo := CriarCatalogoPadrao;
@@ -965,13 +965,13 @@ begin
 
   LProcesso := IniciarProcesso(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio, '-sem-interacao');
   try
-    Assert.IsTrue(AguardarEncerramento(LProcesso, 120000, LCodigoSaida, LShellExistiu),
+    Assert.IsTrue(AguardarEncerramento(LProcesso, 120000, LCodigoSaida, LFormPrincipalExistiu),
       'CadCli.exe recusado deve encerrar em ate 120 s.');
   finally
     LiberarProcesso(LProcesso);
   end;
   Assert.AreEqual(Cardinal(1), LCodigoSaida, 'Uma inicializacao recusada deve encerrar com codigo 1.');
-  Assert.IsFalse(LShellExistiu, 'Nenhuma janela TFormPrincipal pode existir quando a inicializacao e recusada.');
+  Assert.IsFalse(LFormPrincipalExistiu, 'Nenhuma janela TFormPrincipal pode existir quando a inicializacao e recusada.');
 end;
 
 procedure TTestesAplicacaoRelease.ExecutavelReleaseAbreSemDelphiNemDevExpressNoPath;
@@ -982,7 +982,7 @@ begin
   LPath := PathSemDelphiNemDevExpress;
   Assert.IsFalse(ContainsText(LPath, 'Embarcadero'), 'O PATH do filho nao pode conter Embarcadero.');
   Assert.IsFalse(ContainsText(LPath, 'DevExpress'), 'O PATH do filho nao pode conter DevExpress.');
-  ExecutarAteShellEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio, AmbienteComPath(LPath));
+  ExecutarAteFormPrincipalEFechar(TPath.Combine(FDiretorio, 'CadCli.exe'), FDiretorio, AmbienteComPath(LPath));
 end;
 
 initialization

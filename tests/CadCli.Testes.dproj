@@ -48,7 +48,7 @@
     <DCCReference Include="Suporte\Suporte.ProcessoAplicacao.pas" />
     <DCCReference Include="Suporte\Suporte.CaminhosTeste.pas" />
     <DCCReference Include="Suporte\Suporte.FakesMigracao.pas" />
-    <DCCReference Include="Suporte\Suporte.FakesShell.pas" />
+    <DCCReference Include="Suporte\Suporte.FakesFormPrincipal.pas" />
     <DCCReference Include="Unitarios\Testes.CatalogoExecutor.pas" />
     <DCCReference Include="Unitarios\Testes.ControladorPrincipal.pas" />
     <DCCReference Include="Unitarios\Testes.EntregaRunner.pas" />

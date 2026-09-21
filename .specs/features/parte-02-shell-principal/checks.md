@@ -28,7 +28,7 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesControladorPrinci
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesControladorPrincipal.MensagemDeFalhaNaoRepassaTextoDaExcecao`
 
 **C7** - As units que declaram `TControladorPrincipal`, `IVisaoPrincipal` e `INavegadorAplicacao` não referenciam em `uses` nenhuma unit `Vcl.*`, `dx*`, `cx*`, `FireDAC.*`, `ppReport*` nem unit de form do projeto, e `TControladorPrincipal` pode ser criado e acionado nas 3 ações com visão e navegador falsos sem criar nenhuma form (`Screen.FormCount` inalterado) (door 2; AGENTS: controladores)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaShell.ControladorENavegacaoNaoDependemDeVclNemDevExpress`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaFormPrincipal.ControladorENavegacaoNaoDependemDeVclNemDevExpress`
 
 **C8** - O navegador concreto, em `AbrirClientes`, cria exatamente 1 instância da tela de destino de clientes, exibe-a modalmente - durante a exibição a janela do shell está desabilitada (`IsWindowEnabled = False`) - e, ao fechá-la, destrói a instância, deixando `Screen.FormCount` igual ao valor anterior à chamada (S1, AC 3; Assumption: modo de abertura)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesNavegadorAplicacao.AbrirClientesExibeUmaInstanciaModalELibera`
@@ -40,7 +40,7 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesNavegadorAplicaca
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesNavegadorAplicacao.AcionamentosConsecutivosNuncaMantemDuasInstancias`
 
 **C11** - `EncerrarAplicacao` do navegador concreto fecha o shell que lhe foi entregue e deixa `ExitCode = 0` (S1, AC 2)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesNavegadorAplicacao.EncerrarAplicacaoFechaShellComCodigoZero`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesNavegadorAplicacao.EncerrarAplicacaoFechaFormPrincipalComCodigoZero`
 
 ### S2 - Tela principal DevExpress
 
@@ -54,22 +54,22 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.Cad
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.CadaSubmenuDelegaSomenteAoControlador`
 
 **C15** - A unit de `TFormPrincipal` não referencia em `uses` nenhuma unit `FireDAC.*`, `Infraestrutura.*`, `Migracao.*`, `Repositorio*` nem outra unit de form do projeto, e a classe declara exatamente 1 campo do tipo `TControladorPrincipal` (S1, AC 5; door 1)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaShell.FormPrincipalSoConheceSeuControlador`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaFormPrincipal.FormPrincipalSoConheceSeuControlador`
 
 **C16** - `TFormPrincipal` implementa `IVisaoPrincipal` (`Supports` retorna `True`) e é a única classe do projeto que a implementa (door 1)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaShell.FormPrincipalImplementaVisaoPrincipal`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaFormPrincipal.FormPrincipalImplementaVisaoPrincipal`
 
 **C17** - Todo controle visual e todo componente de barra de `TFormPrincipal` pertence a uma classe declarada em unit cujo nome começa por `dx` ou `cx`; zero controles `Vcl.StdCtrls`, `Vcl.ExtCtrls`, `Vcl.ComCtrls` ou `Vcl.Menus` (S1, AC 1 "tela DevExpress")
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.TodosOsControlesSaoDevExpress`
 
 **C18** - Os textos do shell são: título da janela `CadCli`; cabeçalho `CadCli - Cadastro de Clientes`; área central `Bem-vindo! Use o menu para acessar o cadastro e o relatório de clientes.`; barra de status `Versão ` seguido do `FileVersion` lido do recurso de versão do executável em execução (Assumption: layout criativo; Observable: empty state)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.TextosDoShellSaoOsDefinidos`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.TextosDoFormPrincipalSaoOsDefinidos`
 
 **C19** - O arranjo do shell é: barra de menu no topo; cabeçalho com `Align = alTop`; área de boas-vindas com `Align = alClient`; barra de status com `Align = alBottom`; e, com a form exibida, `cabeçalho.Top < boas-vindas.Top < status.Top` (Assumption: layout criativo; Observable: density and ordering)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.ArranjoCabecalhoCentroEStatus`
 
 **C20** - Em um `TFormPrincipal` real com navegador falso que falha em `AbrirClientes`, acionar `Cliente` apresenta exatamente 1 vez a mensagem `Não foi possível abrir o cadastro de clientes.` como erro, e em seguida o shell continua `Visible = True`, com janela habilitada, e acionar `Relatório` chega ao navegador exatamente 1 vez (S1, AC 6; Observable: error state)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.FalhaDeAberturaMostraErroEMantemShellUtilizavel`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.FalhaDeAberturaMostraErroEMantemFormPrincipalUtilizavel`
 
 **C27** - O apresentador de erro usado pelo `CadCli.exe` exibe o diálogo modal com título exatamente `CadCli` e com o texto recebido exatamente como mensagem, e ao fechá-lo libera o diálogo, deixando `Screen.FormCount` igual ao valor anterior (S1, AC 6; Observable: error state; AGENTS: títulos em português)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesApresentadorErro.DialogoDeErroTemTituloCadCliEMostraAMensagem`
@@ -77,10 +77,10 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesApresentadorErro.
 ### S3 - Composição do `CadCli.exe`
 
 **C21** - O `CadCli.exe` Release, executado numa cópia da entrega sem `cadcli.fdb`, exibe em até 60 s uma janela de topo visível da classe `TFormPrincipal`, pertencente ao seu processo, com título `CadCli`; após `WM_CLOSE` nessa janela, o processo encerra em até 30 s com código `0` (S1, AC 1, AC 2; Flow hops 1 e 4; door 1)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesAplicacaoRelease.ExecutavelReleaseExibeShellEEncerraComCodigoZero`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesAplicacaoRelease.ExecutavelReleaseExibeFormPrincipalEEncerraComCodigoZero`
 
 **C22** - Com a inicialização recusada (base em versão futura), o `CadCli.exe` Release com `-sem-interacao` encerra em até 120 s com código `1` e nenhuma janela da classe `TFormPrincipal` pertencente ao processo chega a existir; e as provas de executável da Parte 01 (C17, C20) continuam verdes com todas as suas asserções (Flow hop 1; Parte 01 C8, C17, C20)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesAplicacaoRelease.ExecutavelReleaseRecusadoNaoExibeShell`
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesAplicacaoRelease.ExecutavelReleaseRecusadoNaoExibeFormPrincipal`
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesAplicacaoRelease.ExecutavelReleaseCriaBaseCompletaAoLado`
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesAplicacaoRelease.ExecutavelReleaseRecusaVersaoFuturaERegistraOErro`
 

@@ -25,7 +25,7 @@ uses
   Testes.NavegadorAplicacao in 'Unitarios\Testes.NavegadorAplicacao.pas',
   Suporte.CaminhosTeste in 'Suporte\Suporte.CaminhosTeste.pas',
   Suporte.FakesMigracao in 'Suporte\Suporte.FakesMigracao.pas',
-  Suporte.FakesShell in 'Suporte\Suporte.FakesShell.pas',
+  Suporte.FakesFormPrincipal in 'Suporte\Suporte.FakesFormPrincipal.pas',
   Aplicacao.CatalogoMigracoes in '..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas',
   Aplicacao.ControladorPrincipal in '..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas',
   Aplicacao.ExecutorMigracoes in '..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas',
@@ -56,7 +56,7 @@ begin
      StartsText('TTestesRunnerDUnitX.', Result) then
     Exit('Testes.EntregaRunner.' + Result);
   if StartsText('TTestesControladorPrincipal.', Result) or
-     StartsText('TTestesArquiteturaShell.', Result) then
+     StartsText('TTestesArquiteturaFormPrincipal.', Result) then
     Exit('Testes.ControladorPrincipal.' + Result);
   if StartsText('TTestesNavegadorAplicacao.', Result) then
     Exit('Testes.NavegadorAplicacao.' + Result);

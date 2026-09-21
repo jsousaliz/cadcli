@@ -6,16 +6,16 @@ uses
   Vcl.Forms,
   Aplicacao.NavegadorAplicacao;
 
-function ComporNavegador(AShell: TForm): INavegadorAplicacao;
+function ComporNavegador(AFormPrincipal: TForm): INavegadorAplicacao;
 
 implementation
 
 uses
   Visao.NavegadorAplicacao;
 
-function ComporNavegador(AShell: TForm): INavegadorAplicacao;
+function ComporNavegador(AFormPrincipal: TForm): INavegadorAplicacao;
 begin
-  Result := TNavegadorAplicacao.Create(AShell);
+  Result := TNavegadorAplicacao.Create(AFormPrincipal);
 end;
 
 end.

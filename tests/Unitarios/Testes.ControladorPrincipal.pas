@@ -5,7 +5,7 @@ interface
 uses
   DUnitX.TestFramework,
   Aplicacao.ControladorPrincipal,
-  Suporte.FakesShell;
+  Suporte.FakesFormPrincipal;
 
 type
   [TestFixture]
@@ -36,7 +36,7 @@ type
   end;
 
   [TestFixture]
-  TTestesArquiteturaShell = class
+  TTestesArquiteturaFormPrincipal = class
   public
     [Test]
     procedure ControladorENavegacaoNaoDependemDeVclNemDevExpress;
@@ -209,7 +209,7 @@ begin
   Result := (LContexto.GetType(ATipo) as TRttiInterfaceType).DeclaringUnitName;
 end;
 
-procedure TTestesArquiteturaShell.ControladorENavegacaoNaoDependemDeVclNemDevExpress;
+procedure TTestesArquiteturaFormPrincipal.ControladorENavegacaoNaoDependemDeVclNemDevExpress;
 const
   PREFIXOS_PROIBIDOS: array[0..4] of string = ('Vcl.', 'dx', 'cx', 'FireDAC.', 'ppReport');
 var
@@ -256,7 +256,7 @@ begin
     'O controlador não pode criar forms.');
 end;
 
-procedure TTestesArquiteturaShell.FormPrincipalSoConheceSeuControlador;
+procedure TTestesArquiteturaFormPrincipal.FormPrincipalSoConheceSeuControlador;
 const
   PREFIXOS_PROIBIDOS: array[0..3] of string = ('FireDAC.', 'Infraestrutura.', 'Migracao.',
     'Repositorio');
@@ -288,7 +288,7 @@ begin
     'TFormPrincipal deve declarar exatamente um campo TControladorPrincipal.');
 end;
 
-procedure TTestesArquiteturaShell.FormPrincipalImplementaVisaoPrincipal;
+procedure TTestesArquiteturaFormPrincipal.FormPrincipalImplementaVisaoPrincipal;
 var
   LContexto: TRttiContext;
   LTipo: TRttiType;
@@ -312,6 +312,6 @@ end;
 
 initialization
   TDUnitX.RegisterTestFixture(TTestesControladorPrincipal);
-  TDUnitX.RegisterTestFixture(TTestesArquiteturaShell);
+  TDUnitX.RegisterTestFixture(TTestesArquiteturaFormPrincipal);
 
 end.
