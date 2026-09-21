@@ -21,9 +21,9 @@
 ## Handoff
 
 **Feature**: `parte-02-shell-principal`
-**Where**: `plan.md` e `checks.md` aprovados, com C24-C26 e a door 4 acrescentadas em 2026-09-21 por AD-011/AD-012; nenhum código escrito
+**Where**: build concluído e verificado em `feat/parte-02-shell-principal` (35344fb..f3a79db); `verification.md` com veredito PASS no round 3 (27/27 checks, 0 membros sem prova, faltas injetadas todas mortas); C27 acrescentada com aprovação do usuário a partir do round 1; AD-013 registrada durante o build
 **In progress**: nada
-**Next step**: build em sessão nova: ler `AGENTS.md`, este arquivo e `checks.md` (a seção `## Handoff` lista pré-requisitos, riscos e a ordem sugerida, começando pelo spike do DevExpress trial); depois dispatch do Verifier sobre `<base>..HEAD`
+**Next step**: smoke test visual dos três caminhos pelo usuário (copiar `bin\Win64\Release` para outra pasta antes de executar, para não criar `cadcli.fdb` na pasta de entrega); push/PR só com autorização explícita; depois, plano da Parte 03
 **Blockers**: nenhum; C21, C22 e C25 exigem o serviço Firebird 3 em `localhost:3050`
 **Uncommitted**: nenhum
-**Branch**: `feat/parte-01-firebird-servico` (criar `feat/parte-02-shell-principal` a partir dela antes do primeiro commit de código)
+**Branch**: `feat/parte-02-shell-principal` (criada a partir de `feat/parte-01-firebird-servico`)
