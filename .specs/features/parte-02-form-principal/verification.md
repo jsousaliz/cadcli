@@ -1,8 +1,8 @@
-# Parte 02 - Shell principal e navegação verification
+# Parte 02 - Form principal e navegação verification
 
 **Verdict**: PASS
 **Profile**: ui
-**Diff range**: 35344fb..f3a79db (`feat/parte-02-shell-principal`, HEAD = f3a79db); fix under review fd2eb1c..f3a79db
+**Diff range**: 35344fb..f3a79db (`feat/parte-02-form-principal`, HEAD = f3a79db); fix under review fd2eb1c..f3a79db
 **Round**: 3 - scoped
 **Verifier**: independent sub-agent (author != verifier)
 
@@ -28,7 +28,7 @@ Enumeração do estado de erro (diálogo de `TApresentadorErroDialogo`). As linh
 | modal, exibido uma vez, liberado ao fechar | `ShowModal` / `Free` (:40, :42) | C27 (:363 exibido 1x como modal, :367 liberação) |
 | ícone de erro, botão `OK` | `mtError`, `[mbOK]` | sem check próprio; as fontes não decidem nenhum dos dois (carried from 21d51de) |
 
-O smoke test interativo (Independent test do plano) continua **com o usuário**, porque o Verifier não tem uma tela para operar. Esperado: `Cadastros > Cliente` e `Relatórios > Relatório` mostram, cada um, um diálogo de erro com título `CadCli` e a mensagem da ação, e o shell continua utilizável. `Sistema > Sair` fecha o app, e o aviso trial do DevExpress aparece antes do shell (AD-013). Não rodei o `bin\Win64\Release\CadCli.exe` no lugar.
+O smoke test interativo (Independent test do plano) continua **com o usuário**, porque o Verifier não tem uma tela para operar. Esperado: `Cadastros > Cliente` e `Relatórios > Relatório` mostram, cada um, um diálogo de erro com título `CadCli` e a mensagem da ação, e a form principal continua utilizável. `Sistema > Sair` fecha o app, e o aviso trial do DevExpress aparece antes da form principal (AD-013). Não rodei o `bin\Win64\Release\CadCli.exe` no lugar.
 
 ## Checks
 
@@ -49,22 +49,22 @@ As citações de `tests/Unitarios/Testes.FormPrincipal.pas` (C12-C20, C27) foram
 | C5 | falha relatório: idem, Cliente seguinte 1x | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.ControladorPrincipal.pas:121`; :126; :127 `AreEqual('Não foi possível abrir o relatório de clientes.', Erros[0])`; :129 | PASS |
 | C6 | mensagem não repassa `SYSDBA masterkey Password=x` | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.ControladorPrincipal.pas:148` `AreEqual(ESPERADAS[I], Erros[I])`; :149-151 `IsFalse(Contains(...))` | PASS |
 | C7 | controlador/visão/navegador sem VCL/DevExpress/FireDAC/forms | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.ControladorPrincipal.pas:234` `IsFalse(StartsText(LPrefixo, LReferencia))`; :236; :255 `AreEqual(LFormsAntes, Screen.FormCount)` | PASS |
-| C8 | AbrirClientes: 1 instância modal, shell desabilitado, liberada | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.NavegadorAplicacao.pas:143` `AreEqual(1, Criadas)`; :145 `IsTrue(ModalDuranteExibicao)`; :146; :148 `AreEqual(0, Vivas)`; :149 | PASS |
+| C8 | AbrirClientes: 1 instância modal, form principal desabilitada, liberada | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.NavegadorAplicacao.pas:143` `AreEqual(1, Criadas)`; :145 `IsTrue(ModalDuranteExibicao)`; :146; :148 `AreEqual(0, Vivas)`; :149 | PASS |
 | C9 | AbrirRelatorio: idem | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.NavegadorAplicacao.pas:163`; :165; :166; :168; :169 | PASS |
 | C10 | 2 acionamentos -> 2 instâncias, máx. 1 viva | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.NavegadorAplicacao.pas:182` `AreEqual(2, Criadas)`; :185 `AreEqual(1, MaximoVivas)` | PASS |
-| C11 | Encerrar fecha o shell, ExitCode 0 | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.NavegadorAplicacao.pas:200` `AreEqual(1, Fechamentos)`; :201; :202 `AreEqual(0, ExitCode)` | PASS |
+| C11 | Encerrar fecha a form principal, ExitCode 0 | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.NavegadorAplicacao.pas:200` `AreEqual(1, Fechamentos)`; :201; :202 `AreEqual(0, ExitCode)` | PASS |
 | C12 | 1 TdxBar IsMainMenu no topo; `Sistema`,`Cadastros`,`Relatórios` esquerda->direita | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:90` `AreEqual(1, Integer(Length(LBarras)))`; :126 `IsTrue(LMenu.DockingStyle = dsTop)`; :127 `AreEqual(3, LMenu.ItemLinks.Count)`; :129 `AreEqual(ESPERADAS[I], Legenda(SubItem(LMenu, I).Caption))`; :134 `ItemRect.Left >`; :136 mesmo `Top` | PASS |
 | C13 | cada menu com exatamente 1 link: Sair/Cliente/Relatório | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:154` `AreEqual(1, LSubItem.ItemLinks.Count)`; :156 `AreEqual(ESPERADOS[I], Legenda(LSubItem.ItemLinks[0].Item.Caption))` | PASS |
-| C14 | Click nos itens da form real -> 1 chamada cada, nenhuma form | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:166-168`, :170-172, :174-176 contagens 1/0/0, 1/1/0, 1/1/1; :177 `AreEqual(LFormsComShell, Screen.FormCount)` | PASS |
+| C14 | Click nos itens da form real -> 1 chamada cada, nenhuma form | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:166-168`, :170-172, :174-176 contagens 1/0/0, 1/1/0, 1/1/1; :177 `AreEqual(LFormsComFormPrincipal, Screen.FormCount)` | PASS |
 | C15 | unit da form sem dados/outras forms; 1 campo de controlador | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.ControladorPrincipal.pas:277`; :279; :287 `AreEqual(1, LCamposControlador)` | PASS |
 | C16 | TFormPrincipal é a única IVisaoPrincipal | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.ControladorPrincipal.pas:298` `IsTrue(Supports(TFormPrincipal, IVisaoPrincipal))`; :307; :310 | PASS |
 | C17 | só controles/componentes `dx`/`cx` | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:226` `IsTrue(UnitDevExpress(LComponente.ClassType))`; :202 controles; :230 `AreEqual(0, LProibidos)`; :231 `IsTrue(LVerificados >= 11)` | PASS |
-| C18 | textos do shell + `Versão <FileVersion>` | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:264` `AreNotEqual('1.0.0.0', LVersao)`; :266 `AreEqual('CadCli', FForm.Caption)`; :267 cabeçalho; :268 boas-vindas; :270 `AreEqual(1, Panels.Count)`; :271 `AreEqual('Versão ' + LVersao, Panels[0].Text)` | PASS |
+| C18 | textos da form principal + `Versão <FileVersion>` | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:264` `AreNotEqual('1.0.0.0', LVersao)`; :266 `AreEqual('CadCli', FForm.Caption)`; :267 cabeçalho; :268 boas-vindas; :270 `AreEqual(1, Panels.Count)`; :271 `AreEqual('Versão ' + LVersao, Panels[0].Text)` | PASS |
 | C19 | arranjo menu/alTop/alClient/alBottom e ordem vertical | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:279` dsTop; :280 `Align = alTop`; :281 `alClient`; :282 `alBottom`; :286 menu acima do cabeçalho; :290 `RotuloCabecalho.Top < RotuloBoasVindas.Top`; :292 `RotuloBoasVindas.Top < BarraStatus.Top` | PASS |
-| C20 | form real, falha em clientes: 1 mensagem, shell utilizável, Relatório 1x | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:302` `AreEqual(1, Mensagens.Count)`; :303 texto; :304 `IsTrue(FForm.Visible)`; :305 `IsTrue(IsWindowEnabled(FForm.Handle))`; :307 `AreEqual(1, ChamadasRelatorio)` | PASS |
+| C20 | form real, falha em clientes: 1 mensagem, form principal utilizável, Relatório 1x | batch em f3a79db exit 0 | `tests/Unitarios/Testes.FormPrincipal.pas:302` `AreEqual(1, Mensagens.Count)`; :303 texto; :304 `IsTrue(FForm.Visible)`; :305 `IsTrue(IsWindowEnabled(FForm.Handle))`; :307 `AreEqual(1, ChamadasRelatorio)` | PASS |
 | C27 | apresentador do exe: diálogo modal com título exatamente `CadCli` e o texto recebido exatamente como mensagem, liberado ao fechar | batch em f3a79db exit 0; isolada exit 0 (1/1) (def `tests/Unitarios/Testes.FormPrincipal.pas:311`) | diálogo **exibido** por `ApresentarErro(MENSAGEM)` (:357), capturado em `CapturarDialogoExibido` (`Application.OnIdle`, :353) sobre o `TMessageForm` com `Visible` e `fsModal` (:381): `tests/Unitarios/Testes.FormPrincipal.pas:363` `Assert.AreEqual(1, FExibicoes, ...)`; :364 `Assert.AreEqual('CadCli', FTituloJanela, ...)` (texto da janela exibida, :383); :365 `Assert.AreEqual(MENSAGEM, FMensagemExibida, ...)` (rótulo `Message` do diálogo exibido, :384-386); :367 `Assert.AreEqual(LFormsAntes, Screen.FormCount, ...)`. Os 4 mutantes do apresentador foram mortos (ver Faults) | PASS |
-| C21 | exe Release: shell `CadCli` em 60 s, WM_CLOSE -> 0 | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.IntegracaoFirebird.pas:441` `IsTrue(LShell <> 0)`; :444; :446; :448 `AreEqual('CadCli', TextoJanela(LShell))`; :452 `AreEqual(Cardinal(0), LCodigoSaida)` | PASS |
-| C22 | recusa com `-sem-interacao`: sai 1, sem shell; Parte 01 C17/C20 verdes | batch em f3a79db exit 0 (3 provas) | carried from 21d51de: `tests/Unitarios/Testes.IntegracaoFirebird.pas:971` `AreEqual(Cardinal(1), LCodigoSaida)`; :972 `IsFalse(LShellExistiu)`; Parte 01 :725/:727/:728/:733-738, :892/:893/:911/:913/:915/:918 | PASS |
+| C21 | exe Release: form principal `CadCli` em 60 s, WM_CLOSE -> 0 | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.IntegracaoFirebird.pas:441` `IsTrue(LFormPrincipal <> 0)`; :444; :446; :448 `AreEqual('CadCli', TextoJanela(LFormPrincipal))`; :452 `AreEqual(Cardinal(0), LCodigoSaida)` | PASS |
+| C22 | recusa com `-sem-interacao`: sai 1, sem form principal; Parte 01 C17/C20 verdes | batch em f3a79db exit 0 (3 provas) | carried from 21d51de: `tests/Unitarios/Testes.IntegracaoFirebird.pas:971` `AreEqual(Cardinal(1), LCodigoSaida)`; :972 `IsFalse(LFormPrincipalExistiu)`; Parte 01 :725/:727/:728/:733-738, :892/:893/:911/:913/:915/:918 | PASS |
 | C23 | navegador como no exe: lança nos dois destinos sem criar form | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.NavegadorAplicacao.pas:218`, :223 `Assert.WillRaiseAny`; :228; :240-241 | PASS |
 | C24 | entrega = fechamento de BPLs importadas, 1 exe | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.EntregaRunner.pas:196` `AreEqual(1, Length(LExecutaveis))`; :200; :209/:211; :214; :217; :219 | PASS |
 | C25 | exe abre sem Embarcadero/DevExpress no PATH | batch em f3a79db exit 0 | carried from 21d51de: `tests/Unitarios/Testes.IntegracaoFirebird.pas:981-982` `IsFalse(ContainsText(LPath, ...))`; :983 -> :441-452 | PASS |
@@ -120,7 +120,7 @@ Verified at f3a79db, nas superfícies de `src/Visao/Visao.ApresentadorErro.pas` 
 
 - **Isolamento:** `git worktree add C:\Users\ENVOLT~1.JEA\AppData\Local\Temp\cadcli-wt3 HEAD` (f3a79db). Uma primeira tentativa criou o worktree num caminho errado (`...\LocalCache\Local\Tempcadcli-wt3`). Ele foi removido com `git worktree remove --force` + `prune` antes de qualquer mutação.
 - **Execução:** para cada mutação, apliquei a mudança sobre o texto original do arquivo no worktree e recompilei só o runner Debug/Win64 no worktree (`msbuild tests\CadCli.Testes.dproj`). Depois rodei `--run:TTestesApresentadorErro.DialogoDeErroTemTituloCadCliEMostraAMensagem` com o runner do worktree. Controle: com o arquivo restaurado, o runner do worktree recompilado passou (exit 0, 1/1). Assim, as mortes vêm das mutações e não do ambiente do worktree.
-- **Árvore real:** o `git status --porcelain` antes era `?? .specs/LESSONS.md`, `?? .specs/features/parte-02-shell-principal/verification.md` e `?? .specs/lessons.json`, e depois estava idêntico.
+- **Árvore real:** o `git status --porcelain` antes era `?? .specs/LESSONS.md`, `?? .specs/features/parte-02-form-principal/verification.md` e `?? .specs/lessons.json`, e depois estava idêntico.
 - **Limpeza:** worktree removido com `git worktree remove --force` + `prune`; `git worktree list` mostra só a árvore real.
 
 | Mutation | Location | Killed |
@@ -135,7 +135,7 @@ Verified at f3a79db, nas superfícies de `src/Visao/Visao.ApresentadorErro.pas` 
 - Build f3a79db: `build.bat` (Release app + Debug runner) - exit 0
 - Proofs: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:<29 names>` - 29 passed, 0 failed (exit 0)
 - Full suite: `.\tests\bin\Win64\Debug\CadCli.Testes.exe` - 54 passed, 0 failed (exit 0)
-- `py .claude/skills/tlc-spec-lean/scripts/validate_verification.py parte-02-shell-principal` - exit 0 (0 errors, 0 warnings)
+- `py .claude/skills/tlc-spec-lean/scripts/validate_verification.py parte-02-form-principal` - exit 0 (0 errors, 0 warnings)
 
 ## Notes (non-blocking)
 

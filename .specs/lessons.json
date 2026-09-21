@@ -13,7 +13,7 @@
       "scope": "visao-dialogos",
       "status": "candidate",
       "features": [
-        "parte-02-shell-principal"
+        "parte-02-form-principal"
       ],
       "recurrence": 1,
       "harmful": 0,
@@ -31,7 +31,7 @@
       "scope": "visao-dialogos",
       "status": "candidate",
       "features": [
-        "parte-02-shell-principal"
+        "parte-02-form-principal"
       ],
       "recurrence": 1,
       "harmful": 0,

@@ -16,13 +16,13 @@ Seen once or not yet corroborated. Tracked, not trusted.
 
 ### L-001 - Assert the observable output on the object the production path actually shows, not on a separately built instance from the same factory
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `visao-dialogos` · harmful: 0
-- features: parte-02-shell-principal
+- features: parte-02-form-principal
 - evidence: src/Visao/Visao.ApresentadorErro.pas:38 (C27, round 2) (visao-dialogos)
 - last seen: 2026-09-21T17:36:25Z
 
 ### L-002 - When a check names several properties of a displayed dialog, assert each property on the displayed instance
 - signal: `ac_gap` · recurrence: 1 feature(s) · scope: `visao-dialogos` · harmful: 0
-- features: parte-02-shell-principal
+- features: parte-02-form-principal
 - evidence: C27 - tests/Unitarios/Testes.FormPrincipal.pas:323,357 (visao-dialogos)
 - last seen: 2026-09-21T17:36:26Z
 

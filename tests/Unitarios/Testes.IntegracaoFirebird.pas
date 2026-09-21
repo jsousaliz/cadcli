@@ -400,6 +400,8 @@ begin
 end;
 
 procedure CopiarArvore(const AOrigem, ADestino, ASubdiretorioIgnorado: string);
+const
+  ARQUIVOS_GERADOS_EM_EXECUCAO: array[0..1] of string = ('cadcli.fdb', 'cadcli-erro.log');
 var
   LArquivo: string;
   LSubdiretorio: string;
@@ -407,7 +409,12 @@ var
 begin
   TDirectory.CreateDirectory(ADestino);
   for LArquivo in TDirectory.GetFiles(AOrigem) do
-    TFile.Copy(LArquivo, TPath.Combine(ADestino, TPath.GetFileName(LArquivo)), True);
+  begin
+    LNome := TPath.GetFileName(LArquivo);
+    if MatchText(LNome, ARQUIVOS_GERADOS_EM_EXECUCAO) then
+      Continue;
+    TFile.Copy(LArquivo, TPath.Combine(ADestino, LNome), True);
+  end;
   for LSubdiretorio in TDirectory.GetDirectories(AOrigem) do
   begin
     LNome := TPath.GetFileName(LSubdiretorio);
