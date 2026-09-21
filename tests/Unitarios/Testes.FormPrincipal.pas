@@ -37,9 +37,17 @@ type
     procedure FalhaDeAberturaMostraErroEMantemShellUtilizavel;
   end;
 
+  [TestFixture]
+  TTestesApresentadorErro = class
+  public
+    [Test]
+    procedure DialogoDeErroTemTituloCadCliEMostraAMensagem;
+  end;
+
 implementation
 
 uses
+  Winapi.Messages,
   Winapi.Windows,
   System.Classes,
   System.StrUtils,
@@ -47,10 +55,12 @@ uses
   Vcl.Controls,
   Vcl.Forms,
   Vcl.Menus,
+  Vcl.StdCtrls,
   dxBar,
   Aplicacao.NavegadorAplicacao,
   Visao.ApresentadorErro,
-  Suporte.CaminhosTeste;
+  Suporte.CaminhosTeste,
+  Suporte.ProcessoAplicacao;
 
 function Legenda(const ACaption: string): string;
 begin
@@ -293,7 +303,63 @@ begin
     'O shell deve continuar navegando depois da falha.');
 end;
 
+procedure TTestesApresentadorErro.DialogoDeErroTemTituloCadCliEMostraAMensagem;
+const
+  MENSAGEM = 'Não foi possível abrir o cadastro de clientes.';
+  LIMITE_TENTATIVAS = 200;
+var
+  LDialogo: TForm;
+  LRotulo: TComponent;
+  LTitulo: string;
+  LVigia: TThread;
+  LApresentador: IApresentadorErro;
+  LFormsAntes: Integer;
+begin
+  LDialogo := TApresentadorErroDialogo.CriarDialogo(MENSAGEM);
+  try
+    Assert.AreEqual('CadCli', LDialogo.Caption, 'O título do diálogo de erro deve estar em português.');
+    LRotulo := LDialogo.FindComponent('Message');
+    Assert.IsTrue(LRotulo is TLabel, 'O diálogo deve apresentar a mensagem em um rótulo.');
+    Assert.AreEqual(MENSAGEM, TLabel(LRotulo).Caption);
+  finally
+    LDialogo.Free;
+  end;
+
+  LFormsAntes := Screen.FormCount;
+  LTitulo := '';
+  LVigia := TThread.CreateAnonymousThread(
+    procedure
+    var
+      LJanela: HWND;
+      I: Integer;
+    begin
+      for I := 1 to LIMITE_TENTATIVAS do
+      begin
+        LJanela := JanelaDoProcesso(GetCurrentProcessId, 'TMessageForm', True);
+        if LJanela <> 0 then
+        begin
+          LTitulo := TextoJanela(LJanela);
+          PostMessage(LJanela, WM_CLOSE, 0, 0);
+          Exit;
+        end;
+        Sleep(50);
+      end;
+    end);
+  LVigia.FreeOnTerminate := False;
+  LVigia.Start;
+  try
+    LApresentador := TApresentadorErroDialogo.Create;
+    LApresentador.ApresentarErro(MENSAGEM);
+    LVigia.WaitFor;
+  finally
+    LVigia.Free;
+  end;
+  Assert.AreEqual('CadCli', LTitulo, 'O diálogo real deve ser exibido com o título CadCli.');
+  Assert.AreEqual(LFormsAntes, Screen.FormCount, 'O diálogo deve ser liberado ao fechar.');
+end;
+
 initialization
   TDUnitX.RegisterTestFixture(TTestesFormPrincipal);
+  TDUnitX.RegisterTestFixture(TTestesApresentadorErro);
 
 end.

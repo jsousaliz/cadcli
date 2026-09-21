@@ -3,7 +3,7 @@
 Profile: ui
 Plan: `.specs/features/parte-02-shell-principal/plan.md`
 
-26 checks em 4 slices · 4 one-way doors · 0 questões abertas (Q1 e Q2 decididas em 2026-09-21: AD-009, AD-010; S4 acrescentada em 2026-09-21 por AD-011 e AD-012)
+27 checks em 4 slices · 4 one-way doors · 0 questões abertas (Q1 e Q2 decididas em 2026-09-21: AD-009, AD-010; S4 acrescentada em 2026-09-21 por AD-011 e AD-012; C27 acrescentada em 2026-09-21 pelo round 1 do Verifier, aprovada pelo usuário)
 
 ## Checks
 
@@ -71,6 +71,9 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.Arr
 **C20** - Em um `TFormPrincipal` real com navegador falso que falha em `AbrirClientes`, acionar `Cliente` apresenta exatamente 1 vez a mensagem `Não foi possível abrir o cadastro de clientes.` como erro, e em seguida o shell continua `Visible = True`, com janela habilitada, e acionar `Relatório` chega ao navegador exatamente 1 vez (S1, AC 6; Observable: error state)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesFormPrincipal.FalhaDeAberturaMostraErroEMantemShellUtilizavel`
 
+**C27** - O apresentador de erro usado pelo `CadCli.exe` exibe o diálogo modal com título exatamente `CadCli` e com o texto recebido exatamente como mensagem, e ao fechá-lo libera o diálogo, deixando `Screen.FormCount` igual ao valor anterior (S1, AC 6; Observable: error state; AGENTS: títulos em português)
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesApresentadorErro.DialogoDeErroTemTituloCadCliEMostraAMensagem`
+
 ### S3 - Composição do `CadCli.exe`
 
 **C21** - O `CadCli.exe` Release, executado numa cópia da entrega sem `cadcli.fdb`, exibe em até 60 s uma janela de topo visível da classe `TFormPrincipal`, pertencente ao seu processo, com título `CadCli`; após `WM_CLOSE` nessa janela, o processo encerra em até 30 s com código `0` (S1, AC 1, AC 2; Flow hops 1 e 4; door 1)
@@ -103,10 +106,10 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaFundac
 | submenus do door 3 (3) | `Sistema > Sair` C13 · `Cadastros > Cliente` C13 · `Relatórios > Relatório` C13 | - |
 | ações do controlador (3) | `Sair` C1/C14 · `Cliente` C2/C14 · `Relatório` C3/C14 | - |
 | métodos de `INavegadorAplicacao` - door 2 (3) | `EncerrarAplicacao` C1/C11 · `AbrirClientes` C2/C8/C10 · `AbrirRelatorio` C3/C9 | - |
-| falhas de abertura (2) | clientes C4/C20/C23 · relatório C5/C23 | - |
+| falhas de abertura (2) | clientes C4/C20/C23/C27 · relatório C5/C23/C27 | - |
 | destinos sem tela registrada nesta parte - AD-010 (2) | clientes C23 · relatório C23 | - |
 | screen `Principal` - estados aplicáveis do `Observable` (4) | empty C18 · loading Parte 01 C8 + C22 · error C4/C5/C20 · density and ordering C12/C19 | - |
-| screen `Principal` - textos (13) | título `CadCli` C18/C21 · cabeçalho C18 · boas-vindas C18 · status `Versão <FileVersion>` C18 · `Sistema` C12 · `Cadastros` C12 · `Relatórios` C12 · `Sair` C13 · `Cliente` C13 · `Relatório` C13 · erro de clientes C4/C20 · erro de relatório C5 · mensagem sem texto da exceção C6 | - |
+| screen `Principal` - textos (14) | título `CadCli` C18/C21 · cabeçalho C18 · boas-vindas C18 · status `Versão <FileVersion>` C18 · `Sistema` C12 · `Cadastros` C12 · `Relatórios` C12 · `Sair` C13 · `Cliente` C13 · `Relatório` C13 · erro de clientes C4/C20 · erro de relatório C5 · mensagem sem texto da exceção C6 · título `CadCli` do diálogo de erro C27 | - |
 | screen `Principal` - arranjo (4) | menu no topo C12/C19 · cabeçalho `alTop` C19 · boas-vindas `alClient` C19 · status `alBottom` C19 | - |
 | fronteiras do door 1 (4) | form implementa `IVisaoPrincipal` C16 · exatamente 1 `TControladorPrincipal` C15 · form sem acesso a dados C15 · form não cria outras forms C14/C15 | - |
 | fronteiras do door 2 (2) | controlador sem VCL/DevExpress/FireDAC C7 · controlador sem units de form C7 | - |
@@ -133,6 +136,7 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaFundac
 | Decide sem cruzar fronteira (`TControladorPrincipal`) | uma prova unitária no próprio nível, com visão e navegador falsos | uma asserção por ação (3) e por falha de abertura (2), mais a mensagem sem texto de exceção |
 | Adaptador VCL que decide ciclo de vida (navegador concreto) | uma prova no próprio nível com forms reais de teste | instância única, modalidade, liberação e encerramento com código `0` |
 | View passiva que não decide (`TFormPrincipal`) | uma prova no limite da form real | cada item de menu delega, textos, arranjo, controles DevExpress e erro mantendo o shell |
+| Adaptador VCL de apresentação de erro (`TApresentadorErroDialogo`) | uma prova no próprio nível exibindo o diálogo real | título `CadCli`, mensagem exata e liberação (C27) |
 | Entrada que apenas compõe (`CadCli.exe`) | uma prova executando o artefato entregue | sucesso exibe o shell e encerra com `0`; recusa encerra com `1` sem shell |
 
 Evidence:
@@ -143,7 +147,7 @@ Evidence:
 - `CadCli.dpr`: hoje o `TAutorizadorInterfaceAplicacao` não faz nada; passa a ser o ponto em que o shell é criado depois da Parte 01 C8 autorizar.
 - Closest analogue: `tests/Unitarios/Testes.InicializadorAplicacao.pas` (decisão com fakes) e `TTestesAplicacaoRelease` em `tests/Unitarios/Testes.IntegracaoFirebird.pas` (artefato entregue).
 
-Cost: 26 checks, ~24 provas novas em 4 fixtures novas e 1 existente, 2 provas da Parte 01 reescritas (C24, C26); 1 prova existente da Parte 01 (`ExecutavelReleaseCriaBaseCompletaAoLado`) passa a fechar o shell (AD-009).
+Cost: 27 checks, ~25 provas novas em 4 fixtures novas e 1 existente, 2 provas da Parte 01 reescritas (C24, C26); 1 prova existente da Parte 01 (`ExecutavelReleaseCriaBaseCompletaAoLado`) passa a fechar o shell (AD-009).
 
 ## Swept
 
@@ -155,7 +159,7 @@ Cost: 26 checks, ~24 provas novas em 4 fixtures novas e 1 existente, 2 provas da
 - data lifecycle: n/a - o shell não lê nem grava registros (Impact: stored data)
 - dependency failure: C4, C5, C20 - falha do navegador ou da tela de destino; C24, C25 - BPL ausente na entrega
 - state transitions: C20, C21, C22 - inicialização -> shell -> encerramento, e recusa sem shell
-- observability: C4, C5, C20 - mensagem ao usuário identificando a ação; nenhum requisito de log nesta parte
+- observability: C4, C5, C20, C27 - mensagem ao usuário identificando a ação, em diálogo com título `CadCli`; nenhum requisito de log nesta parte
 
 ## Decisões
 

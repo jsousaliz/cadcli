@@ -59,7 +59,8 @@ begin
     Exit('Testes.ControladorPrincipal.' + Result);
   if StartsText('TTestesNavegadorAplicacao.', Result) then
     Exit('Testes.NavegadorAplicacao.' + Result);
-  if StartsText('TTestesFormPrincipal.', Result) then
+  if StartsText('TTestesFormPrincipal.', Result) or
+     StartsText('TTestesApresentadorErro.', Result) then
     Exit('Testes.FormPrincipal.' + Result);
   if StartsText('TTestesInicializadorAplicacao.', Result) or
      StartsText('TTestesArquiteturaFundacao.', Result) then
