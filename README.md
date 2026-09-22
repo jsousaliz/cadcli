@@ -10,13 +10,24 @@ Os dados são armazenados em um banco Firebird 3 local. Na primeira execução, 
 2. Mantenha marcada a opção **Instalar Firebird 3**, a menos que o Firebird 3 x64 já esteja instalado como serviço local.
 3. Conclua a instalação e abra o CadCli pelo atalho criado.
 
+### Alerta do Windows ao abrir o instalador
+
+Ao executar o instalador, o Microsoft Defender SmartScreen pode exibir a mensagem **O Windows protegeu o computador**. Isso acontece porque o executável ainda não possui reputação reconhecida pelo SmartScreen e o fornecedor pode aparecer como desconhecido; o aviso, por si só, não indica que o arquivo esteja infectado.
+
+Antes de continuar, confirme que o instalador veio da página oficial de releases do CadCli e valide o arquivo `.sha256` publicado junto com ele. Depois, selecione **Mais informações**, confira o nome do executável e clique em **Executar assim mesmo**.
+
+<p align="center">
+  <img src="assets/instalador-help1.png" alt="SmartScreen com a opção Mais informações" width="48%">
+  <img src="assets/instalador-help2.png" alt="SmartScreen com a opção Executar assim mesmo" width="48%">
+</p>
+
 O instalador configura os arquivos necessários para executar o programa. O banco de dados é criado ao lado de `CadCli.exe` no primeiro uso e é preservado durante atualizações e na desinstalação.
 
 ## Aviso de versão trial
 
 Ao iniciar o CadCli, pode aparecer esta mensagem:
 
-<img src="assets/mensagem-trial.jpg" alt="Aviso da versão trial do DevExpress" width="20%">
+<img src="assets/mensagem-trial.jpg" alt="Aviso da versão trial do DevExpress" width="30%">
 
 Ela aparece porque o projeto foi compilado com uma instalação de avaliação do **DevExpress VCL**. O aviso é exibido pelo próprio DevExpress antes da tela principal e não representa erro no CadCli, no Firebird ou no banco de dados.
 
