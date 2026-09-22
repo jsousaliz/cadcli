@@ -6,6 +6,7 @@ uses
   DUnitX.TestFramework,
   FireDAC.Comp.Client,
   Dominio.FiltroCliente,
+  Dominio.FiltroRelatorioCliente,
   Aplicacao.CatalogoMigracoes,
   Aplicacao.RepositorioCliente,
   Infraestrutura.InicializadorBancoFireDAC;
@@ -23,6 +24,7 @@ type
     procedure InserirCliente(AId: Integer; const ANome, ACpfCnpj, ACep: string; ACidadeId: Integer;
       ADataNascimento: TDate);
     function CidadeId(const ANome: string): Integer;
+    function EstadoId(const AUf: string): Integer;
     procedure SemearBaseF5;
     function PesquisarNomes(const AFiltro: TFiltroCliente): string;
   public
@@ -54,6 +56,14 @@ type
     procedure OrdenaPorCadaColunaNasDuasDirecoesComAusentesPorUltimo;
     [Test]
     procedure PesquisaTrazCidadeUfEEstadoDoCliente;
+    [Test]
+    procedure RelatorioPorIntervaloIncluiOsDoisLimites;
+    [Test]
+    procedure RelatorioPorCidadeEstadoFiltraACombinacaoOuOEstado;
+    [Test]
+    procedure RelatorioTodosSemLimiteEmIdCrescente;
+    [Test]
+    procedure ListaEstadosECidadesDoEstadoPorNome;
   end;
 
 implementation
@@ -568,6 +578,184 @@ begin
   Assert.AreEqual('', LClientes[0].Cidade);
   Assert.AreEqual('', LClientes[0].Uf);
   Assert.AreEqual('', LClientes[0].Estado);
+end;
+
+function IdsDoRelatorio(const AClientes: TClientes): string;
+var
+  LCliente: TCliente;
+begin
+  Result := '';
+  for LCliente in AClientes do
+  begin
+    if Result <> '' then
+      Result := Result + ',';
+    Result := Result + IntToStr(LCliente.Id);
+  end;
+end;
+
+function FiltroIntervalo(ADe, AAte: Integer): TFiltroRelatorioCliente;
+begin
+  Result := Default(TFiltroRelatorioCliente);
+  Result.Modo := mrIntervalo;
+  Result.IdInicial := ADe;
+  Result.IdFinal := AAte;
+end;
+
+function FiltroCidadeEstado(AEstadoId, ACidadeId: Integer): TFiltroRelatorioCliente;
+begin
+  Result := Default(TFiltroRelatorioCliente);
+  Result.Modo := mrCidadeEstado;
+  Result.EstadoId := AEstadoId;
+  Result.CidadeId := ACidadeId;
+end;
+
+function FiltroTodos: TFiltroRelatorioCliente;
+begin
+  Result := Default(TFiltroRelatorioCliente);
+  Result.Modo := mrTodos;
+end;
+
+function TTestesRepositorioClienteFirebird.EstadoId(const AUf: string): Integer;
+begin
+  Result := Inteiro(Conexao, 'SELECT ID FROM ESTADO WHERE UF = :UF', [AUf]);
+end;
+
+function NomesDosEstados(const AEstados: TEstados): string;
+var
+  LEstado: TEstado;
+begin
+  Result := '';
+  for LEstado in AEstados do
+  begin
+    if Result <> '' then
+      Result := Result + ',';
+    Result := Result + LEstado.Uf + ' - ' + LEstado.Nome;
+  end;
+end;
+
+function NomesDasCidades(const ACidades: TCidades): string;
+var
+  LCidade: TCidade;
+begin
+  Result := '';
+  for LCidade in ACidades do
+  begin
+    if Result <> '' then
+      Result := Result + ',';
+    Result := Result + LCidade.Nome;
+  end;
+end;
+
+procedure TTestesRepositorioClienteFirebird.RelatorioPorIntervaloIncluiOsDoisLimites;
+type
+  TCasoIntervalo = record
+    De: Integer;
+    Ate: Integer;
+    Esperados: string;
+  end;
+const
+  CASOS: array[0..3] of TCasoIntervalo = (
+    (De: 2; Ate: 4; Esperados: '2,3,4'),
+    (De: 1; Ate: 1; Esperados: '1'),
+    (De: 4; Ate: 9; Esperados: '4,5'),
+    (De: 6; Ate: 9; Esperados: ''));
+var
+  LCaso: TCasoIntervalo;
+  LVerificados: Integer;
+begin
+  SemearBaseF5;
+  LVerificados := 0;
+  for LCaso in CASOS do
+  begin
+    Assert.AreEqual(LCaso.Esperados,
+      IdsDoRelatorio(FRepositorio.ListarParaRelatorio(FiltroIntervalo(LCaso.De, LCaso.Ate))),
+      Format('Intervalo %d..%d', [LCaso.De, LCaso.Ate]));
+    Inc(LVerificados);
+  end;
+  Assert.AreEqual(4, LVerificados, 'Os quatro intervalos devem ser asseridos.');
+end;
+
+procedure TTestesRepositorioClienteFirebird.RelatorioPorCidadeEstadoFiltraACombinacaoOuOEstado;
+type
+  TCasoLocalidade = record
+    Uf: string;
+    Cidade: string;
+    Esperados: string;
+  end;
+const
+  CASOS: array[0..5] of TCasoLocalidade = (
+    (Uf: 'SP'; Cidade: 'Campinas'; Esperados: '3,4'),
+    (Uf: 'MG'; Cidade: 'Mariana'; Esperados: '2'),
+    (Uf: 'SP'; Cidade: 'Santos'; Esperados: ''),
+    (Uf: 'MG'; Cidade: ''; Esperados: '1,2'),
+    (Uf: 'SP'; Cidade: ''; Esperados: '3,4'),
+    (Uf: 'RJ'; Cidade: ''; Esperados: ''));
+var
+  LCaso: TCasoLocalidade;
+  LCidadeId: Integer;
+  LVerificados: Integer;
+begin
+  SemearBaseF5;
+  LVerificados := 0;
+  for LCaso in CASOS do
+  begin
+    if LCaso.Cidade = '' then
+      LCidadeId := 0
+    else
+      LCidadeId := CidadeId(LCaso.Cidade);
+    Assert.AreEqual(LCaso.Esperados, IdsDoRelatorio(FRepositorio.ListarParaRelatorio(
+      FiltroCidadeEstado(EstadoId(LCaso.Uf), LCidadeId))),
+      Format('Estado %s, cidade "%s"', [LCaso.Uf, LCaso.Cidade]));
+    Inc(LVerificados);
+  end;
+  Assert.AreEqual(6, LVerificados, 'As seis combinações devem ser asseridas.');
+end;
+
+procedure TTestesRepositorioClienteFirebird.RelatorioTodosSemLimiteEmIdCrescente;
+var
+  I: Integer;
+  LClientes: TClientes;
+  LEsperados: string;
+begin
+  for I := 60 downto 1 do
+    InserirCliente(I, Format('Cliente %.2d', [61 - I]), '52998224725', '13010000',
+      CidadeId('Campinas'), EncodeDate(1980, 1, 1));
+  FRepositorio := TRepositorioClienteFireDAC.Create(Conexao);
+
+  LClientes := FRepositorio.ListarParaRelatorio(FiltroTodos);
+  Assert.AreEqual(60, Integer(Length(LClientes)), 'O relatório não corta os clientes.');
+  LEsperados := '';
+  for I := 1 to 60 do
+  begin
+    if LEsperados <> '' then
+      LEsperados := LEsperados + ',';
+    LEsperados := LEsperados + IntToStr(I);
+  end;
+  Assert.AreEqual(LEsperados, IdsDoRelatorio(LClientes), 'Os IDs vêm em ordem crescente.');
+
+  Conexao.ExecSQL('DELETE FROM CLIENTE');
+  SemearBaseF5;
+  LClientes := FRepositorio.ListarParaRelatorio(FiltroTodos);
+  Assert.AreEqual('1,2,3,4,5', IdsDoRelatorio(LClientes));
+  Assert.AreEqual('Centro', LClientes[2].Bairro, 'O cliente 3 traz o bairro.');
+  Assert.AreEqual('Campinas', LClientes[2].Cidade, 'O cliente 3 traz a cidade.');
+  Assert.AreEqual('SP', LClientes[2].Uf, 'O cliente 3 traz a UF.');
+  Assert.AreEqual('São Paulo', LClientes[2].Estado, 'O cliente 3 traz o estado.');
+  Assert.AreEqual('', LClientes[4].Cidade, 'O cliente 5 não tem cidade.');
+  Assert.AreEqual('', LClientes[4].Uf, 'O cliente 5 não tem UF.');
+  Assert.AreEqual('', LClientes[4].Estado, 'O cliente 5 não tem estado.');
+end;
+
+procedure TTestesRepositorioClienteFirebird.ListaEstadosECidadesDoEstadoPorNome;
+begin
+  SemearBaseF5;
+
+  Assert.AreEqual('BA - Bahia,MG - Minas Gerais,RJ - Rio de Janeiro,SP - São Paulo',
+    NomesDosEstados(FRepositorio.ListarEstados), 'Os estados vêm por nome.');
+  Assert.AreEqual('Belo Horizonte,Contagem,Mariana,Uberlândia',
+    NomesDasCidades(FRepositorio.ListarCidades(EstadoId('MG'))), 'As cidades de MG vêm por nome.');
+  Assert.AreEqual('Campinas,Santos,São Paulo',
+    NomesDasCidades(FRepositorio.ListarCidades(EstadoId('SP'))), 'As cidades de SP vêm por nome.');
 end;
 
 initialization
