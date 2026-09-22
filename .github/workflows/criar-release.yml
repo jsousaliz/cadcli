@@ -1,0 +1,126 @@
+name: Criar release CadCli
+
+on:
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Versao da entrega, no formato X.Y.Z"
+        required: true
+        type: string
+      modo_notas:
+        description: "Origem das notas da release"
+        required: true
+        type: choice
+        default: arquivo
+        options:
+          - arquivo
+          - automaticas
+      publicar_release:
+        description: "Criar a tag e publicar a GitHub Release"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  criar-release:
+    if: github.ref == 'refs/heads/main' && github.actor == 'jsousaliz'
+    runs-on: [self-hosted, Windows, X64, delphi]
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Obter o codigo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar a versao, a tag e as notas
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $versao = '${{ inputs.versao }}'
+          if ($versao -notmatch '^\d+\.\d+\.\d+$') {
+            Write-Host "Versao invalida: '$versao'. Use o formato X.Y.Z."
+            exit 1
+          }
+          if ($versao -eq '0.0.0') {
+            Write-Host "A versao 0.0.0 nao pode ser publicada."
+            exit 1
+          }
+          git rev-parse --verify --quiet "refs/tags/v$versao" | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "A tag v$versao ja existe no repositorio."
+            exit 1
+          }
+          if ('${{ inputs.modo_notas }}' -eq 'arquivo') {
+            $notas = "docs/notas-de-versao/v$versao.md"
+            if (-not (Test-Path $notas)) {
+              Write-Host "Arquivo de notas ausente: $notas."
+              exit 1
+            }
+          }
+          Write-Host "Versao $versao validada."
+
+      - name: Compilar o CadCli.exe em Release Win64
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cmd /c '"%ProgramFiles(x86)%\Embarcadero\Studio\23.0\bin\rsvars.bat" && MSBuild.exe CadCli.dproj /t:Build /p:Config=Release /p:Platform=Win64 /nologo /v:minimal'
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "A compilacao do CadCli.exe falhou com o codigo $LASTEXITCODE."
+            exit 1
+          }
+
+      - name: Compilar o instalador Inno Setup
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & .\tools\CompilarInstalador.ps1 -Versao '${{ inputs.versao }}'
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "A compilacao do instalador falhou com o codigo $LASTEXITCODE."
+            exit 1
+          }
+
+      - name: Publicar o artefato da execucao
+        uses: actions/upload-artifact@v4
+        with:
+          name: CadCli-Setup-x64-${{ inputs.versao }}
+          if-no-files-found: error
+          path: |
+            dist/CadCli-Setup-x64.exe
+            dist/CadCli-Setup-x64.exe.sha256
+
+      - name: Criar a tag da versao
+        if: inputs.publicar_release
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $versao = '${{ inputs.versao }}'
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git tag -a "v$versao" -m "CadCli v$versao"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          git push origin "refs/tags/v$versao"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Publicar a GitHub Release
+        if: inputs.publicar_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $versao = '${{ inputs.versao }}'
+          if ('${{ inputs.modo_notas }}' -eq 'arquivo') {
+            $origemDasNotas = @('--notes-file', "docs/notas-de-versao/v$versao.md")
+          } else {
+            $origemDasNotas = @('--generate-notes')
+          }
+          gh release create "v$versao" `
+            'dist/CadCli-Setup-x64.exe' `
+            'dist/CadCli-Setup-x64.exe.sha256' `
+            --title "CadCli v$versao" `
+            @origemDasNotas
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "A publicacao da release falhou com o codigo $LASTEXITCODE."
+            exit 1
+          }

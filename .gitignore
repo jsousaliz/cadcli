@@ -18,3 +18,6 @@ cadcli.fdb
 
 # Área de trabalho temporária (runtime do Firebird baixado, provas descartáveis)
 tmp/
+
+# Pacote gerado pelo Inno Setup
+dist/
