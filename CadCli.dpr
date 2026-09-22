@@ -32,7 +32,12 @@ uses
   Visao.ConfirmacaoDialogo in 'src\Visao\Visao.ConfirmacaoDialogo.pas',
   Visao.FormPesquisaCliente in 'src\Visao\Visao.FormPesquisaCliente.pas' {FormPesquisaCliente},
   Visao.FormCadastroCliente in 'src\Visao\Visao.FormCadastroCliente.pas' {FormCadastroCliente},
-  Visao.NavegadorClientes in 'src\Visao\Visao.NavegadorClientes.pas';
+  Visao.NavegadorClientes in 'src\Visao\Visao.NavegadorClientes.pas',
+  Dominio.FiltroRelatorioCliente in 'src\Dominio\Dominio.FiltroRelatorioCliente.pas',
+  Aplicacao.GeradorRelatorioCliente in 'src\Aplicacao\Aplicacao.GeradorRelatorioCliente.pas',
+  Aplicacao.ControladorRelatorioCliente in 'src\Aplicacao\Aplicacao.ControladorRelatorioCliente.pas',
+  Infraestrutura.GeradorRelatorioClienteReportBuilder in 'src\Infraestrutura\Infraestrutura.GeradorRelatorioClienteReportBuilder.pas',
+  Visao.FormFiltroRelatorioCliente in 'src\Visao\Visao.FormFiltroRelatorioCliente.pas' {FormFiltroRelatorioCliente};
 
 type
   TAutorizadorInterfaceAplicacao = class(TInterfacedObject, IAutorizadorInterface)

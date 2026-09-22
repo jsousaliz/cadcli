@@ -16,7 +16,12 @@ type
     FLinhasNaGrade: Integer;
     FDialogosInesperados: Integer;
     FFormsDuranteExibicao: Integer;
+    FRelatoriosExibidos: Integer;
+    FRelatorioModal: Boolean;
+    FModoNoRelatorio: Integer;
+    FEstadosNoRelatorio: Integer;
     procedure InspecionarPesquisa(Sender: TObject; var ADone: Boolean);
+    procedure InspecionarRelatorio(Sender: TObject; var ADone: Boolean);
   public
     [Setup]
     procedure Preparar;
@@ -34,6 +39,8 @@ type
     procedure DestinoSemTelaRegistradaFalhaSemCriarForm;
     [Test]
     procedure ClientesAbrePesquisaRealSobreABase;
+    [Test]
+    procedure RelatorioAbreFiltroRealSobreABase;
   end;
 
 implementation
@@ -51,6 +58,7 @@ uses
   Infraestrutura.CatalogoPadraoMigracoes,
   Infraestrutura.InicializadorBancoFireDAC,
   Visao.ComposicaoAplicacao,
+  Visao.FormFiltroRelatorioCliente,
   Visao.FormPesquisaCliente,
   Visao.NavegadorAplicacao,
   Suporte.CaminhosTeste,
@@ -227,7 +235,7 @@ var
   LControlador: TControladorPrincipal;
   LFormsAntes: Integer;
 begin
-  LNavegador := ComporNavegador(FFormPrincipal, nil);
+  LNavegador := TNavegadorAplicacao.Create(FFormPrincipal);
   LFormsAntes := Screen.FormCount;
   Assert.WillRaise(
     procedure
@@ -274,6 +282,79 @@ begin
       PostMessage(LForm.Handle, WM_CLOSE, 0, 0);
       Exit;
     end;
+  end;
+end;
+
+procedure TTestesNavegadorAplicacao.InspecionarRelatorio(Sender: TObject; var ADone: Boolean);
+var
+  I: Integer;
+  LForm: TForm;
+begin
+  for I := 0 to Screen.FormCount - 1 do
+  begin
+    LForm := Screen.Forms[I];
+    if not LForm.Visible then
+      Continue;
+    if LForm is TFormFiltroRelatorioCliente then
+    begin
+      Inc(FRelatoriosExibidos);
+      FRelatorioModal := fsModal in LForm.FormState;
+      FModoNoRelatorio := TFormFiltroRelatorioCliente(LForm).GrupoModos.ItemIndex;
+      FEstadosNoRelatorio :=
+        TFormFiltroRelatorioCliente(LForm).ComboEstado.Properties.Items.Count;
+      FFormsDuranteExibicao := Screen.FormCount;
+      PostMessage(LForm.Handle, WM_CLOSE, 0, 0);
+      Exit;
+    end;
+    if LForm.ClassName = 'TMessageForm' then
+    begin
+      Inc(FDialogosInesperados);
+      PostMessage(LForm.Handle, WM_CLOSE, 0, 0);
+      Exit;
+    end;
+  end;
+end;
+
+procedure TTestesNavegadorAplicacao.RelatorioAbreFiltroRealSobreABase;
+var
+  LDiretorio: string;
+  LCatalogo: TCatalogoMigracoes;
+  LBanco: TInicializadorBanco;
+  LMensagem: string;
+  LNavegador: INavegadorAplicacao;
+  LFormsAntes: Integer;
+begin
+  LDiretorio := CriarDiretorioTemporario;
+  LCatalogo := CriarCatalogoPadrao;
+  LBanco := TInicializadorBanco.Create(TPath.Combine(LDiretorio, 'cadcli.fdb'), LCatalogo);
+  try
+    Assert.IsTrue(LBanco.Preparar(LMensagem), LMensagem);
+    LNavegador := ComporNavegador(FFormPrincipal, LBanco.Conexao);
+    LFormsAntes := Screen.FormCount;
+    FRelatoriosExibidos := 0;
+    FDialogosInesperados := 0;
+    FModoNoRelatorio := -1;
+    FEstadosNoRelatorio := -1;
+    Application.OnIdle := InspecionarRelatorio;
+    try
+      LNavegador.AbrirRelatorio;
+    finally
+      Application.OnIdle := nil;
+    end;
+    Assert.AreEqual(0, FDialogosInesperados, 'Nenhum diálogo de erro pode aparecer.');
+    Assert.AreEqual(1, FRelatoriosExibidos,
+      'Deve ser exibida exatamente 1 TFormFiltroRelatorioCliente.');
+    Assert.IsTrue(FRelatorioModal, 'A tela de filtros deve ser exibida modalmente.');
+    Assert.AreEqual(2, FModoNoRelatorio, 'A tela abre com o modo Todos selecionado.');
+    Assert.AreEqual(4, FEstadosNoRelatorio, 'O combo de estado traz os 4 estados da base.');
+    Assert.AreEqual(LFormsAntes + 1, FFormsDuranteExibicao,
+      'Somente a tela de filtros pode ser criada.');
+    Assert.AreEqual(LFormsAntes, Screen.FormCount, 'A tela deve ser liberada ao fechar.');
+    LNavegador := nil;
+  finally
+    LBanco.Free;
+    LCatalogo.Free;
+    TDirectory.Delete(LDiretorio, True);
   end;
 end;
 

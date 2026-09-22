@@ -30,9 +30,14 @@ uses
   Suporte.FakesMigracao in 'Suporte\Suporte.FakesMigracao.pas',
   Suporte.FakesFormPrincipal in 'Suporte\Suporte.FakesFormPrincipal.pas',
   Suporte.FakesClientes in 'Suporte\Suporte.FakesClientes.pas',
+  Suporte.FakesRelatorioCliente in 'Suporte\Suporte.FakesRelatorioCliente.pas',
   Testes.ServicoViaCep in 'Unitarios\Testes.ServicoViaCep.pas',
   Testes.RepositorioClienteFirebird in 'Unitarios\Testes.RepositorioClienteFirebird.pas',
   Testes.FormsClientes in 'Unitarios\Testes.FormsClientes.pas',
+  Testes.FiltroRelatorioCliente in 'Unitarios\Testes.FiltroRelatorioCliente.pas',
+  Testes.ControladorRelatorioCliente in 'Unitarios\Testes.ControladorRelatorioCliente.pas',
+  Testes.FormFiltroRelatorioCliente in 'Unitarios\Testes.FormFiltroRelatorioCliente.pas',
+  Testes.GeradorRelatorioCliente in 'Unitarios\Testes.GeradorRelatorioCliente.pas',
   Aplicacao.CatalogoMigracoes in '..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas',
   Aplicacao.ControladorPrincipal in '..\src\Aplicacao\Aplicacao.ControladorPrincipal.pas',
   Aplicacao.ExecutorMigracoes in '..\src\Aplicacao\Aplicacao.ExecutorMigracoes.pas',
@@ -43,11 +48,14 @@ uses
   Aplicacao.ControladorPesquisaCliente in '..\src\Aplicacao\Aplicacao.ControladorPesquisaCliente.pas',
   Aplicacao.NavegadorClientes in '..\src\Aplicacao\Aplicacao.NavegadorClientes.pas',
   Aplicacao.RepositorioCliente in '..\src\Aplicacao\Aplicacao.RepositorioCliente.pas',
+  Aplicacao.GeradorRelatorioCliente in '..\src\Aplicacao\Aplicacao.GeradorRelatorioCliente.pas',
+  Aplicacao.ControladorRelatorioCliente in '..\src\Aplicacao\Aplicacao.ControladorRelatorioCliente.pas',
   Aplicacao.ServicoViaCep in '..\src\Aplicacao\Aplicacao.ServicoViaCep.pas',
   Aplicacao.Transacao in '..\src\Aplicacao\Aplicacao.Transacao.pas',
   Dominio.Migracao in '..\src\Dominio\Dominio.Migracao.pas',
   Dominio.Cliente in '..\src\Dominio\Dominio.Cliente.pas',
   Dominio.FiltroCliente in '..\src\Dominio\Dominio.FiltroCliente.pas',
+  Dominio.FiltroRelatorioCliente in '..\src\Dominio\Dominio.FiltroRelatorioCliente.pas',
   Dominio.UnidadesFederativas in '..\src\Dominio\Dominio.UnidadesFederativas.pas',
   Dominio.ValidacaoCliente in '..\src\Dominio\Dominio.ValidacaoCliente.pas',
   Infraestrutura.CaminhosAplicacao in '..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas',
@@ -65,10 +73,12 @@ uses
   Infraestrutura.TransporteHttp in '..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas',
   Infraestrutura.ServicoViaCep in '..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas',
   Infraestrutura.RepositorioClienteFireDAC in '..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas',
+  Infraestrutura.GeradorRelatorioClienteReportBuilder in '..\src\Infraestrutura\Infraestrutura.GeradorRelatorioClienteReportBuilder.pas',
   Visao.ConfirmacaoDialogo in '..\src\Visao\Visao.ConfirmacaoDialogo.pas',
   Visao.FormPesquisaCliente in '..\src\Visao\Visao.FormPesquisaCliente.pas' {FormPesquisaCliente},
   Visao.FormCadastroCliente in '..\src\Visao\Visao.FormCadastroCliente.pas' {FormCadastroCliente},
-  Visao.NavegadorClientes in '..\src\Visao\Visao.NavegadorClientes.pas';
+  Visao.NavegadorClientes in '..\src\Visao\Visao.NavegadorClientes.pas',
+  Visao.FormFiltroRelatorioCliente in '..\src\Visao\Visao.FormFiltroRelatorioCliente.pas' {FormFiltroRelatorioCliente};
 
 function QualificarTeste(const ANome: string): string;
 begin
@@ -90,6 +100,15 @@ begin
     Exit('Testes.ValidacaoCliente.' + Result);
   if StartsText('TTestesControladorPesquisaCliente.', Result) then
     Exit('Testes.ControladorPesquisaCliente.' + Result);
+  if StartsText('TTestesFiltroRelatorioCliente.', Result) then
+    Exit('Testes.FiltroRelatorioCliente.' + Result);
+  if StartsText('TTestesControladorRelatorioCliente.', Result) then
+    Exit('Testes.ControladorRelatorioCliente.' + Result);
+  if StartsText('TTestesGeradorRelatorioClienteReportBuilder.', Result) then
+    Exit('Testes.GeradorRelatorioCliente.' + Result);
+  if StartsText('TTestesFormFiltroRelatorioCliente.', Result) or
+     StartsText('TTestesArquiteturaRelatorioCliente.', Result) then
+    Exit('Testes.FormFiltroRelatorioCliente.' + Result);
   if StartsText('TTestesServicoViaCep.', Result) or
      StartsText('TTestesTransporteHttp.', Result) then
     Exit('Testes.ServicoViaCep.' + Result);

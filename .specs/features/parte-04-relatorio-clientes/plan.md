@@ -19,7 +19,7 @@ Esta parte reutiliza o repositório e a conexão da parte 03, sem criar um segun
 
 | Front | What changes |
 | --- | --- |
-| domain | novo valor `TFiltroRelatorioCliente` com modos intervalo de IDs, cidade/estado e todos |
+| domain | novo valor `TFiltroRelatorioCliente` com modos intervalo de IDs, cidade/estado e todos, e os valores de leitura `TEstado` e `TCidade` usados pelos combos |
 | stored data | nothing - o relatório executa somente leitura |
 | UI | entra uma form de filtros com controlador próprio e uma pré-visualização ReportBuilder |
 
@@ -37,7 +37,7 @@ None - nothing consumed outside; a saída é a pré-visualização nativa do Rep
 | --- | --- | --- |
 | 1. par form/controlador de relatório | `TFormFiltroRelatorioCliente : IVisaoRelatorioCliente` possui exatamente `TControladorRelatorioCliente` | SQL e validação em eventos da form não podem ser testados isoladamente |
 | 2. isolamento do componente comercial | `IGeradorRelatorioCliente.Visualizar(TDadosRelatorioCliente)` com implementação ReportBuilder | expor `TppReport` ao controlador acopla domínio, testes e licença ao componente visual |
-| 3. contrato visual do relatório | título `Relatório de Clientes`; colunas `ID`, `NOME`, `CPF/CNPJ`, `CEP`, `BAIRRO`, `CIDADE`, `ESTADO`; ordenação por ID crescente | incluir campos diferentes ou outra ordem diverge do enunciado e dificulta conferência |
+| 3. contrato visual do relatório | título `Relatório de Clientes`; colunas `ID`, `NOME`, `CPF/CNPJ`, `CEP`, `BAIRRO`, `CIDADE`, `ESTADO`; ordenação por nome, sem diferenciar caixa (`UPPER(C.NOME)`, desempate por ID) | o enunciado não fixa ordem; ordenar por ID deixava o relatório fora da ordem em que o usuário lê a lista, e uma ordem sensível à caixa divergiria da tela de pesquisa (AD-018) |
 
 - Nothing else in this change is hard to reverse.
 
@@ -67,7 +67,7 @@ O usuário visualiza exatamente os registros correspondentes.
 7. WHEN cidade/estado for solicitado com cidade informada THEN o sistema SHALL listar somente clientes da combinação selecionada.
 8. WHEN cidade/estado for solicitado sem cidade THEN o sistema SHALL listar somente clientes do estado selecionado.
 9. WHEN `Todos` for solicitado THEN o sistema SHALL listar todos os clientes.
-10. WHEN houver resultados THEN o relatório SHALL exibir título, data/hora de emissão, filtro aplicado, paginação e as sete colunas do door 3 em ID crescente.
+10. WHEN houver resultados THEN o relatório SHALL exibir título, data/hora de emissão, filtro aplicado, paginação e as sete colunas do door 3 em ordem de nome.
 11. WHEN não houver resultados THEN o sistema SHALL manter a form de filtros aberta e exibir `Nenhum cliente encontrado para o filtro informado` sem abrir pré-visualização vazia.
 12. IF a consulta ou o ReportBuilder falhar THEN o sistema SHALL fechar o estado de carregamento, preservar o filtro e exibir uma mensagem de erro.
 13. WHEN o filtro mudar entre duas visualizações THEN o sistema SHALL reiniciar o relatório antes de gerar as páginas para não reutilizar dados anteriores.

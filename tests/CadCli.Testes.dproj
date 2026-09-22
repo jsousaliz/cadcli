@@ -1,4 +1,4 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>{36A79882-349E-41A5-882A-D716E05A953B}</ProjectGuid>
     <ProjectVersion>20.3</ProjectVersion>
@@ -50,6 +50,7 @@
     <DCCReference Include="Suporte\Suporte.FakesMigracao.pas" />
     <DCCReference Include="Suporte\Suporte.FakesFormPrincipal.pas" />
     <DCCReference Include="Suporte\Suporte.FakesClientes.pas" />
+    <DCCReference Include="Suporte\Suporte.FakesRelatorioCliente.pas" />
     <DCCReference Include="Unitarios\Testes.CatalogoExecutor.pas" />
     <DCCReference Include="Unitarios\Testes.ControladorPrincipal.pas" />
     <DCCReference Include="Unitarios\Testes.EntregaRunner.pas" />
@@ -63,9 +64,14 @@
     <DCCReference Include="Unitarios\Testes.ServicoViaCep.pas" />
     <DCCReference Include="Unitarios\Testes.RepositorioClienteFirebird.pas" />
     <DCCReference Include="Unitarios\Testes.FormsClientes.pas" />
+    <DCCReference Include="Unitarios\Testes.FiltroRelatorioCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.ControladorRelatorioCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.FormFiltroRelatorioCliente.pas" />
+    <DCCReference Include="Unitarios\Testes.GeradorRelatorioCliente.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Migracao.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.Cliente.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.FiltroCliente.pas" />
+    <DCCReference Include="..\src\Dominio\Dominio.FiltroRelatorioCliente.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.UnidadesFederativas.pas" />
     <DCCReference Include="..\src\Dominio\Dominio.ValidacaoCliente.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.CatalogoMigracoes.pas" />
@@ -78,6 +84,8 @@
     <DCCReference Include="..\src\Aplicacao\Aplicacao.ControladorPesquisaCliente.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.NavegadorClientes.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.RepositorioCliente.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.GeradorRelatorioCliente.pas" />
+    <DCCReference Include="..\src\Aplicacao\Aplicacao.ControladorRelatorioCliente.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.ServicoViaCep.pas" />
     <DCCReference Include="..\src\Aplicacao\Aplicacao.Transacao.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.CaminhosAplicacao.pas" />
@@ -98,6 +106,7 @@
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.TransporteHttp.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.ServicoViaCep.pas" />
     <DCCReference Include="..\src\Infraestrutura\Infraestrutura.RepositorioClienteFireDAC.pas" />
+    <DCCReference Include="..\src\Infraestrutura\Infraestrutura.GeradorRelatorioClienteReportBuilder.pas" />
     <DCCReference Include="..\src\Visao\Visao.ConfirmacaoDialogo.pas" />
     <DCCReference Include="..\src\Visao\Visao.FormPesquisaCliente.pas">
         <Form>FormPesquisaCliente</Form>
@@ -108,6 +117,9 @@
         <FormType>dfm</FormType>
     </DCCReference>
     <DCCReference Include="..\src\Visao\Visao.NavegadorClientes.pas" />
+    <DCCReference Include="..\src\Visao\Visao.FormFiltroRelatorioCliente.pas">
+      <Form>FormFiltroRelatorioCliente</Form>
+    </DCCReference>
     <BuildConfiguration Include="Debug">
       <Key>Cfg_1</Key>
       <CfgParent>Base</CfgParent>

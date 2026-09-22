@@ -4,7 +4,8 @@ interface
 
 uses
   Dominio.Cliente,
-  Dominio.FiltroCliente;
+  Dominio.FiltroCliente,
+  Dominio.FiltroRelatorioCliente;
 
 type
   IRepositorioCliente = interface
@@ -16,6 +17,9 @@ type
     function Pesquisar(const AFiltro: TFiltroCliente; const AOrdenacao: TOrdenacaoCliente;
       ALimite: Integer): TClientes;
     function ResolverCidade(const ANomeCidade, AUf, ANomeEstado: string): Integer;
+    function ListarParaRelatorio(const AFiltro: TFiltroRelatorioCliente): TClientes;
+    function ListarEstados: TEstados;
+    function ListarCidades(AEstadoId: Integer): TCidades;
   end;
 
 implementation
