@@ -60,6 +60,7 @@ type
     Dados: TDadosRelatorioCliente;
     Falhar: Boolean;
     MensagemFalha: string;
+    AoVisualizar: TProc;
     constructor Create(ARegistro: TStrings = nil);
     procedure Visualizar(const ADados: TDadosRelatorioCliente);
     function IdsRecebidos: string;
@@ -269,6 +270,8 @@ begin
   Inc(Chamadas);
   if Assigned(FRegistro) then
     FRegistro.Add('Gerar');
+  if Assigned(AoVisualizar) then
+    AoVisualizar;
   if Falhar then
     raise Exception.Create(MensagemFalha);
   Dados := ADados;
