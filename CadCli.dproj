@@ -122,6 +122,13 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="src\Visao\Visao.NavegadorClientes.pas"/>
+        <DCCReference Include="src\Dominio\Dominio.FiltroRelatorioCliente.pas"/>
+        <DCCReference Include="src\Aplicacao\Aplicacao.GeradorRelatorioCliente.pas"/>
+        <DCCReference Include="src\Aplicacao\Aplicacao.ControladorRelatorioCliente.pas"/>
+        <DCCReference Include="src\Infraestrutura\Infraestrutura.GeradorRelatorioClienteReportBuilder.pas"/>
+        <DCCReference Include="src\Visao\Visao.FormFiltroRelatorioCliente.pas">
+            <Form>FormFiltroRelatorioCliente</Form>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

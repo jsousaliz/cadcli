@@ -16,14 +16,32 @@ uses
   Aplicacao.ExecutorMigracoes,
   Aplicacao.RepositorioCliente,
   Aplicacao.Transacao,
+  Infraestrutura.GeradorRelatorioClienteReportBuilder,
   Infraestrutura.RepositorioClienteFireDAC,
   Infraestrutura.ServicoViaCep,
   Infraestrutura.TransporteHttp,
   Visao.ApresentadorErro,
   Visao.ConfirmacaoDialogo,
+  Visao.FormFiltroRelatorioCliente,
   Visao.FormPesquisaCliente,
   Visao.NavegadorAplicacao,
   Visao.NavegadorClientes;
+
+function CriarTelaRelatorio(AConexao: TFDConnection): TForm;
+var
+  LForm: TFormFiltroRelatorioCliente;
+begin
+  LForm := TFormFiltroRelatorioCliente.Create(nil);
+  try
+    LForm.Conectar(TRepositorioClienteFireDAC.Create(AConexao),
+      TGeradorRelatorioClienteReportBuilder.Create(drPreVisualizacao),
+      TRelogioSistema.Create, TApresentadorErroDialogo.Create);
+  except
+    LForm.Free;
+    raise;
+  end;
+  Result := LForm;
+end;
 
 function CriarTelaClientes(AConexao: TFDConnection): TForm;
 var
@@ -62,6 +80,11 @@ begin
     function: TForm
     begin
       Result := CriarTelaClientes(AConexao);
+    end);
+  LNavegador.RegistrarTelaRelatorio(
+    function: TForm
+    begin
+      Result := CriarTelaRelatorio(AConexao);
     end);
 end;
 
