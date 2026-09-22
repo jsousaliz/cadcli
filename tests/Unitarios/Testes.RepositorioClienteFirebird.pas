@@ -61,7 +61,7 @@ type
     [Test]
     procedure RelatorioPorCidadeEstadoFiltraACombinacaoOuOEstado;
     [Test]
-    procedure RelatorioTodosSemLimiteEmIdCrescente;
+    procedure RelatorioTodosSemLimiteEmOrdemDeNome;
     [Test]
     procedure ListaEstadosECidadesDoEstadoPorNome;
   end;
@@ -658,7 +658,7 @@ const
   CASOS: array[0..3] of TCasoIntervalo = (
     (De: 2; Ate: 4; Esperados: '2,3,4'),
     (De: 1; Ate: 1; Esperados: '1'),
-    (De: 4; Ate: 9; Esperados: '4,5'),
+    (De: 4; Ate: 9; Esperados: '5,4'),
     (De: 6; Ate: 9; Esperados: ''));
 var
   LCaso: TCasoIntervalo;
@@ -712,14 +712,14 @@ begin
   Assert.AreEqual(6, LVerificados, 'As seis combinações devem ser asseridas.');
 end;
 
-procedure TTestesRepositorioClienteFirebird.RelatorioTodosSemLimiteEmIdCrescente;
+procedure TTestesRepositorioClienteFirebird.RelatorioTodosSemLimiteEmOrdemDeNome;
 var
   I: Integer;
   LClientes: TClientes;
   LEsperados: string;
 begin
   for I := 60 downto 1 do
-    InserirCliente(I, Format('Cliente %.2d', [61 - I]), '52998224725', '13010000',
+    InserirCliente(I, Format('Cliente %.2d', [I]), '52998224725', '13010000',
       CidadeId('Campinas'), EncodeDate(1980, 1, 1));
   FRepositorio := TRepositorioClienteFireDAC.Create(Conexao);
 
@@ -732,19 +732,23 @@ begin
       LEsperados := LEsperados + ',';
     LEsperados := LEsperados + IntToStr(I);
   end;
-  Assert.AreEqual(LEsperados, IdsDoRelatorio(LClientes), 'Os IDs vêm em ordem crescente.');
+  Assert.AreEqual(LEsperados, IdsDoRelatorio(LClientes),
+    'A ordem segue o nome, nao a ordem de insercao, que foi de 60 ate 1.');
 
   Conexao.ExecSQL('DELETE FROM CLIENTE');
   SemearBaseF5;
   LClientes := FRepositorio.ListarParaRelatorio(FiltroTodos);
-  Assert.AreEqual('1,2,3,4,5', IdsDoRelatorio(LClientes));
-  Assert.AreEqual('Centro', LClientes[2].Bairro, 'O cliente 3 traz o bairro.');
-  Assert.AreEqual('Campinas', LClientes[2].Cidade, 'O cliente 3 traz a cidade.');
-  Assert.AreEqual('SP', LClientes[2].Uf, 'O cliente 3 traz a UF.');
-  Assert.AreEqual('São Paulo', LClientes[2].Estado, 'O cliente 3 traz o estado.');
-  Assert.AreEqual('', LClientes[4].Cidade, 'O cliente 5 não tem cidade.');
-  Assert.AreEqual('', LClientes[4].Uf, 'O cliente 5 não tem UF.');
-  Assert.AreEqual('', LClientes[4].Estado, 'O cliente 5 não tem estado.');
+  Assert.AreEqual('1,5,2,3,4', IdsDoRelatorio(LClientes),
+    'Ana, bianca, Bruno, Carlos, Denise: a caixa nao muda a ordem.');
+  Assert.AreEqual(3, LClientes[3].Id, 'Carlos Silva é a quarta linha.');
+  Assert.AreEqual('Centro', LClientes[3].Bairro, 'O cliente 3 traz o bairro.');
+  Assert.AreEqual('Campinas', LClientes[3].Cidade, 'O cliente 3 traz a cidade.');
+  Assert.AreEqual('SP', LClientes[3].Uf, 'O cliente 3 traz a UF.');
+  Assert.AreEqual('São Paulo', LClientes[3].Estado, 'O cliente 3 traz o estado.');
+  Assert.AreEqual(5, LClientes[1].Id, 'bianca souza é a segunda linha.');
+  Assert.AreEqual('', LClientes[1].Cidade, 'O cliente 5 não tem cidade.');
+  Assert.AreEqual('', LClientes[1].Uf, 'O cliente 5 não tem UF.');
+  Assert.AreEqual('', LClientes[1].Estado, 'O cliente 5 não tem estado.');
 end;
 
 procedure TTestesRepositorioClienteFirebird.ListaEstadosECidadesDoEstadoPorNome;

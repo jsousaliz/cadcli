@@ -433,8 +433,8 @@ begin
   LFim := Pos('function TRepositorioClienteFireDAC.ListarEstados', LTexto);
   Assert.IsTrue(LFim > LInicio, 'ListarEstados vem depois de ListarParaRelatorio.');
   LSql := Copy(LTexto, LInicio, LFim - LInicio);
-  Assert.IsTrue(ContainsStr(LSql, '''ORDER BY C.ID'''),
-    'O SQL do relatório termina em ORDER BY C.ID.');
+  Assert.IsTrue(ContainsStr(LSql, '''ORDER BY UPPER(C.NOME), C.ID'''),
+    'O SQL do relatório termina em ORDER BY UPPER(C.NOME), C.ID.');
   Assert.IsFalse(ContainsText(LSql, 'FIRST'), 'O relatório não limita as linhas.');
 end;
 

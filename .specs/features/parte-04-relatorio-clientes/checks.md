@@ -81,14 +81,14 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaRelato
 
 ### S2 - Consulta, geração e pré-visualização · 12 files · ~145 KB · ~36k
 
-**C11** - Na base F5, `ListarParaRelatorio` com modo intervalo, table-driven, devolve exatamente estes IDs: 2..4 -> 2, 3, 4; 1..1 -> 1; 4..9 -> 4, 5; 6..9 -> nenhum (AC 6)
+**C11** - Na base F5, `ListarParaRelatorio` com modo intervalo, table-driven, devolve exatamente estes IDs: 2..4 -> 2, 3, 4; 1..1 -> 1; 4..9 -> 5, 4 (`bianca souza` antes de `Denise D'Avila`); 6..9 -> nenhum (AC 6)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesRepositorioClienteFirebird.RelatorioPorIntervaloIncluiOsDoisLimites`
 
 **C12** - Na base F5, `ListarParaRelatorio` com modo cidade/estado, table-driven, devolve exatamente: Campinas/SP -> 3, 4; Mariana/MG -> 2; Santos/SP -> nenhum; MG sem cidade -> 1, 2; SP sem cidade -> 3, 4; RJ sem cidade -> nenhum (AC 7, AC 8)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesRepositorioClienteFirebird.RelatorioPorCidadeEstadoFiltraACombinacaoOuOEstado`
 
-**C13** - Com 60 clientes inseridos na ordem de ID 60 até 1, `ListarParaRelatorio` com modo Todos devolve exatamente 60 clientes com IDs 1 a 60 em ordem crescente; na base F5, devolve 1, 2, 3, 4, 5, e o cliente 3 traz bairro `Centro`, cidade `Campinas`, UF `SP` e estado `São Paulo`, e o cliente 5 traz cidade, UF e estado vazios (AC 9; door 3)
-Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesRepositorioClienteFirebird.RelatorioTodosSemLimiteEmIdCrescente`
+**C13** - Com 60 clientes inseridos na ordem de ID 60 até 1 e nomes `Cliente 01` a `Cliente 60` acompanhando o ID, `ListarParaRelatorio` com modo Todos devolve exatamente 60 clientes com IDs 1 a 60, ou seja pelo nome e não pela ordem de inserção; na base F5, devolve 1, 5, 2, 3, 4 (Ana, bianca, Bruno, Carlos, Denise), e o cliente 3 traz bairro `Centro`, cidade `Campinas`, UF `SP` e estado `São Paulo`, e o cliente 5 traz cidade, UF e estado vazios (AC 9; door 3)
+Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesRepositorioClienteFirebird.RelatorioTodosSemLimiteEmOrdemDeNome`
 
 **C14** - Na base F5, `ListarEstados` devolve exatamente Bahia, Minas Gerais, Rio de Janeiro, São Paulo com as UFs BA, MG, RJ, SP; `ListarCidades(<id de MG>)` devolve exatamente Belo Horizonte, Contagem, Mariana, Uberlândia; `ListarCidades(<id de SP>)` devolve exatamente Campinas, Santos, São Paulo (AC 3)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesRepositorioClienteFirebird.ListaEstadosECidadesDoEstadoPorNome`
@@ -131,7 +131,7 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesNavegadorAplicaca
 Proof: `powershell -NoProfile -Command "if (Select-String -Path CadCli.dproj -Pattern '<DCC_UsePackage>[^<]*\b(rb|pp)[A-Za-z0-9]*' -Quiet) { exit 1 } else { exit 0 }"`
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesEntregaRelease.NaoDistribuiBplNemExecutavelAuxiliar`
 
-**C27** - `IRepositorioCliente` declara `ListarParaRelatorio(const AFiltro: TFiltroRelatorioCliente): TClientes`, `ListarEstados: TEstados` e `ListarCidades(AEstadoId: Integer): TCidades`; `IGeradorRelatorioCliente` declara exatamente um método, `Visualizar(const ADados: TDadosRelatorioCliente)`; o SQL de `ListarParaRelatorio` em `Infraestrutura.RepositorioClienteFireDAC.pas` termina em `ORDER BY C.ID` e não contém `FIRST` (Flow 2; door 2; door 3)
+**C27** - `IRepositorioCliente` declara `ListarParaRelatorio(const AFiltro: TFiltroRelatorioCliente): TClientes`, `ListarEstados: TEstados` e `ListarCidades(AEstadoId: Integer): TCidades`; `IGeradorRelatorioCliente` declara exatamente um método, `Visualizar(const ADados: TDadosRelatorioCliente)`; o SQL de `ListarParaRelatorio` em `Infraestrutura.RepositorioClienteFireDAC.pas` termina em `ORDER BY UPPER(C.NOME), C.ID` e não contém `FIRST` (Flow 2; door 2; door 3)
 Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaRelatorioCliente.ContratosDoRepositorioEDoGerador`
 
 ## Coverage
@@ -144,10 +144,10 @@ Proof: `.\tests\bin\Win64\Debug\CadCli.Testes.exe --run:TTestesArquiteturaRelato
 | normalização de resíduos (3) | Todos ignora IDs, estado e cidade C1 · intervalo ignora estado e cidade C1 · cidade/estado ignora IDs C1 | - |
 | limites do intervalo (4) | inicial incluso C11 · final incluso C11 · inicial igual ao final C11/C1 · faixa sem clientes C11 | - |
 | cidade/estado (4) | combinação com clientes C12 · combinação sem clientes C12 · estado com clientes C12 · estado sem clientes C12 | - |
-| Todos (3) | sem limite C13 · ordem por ID independente da inserção C13 · cliente sem cidade incluído C13/C19 | - |
+| Todos (3) | sem limite C13 · ordem por nome independente da inserção C13 · cliente sem cidade incluído C13/C19 | - |
 | desfechos de `Visualizar` (5) | sucesso C15/C23 · vazio C16 · inválido C5/C8 · falha na consulta C17 · falha no gerador C17/C18 | - |
 | descrição do filtro aplicado (4) | Todos C15/C19 · intervalo C15 · estado C15/C21 · cidade C15 | - |
-| elementos do AC 10 (6) | título C19 · emissão C19 · filtro aplicado C19 · paginação C19/C20 · sete colunas C19/C20 · ID crescente C13/C20 | - |
+| elementos do AC 10 (6) | título C19 · emissão C19 · filtro aplicado C19 · paginação C19/C20 · sete colunas C19/C20 · ordem por nome C13 · ordem recebida preservada C20 | - |
 | colunas do door 3 (7) | `ID` C19 · `NOME` C19 · `CPF/CNPJ` C19 · `CEP` C19 · `BAIRRO` C19 · `CIDADE` C19 · `ESTADO` C19 | - |
 | geração repetida (2) | reinício entre filtros C21 · mesma instância não mistura dados C21 | - |
 | destinos do gerador (2) | produção pré-visualização modal C22 · teste `dtReportTextFile` C19/C20/C21 | - |

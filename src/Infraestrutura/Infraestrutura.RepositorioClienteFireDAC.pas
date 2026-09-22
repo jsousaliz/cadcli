@@ -350,7 +350,7 @@ begin
       else
         LSql := LSql + 'WHERE CI.ESTADOID = :ESTADOID ';
   end;
-  LSql := LSql + 'ORDER BY C.ID';
+  LSql := LSql + 'ORDER BY UPPER(C.NOME), C.ID';
   LConsulta := CriarConsulta(LSql);
   try
     case AFiltro.Modo of
