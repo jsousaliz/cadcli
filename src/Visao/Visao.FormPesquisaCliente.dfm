@@ -115,6 +115,7 @@ object FormPesquisaCliente: TFormPesquisaCliente
     Width = 900
     Height = 427
     Align = alClient
+    ColumnLineColor = clWhite
     Delimiter = #9
     HeaderSections = <
       item
@@ -154,8 +155,9 @@ object FormPesquisaCliente: TFormPesquisaCliente
       item
         AllowClick = True
         Text = 'Data de nascimento'
-        Width = 110
+        Width = 130
       end>
+    Style.BorderStyle = cbsUltraFlat
     TabOrder = 1
     OnDblClick = ListaClientesDblClick
   end
@@ -226,6 +228,7 @@ object FormPesquisaCliente: TFormPesquisaCliente
     Top = 232
     Width = 210
     Height = 80
+    Frame.Color = clSilver
     TabOrder = 3
     Visible = False
     object RotuloSemResultado: TcxLabel

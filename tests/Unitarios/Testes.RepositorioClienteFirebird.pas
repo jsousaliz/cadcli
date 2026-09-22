@@ -120,6 +120,7 @@ begin
   FCatalogo := CriarCatalogoPadrao;
   FInicializador := TInicializadorBanco.Create(TPath.Combine(FDiretorio, 'cadcli.fdb'), FCatalogo);
   Assert.IsTrue(FInicializador.Preparar(LMensagem), LMensagem);
+  FInicializador.Conexao.ExecSQL('DELETE FROM CLIENTE');
 end;
 
 procedure TTestesRepositorioClienteFirebird.Limpar;
@@ -147,7 +148,7 @@ var
   LEstados: Integer;
   LCidades: Integer;
   LCidadeId: Integer;
-  LEstadoSc: Integer;
+  LEstadoPr: Integer;
 begin
   LRepositorio := TRepositorioClienteFireDAC.Create(Conexao);
 
@@ -168,20 +169,20 @@ begin
   Assert.AreEqual(Inteiro(Conexao, 'SELECT GEN_ID(SEQ_CIDADE, 0) FROM RDB$DATABASE', []), LCidadeId,
     'O ID da cidade deve vir de SEQ_CIDADE.');
 
-  LCidadeId := LRepositorio.ResolverCidade('Florianópolis', 'SC', 'Santa Catarina');
-  Assert.AreEqual(LEstados + 1, Contar('ESTADO'), 'Florianópolis/SC insere 1 estado.');
-  Assert.AreEqual(LCidades + 2, Contar('CIDADE'), 'Florianópolis/SC insere 1 cidade.');
-  LEstadoSc := Inteiro(Conexao, 'SELECT ID FROM ESTADO WHERE UF = :UF', ['SC']);
-  Assert.AreEqual('SC - Santa Catarina', Texto(Conexao,
-    'SELECT TRIM(UF) || '' - '' || NOME FROM ESTADO WHERE ID = :ID', [LEstadoSc]));
-  Assert.AreEqual(Inteiro(Conexao, 'SELECT GEN_ID(SEQ_ESTADO, 0) FROM RDB$DATABASE', []), LEstadoSc,
+  LCidadeId := LRepositorio.ResolverCidade('Curitiba', 'PR', 'Paraná');
+  Assert.AreEqual(LEstados + 1, Contar('ESTADO'), 'Curitiba/PR insere 1 estado.');
+  Assert.AreEqual(LCidades + 2, Contar('CIDADE'), 'Curitiba/PR insere 1 cidade.');
+  LEstadoPr := Inteiro(Conexao, 'SELECT ID FROM ESTADO WHERE UF = :UF', ['PR']);
+  Assert.AreEqual('PR - Paraná', Texto(Conexao,
+    'SELECT TRIM(UF) || '' - '' || NOME FROM ESTADO WHERE ID = :ID', [LEstadoPr]));
+  Assert.AreEqual(Inteiro(Conexao, 'SELECT GEN_ID(SEQ_ESTADO, 0) FROM RDB$DATABASE', []), LEstadoPr,
     'O ID do estado deve vir de SEQ_ESTADO.');
-  Assert.AreEqual(LEstadoSc, Inteiro(Conexao, 'SELECT ESTADOID FROM CIDADE WHERE ID = :ID', [LCidadeId]),
-    'Florianópolis deve ficar ligada ao novo estado.');
-  Assert.AreEqual('Florianópolis', Texto(Conexao, 'SELECT NOME FROM CIDADE WHERE ID = :ID', [LCidadeId]));
+  Assert.AreEqual(LEstadoPr, Inteiro(Conexao, 'SELECT ESTADOID FROM CIDADE WHERE ID = :ID', [LCidadeId]),
+    'Curitiba deve ficar ligada ao novo estado.');
+  Assert.AreEqual('Curitiba', Texto(Conexao, 'SELECT NOME FROM CIDADE WHERE ID = :ID', [LCidadeId]));
   Assert.AreEqual(Inteiro(Conexao, 'SELECT GEN_ID(SEQ_CIDADE, 0) FROM RDB$DATABASE', []), LCidadeId);
 
-  Assert.AreEqual(LCidadeId, LRepositorio.ResolverCidade('Florianópolis', 'SC', 'Santa Catarina'));
+  Assert.AreEqual(LCidadeId, LRepositorio.ResolverCidade('Curitiba', 'PR', 'Paraná'));
   Assert.AreEqual(LEstados + 1, Contar('ESTADO'), 'Repetir não insere estado.');
   Assert.AreEqual(LCidades + 2, Contar('CIDADE'), 'Repetir não insere cidade.');
 end;
@@ -204,7 +205,7 @@ begin
   LEstados := Contar('ESTADO');
   LCidades := Contar('CIDADE');
   LClientes := Contar('CLIENTE');
-  Assert.AreEqual(0, Inteiro(Conexao, 'SELECT COUNT(*) FROM ESTADO WHERE UF = :UF', ['SC']));
+  Assert.AreEqual(0, Inteiro(Conexao, 'SELECT COUNT(*) FROM ESTADO WHERE UF = :UF', ['PR']));
 
   LVisaoObjeto := TVisaoCadastroClienteFake.Create;
   LVisao := LVisaoObjeto;
@@ -216,9 +217,9 @@ begin
     LControlador.Abrir(mcInclusao);
     LVisaoObjeto.Dados := DadosValidos;
     LVisaoObjeto.Dados.Nome := StringOfChar('N', 81);
-    LVisaoObjeto.Dados.Cidade := 'Florianópolis';
-    LVisaoObjeto.Dados.Uf := 'SC';
-    LVisaoObjeto.Dados.Estado := 'Santa Catarina';
+    LVisaoObjeto.Dados.Cidade := 'Curitiba';
+    LVisaoObjeto.Dados.Uf := 'PR';
+    LVisaoObjeto.Dados.Estado := 'Paraná';
     LControlador.Salvar;
     Assert.AreEqual('Não foi possível salvar o cliente.', LVisaoObjeto.Mensagens.Text.Trim);
     Assert.IsFalse(LControlador.Salvo);
@@ -226,9 +227,9 @@ begin
     LControlador.Free;
   end;
   Assert.AreEqual(LSequenciaEstado + 1, Inteiro(Conexao, 'SELECT GEN_ID(SEQ_ESTADO, 0) FROM RDB$DATABASE', []),
-    'O estado SC deve ter sido criado antes da falha.');
+    'O estado PR deve ter sido criado antes da falha.');
   Assert.AreEqual(LSequenciaCidade + 1, Inteiro(Conexao, 'SELECT GEN_ID(SEQ_CIDADE, 0) FROM RDB$DATABASE', []),
-    'A cidade Florianópolis deve ter sido criada antes da falha.');
+    'A cidade Curitiba deve ter sido criada antes da falha.');
   Assert.IsFalse(Conexao.InTransaction, 'A transação deve ter sido encerrada.');
   Assert.AreEqual(LEstados, Contar('ESTADO'), 'Nenhum estado órfão pode ficar no banco.');
   Assert.AreEqual(LCidades, Contar('CIDADE'), 'Nenhuma cidade órfã pode ficar no banco.');

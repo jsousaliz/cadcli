@@ -346,7 +346,7 @@ begin
       'Deve ser exibida exatamente 1 TFormFiltroRelatorioCliente.');
     Assert.IsTrue(FRelatorioModal, 'A tela de filtros deve ser exibida modalmente.');
     Assert.AreEqual(2, FModoNoRelatorio, 'A tela abre com o modo Todos selecionado.');
-    Assert.AreEqual(4, FEstadosNoRelatorio, 'O combo de estado traz os 4 estados da base.');
+    Assert.AreEqual(5, FEstadosNoRelatorio, 'O combo de estado traz os 5 estados da base.');
     Assert.AreEqual(LFormsAntes + 1, FFormsDuranteExibicao,
       'Somente a tela de filtros pode ser criada.');
     Assert.AreEqual(LFormsAntes, Screen.FormCount, 'A tela deve ser liberada ao fechar.');
@@ -387,7 +387,7 @@ begin
     Assert.AreEqual(1, FPesquisasExibidas, 'Deve ser exibida exatamente 1 TFormPesquisaCliente.');
     Assert.IsTrue(FPesquisaModal, 'A pesquisa deve ser exibida modalmente.');
     Assert.AreEqual(LFormsAntes + 1, FFormsDuranteExibicao, 'Somente a pesquisa pode ser criada.');
-    Assert.AreEqual(0, FLinhasNaGrade, 'A pesquisa deve listar os 0 clientes da base.');
+    Assert.AreEqual(5, FLinhasNaGrade, 'A pesquisa deve listar os 5 clientes da base.');
     Assert.AreEqual(LFormsAntes, Screen.FormCount, 'A pesquisa deve ser liberada ao fechar.');
     LNavegador := nil;
   finally

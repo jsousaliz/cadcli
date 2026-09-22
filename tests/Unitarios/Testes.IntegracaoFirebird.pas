@@ -100,6 +100,8 @@ type
     procedure CriaUmaSequenciaPorEntidadeSemMaxId;
     [Test]
     procedure SequenciasContinuamDepoisDosDadosDeReferencia;
+    [Test]
+    procedure InsereOsClientesDeIdsProtegidos;
   end;
 
 implementation
@@ -319,8 +321,8 @@ var
   LMensagem: string;
 begin
   PrepararBanco;
-  Assert.AreEqual(4, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM ESTADO'));
-  Assert.AreEqual(12, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM CIDADE'));
+  Assert.AreEqual(5, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM ESTADO'));
+  Assert.AreEqual(13, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM CIDADE'));
   FInicializador.Conexao.Connected := False;
   FreeAndNil(FInicializador);
   LQuantidadeDDL := 0;
@@ -333,9 +335,9 @@ begin
   Assert.IsTrue(FInicializador.Preparar(LMensagem), LMensagem);
   Assert.AreEqual(0, LQuantidadeDDL,
     'Uma base na versão suportada não pode executar instruções DDL.');
-  Assert.AreEqual(4, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM ESTADO'));
-  Assert.AreEqual(12, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM CIDADE'));
-  Assert.AreEqual(2, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM SCHEMA_VERSION'));
+  Assert.AreEqual(5, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM ESTADO'));
+  Assert.AreEqual(13, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM CIDADE'));
+  Assert.AreEqual(3, InteiroSQL(FInicializador.Conexao, 'SELECT COUNT(*) FROM SCHEMA_VERSION'));
 end;
 
 procedure TTestesInicializadorBanco.ConectaPeloServicoLocalEmLocalhost3050;
@@ -739,11 +741,12 @@ begin
 
   LConexao := ConectarPeloServico(LBanco);
   try
-    Assert.AreEqual(2, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM SCHEMA_VERSION'),
-      'A base criada pelo executavel deve registrar as duas migracoes.');
-    Assert.AreEqual(4, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM ESTADO'));
-    Assert.AreEqual(12, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM CIDADE'));
-    Assert.AreEqual(0, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM CLIENTE'));
+    Assert.AreEqual(3, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM SCHEMA_VERSION'),
+      'A base criada pelo executavel deve registrar as tres migracoes.');
+    Assert.AreEqual(5, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM ESTADO'));
+    Assert.AreEqual(13, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM CIDADE'));
+    Assert.AreEqual(5, InteiroSQL(LConexao, 'SELECT COUNT(*) FROM CLIENTE'),
+      'A base criada pelo executavel deve trazer os clientes de IDs protegidos.');
     Assert.AreEqual('Uberlândia', TextoSQL(LConexao,
       'SELECT NOME FROM CIDADE WHERE ID = 2'),
       'Os dados de referencia devem preservar acentuacao em UTF8.');
@@ -834,7 +837,8 @@ begin
     'Minas Gerais/MG:Belo Horizonte|Minas Gerais/MG:Uberlândia|Minas Gerais/MG:Contagem|' +
     'São Paulo/SP:São Paulo|São Paulo/SP:Campinas|São Paulo/SP:Santos|' +
     'Rio de Janeiro/RJ:Rio de Janeiro|Rio de Janeiro/RJ:Niterói|Rio de Janeiro/RJ:Petrópolis|' +
-    'Bahia/BA:Salvador|Bahia/BA:Feira de Santana|Bahia/BA:Vitória da Conquista',
+    'Bahia/BA:Salvador|Bahia/BA:Feira de Santana|Bahia/BA:Vitória da Conquista|' +
+    'Santa Catarina/SC:Lages',
     LReferencias);
   Assert.AreEqual(4, InteiroSQL(FInicializador.Conexao,
     'SELECT COUNT(*) FROM (SELECT ESTADOID FROM CIDADE GROUP BY ESTADOID HAVING COUNT(*)=3)'));
@@ -874,8 +878,27 @@ begin
     'SELECT MAX(ID) FROM CIDADE'),
     'A proxima chave de SEQ_CIDADE deve estar livre apos as cidades de referencia.');
   Assert.IsTrue(InteiroSQL(FInicializador.Conexao,
-    'SELECT NEXT VALUE FOR SEQ_CLIENTE FROM RDB$DATABASE') > 0,
-    'SEQ_CLIENTE deve gerar chaves positivas.');
+    'SELECT NEXT VALUE FOR SEQ_CLIENTE FROM RDB$DATABASE') > InteiroSQL(FInicializador.Conexao,
+    'SELECT MAX(ID) FROM CLIENTE'),
+    'A proxima chave de SEQ_CLIENTE deve estar livre apos os clientes protegidos.');
+end;
+
+procedure TTestesMigracaoInicial.InsereOsClientesDeIdsProtegidos;
+var
+  LClientes: string;
+begin
+  LClientes := LinhasSQL(FInicializador.Conexao,
+    'SELECT CL.ID || '':'' || CL.NOME || '':'' || CL.CPF_CNPJ || '':'' || C.NOME || ''/'' || E.UF ' +
+    '|| '':'' || CAST(CL.DATANASCIMENTO AS VARCHAR(10)) FROM CLIENTE CL ' +
+    'JOIN CIDADE C ON C.ID=CL.CIDADEID JOIN ESTADO E ON E.ID=C.ESTADOID ORDER BY CL.ID');
+  Assert.AreEqual(
+    '1:Cliente código protegido:51808188004:Lages/SC:2026-09-22|' +
+    '5:Cliente código protegido:19760893282:Lages/SC:2026-09-22|' +
+    '8:Cliente código protegido:88183624456:Lages/SC:2026-09-22|' +
+    '10:Cliente código protegido:41651116431:Lages/SC:2026-09-22|' +
+    '15:Cliente código protegido:73315402205:Lages/SC:2026-09-22',
+    LClientes,
+    'A migracao 3 deve semear um cliente para cada ID protegido.');
 end;
 
 procedure TTestesAplicacaoRelease.ExecutavelReleaseRecusaVersaoFuturaERegistraOErro;

@@ -65,6 +65,7 @@ uses
   Infraestrutura.RegistroErroInicializacao in '..\src\Infraestrutura\Infraestrutura.RegistroErroInicializacao.pas',
   Migracao.V001.EsquemaInicial in '..\src\Migracoes\Migracao.V001.EsquemaInicial.pas',
   Migracao.V002.DadosReferencia in '..\src\Migracoes\Migracao.V002.DadosReferencia.pas',
+  Migracao.V003.ClientesProtegidos in '..\src\Migracoes\Migracao.V003.ClientesProtegidos.pas',
   Visao.ApresentadorErro in '..\src\Visao\Visao.ApresentadorErro.pas',
   Visao.ComposicaoAplicacao in '..\src\Visao\Visao.ComposicaoAplicacao.pas',
   Visao.FormPrincipal in '..\src\Visao\Visao.FormPrincipal.pas' {FormPrincipal},
