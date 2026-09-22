@@ -51,7 +51,9 @@ jobs:
             exit 1
           }
           git rev-parse --verify --quiet "refs/tags/v$versao" | Out-Null
-          if ($LASTEXITCODE -eq 0) {
+          $tagJaExiste = $LASTEXITCODE -eq 0
+          $global:LASTEXITCODE = 0
+          if ($tagJaExiste) {
             Write-Host "A tag v$versao ja existe no repositorio."
             exit 1
           }
@@ -63,6 +65,7 @@ jobs:
             }
           }
           Write-Host "Versao $versao validada."
+          exit 0
 
       - name: Compilar o CadCli.exe em Release Win64
         run: |
