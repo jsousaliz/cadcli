@@ -24,10 +24,10 @@
 
 ## Handoff
 
-**Feature**: `parte-03.1-pesquisa-clientes`
-**Where**: Parte 03.1 construída e verificada. O Verifier independente deu PASS no round 2 (`verification.md`, faixa 76f1716..ed559b9): 26/26 checks, 9/9 faltas mortas, suíte 124/124. Round 1 falhou por AC 17 sem prova em Cidade/Estado e comentários na form, corrigidos em ed559b9
+**Feature**: `parte-04-relatorio-clientes`
+**Where**: Parte 04 construída e verificada. O Verifier independente deu PASS na rodada 2 (`verification.md`, faixa 512d806..300fc39): 27/27 checks, 9/9 faltas mortas nas duas rodadas, suíte 149/149. A rodada 1 falhou por mensagens do controlador em UTF-8 duplamente codificado e por provas que comparavam a constante de produção com ela mesma, corrigidas em 300fc39
 **In progress**: nada
-**Next step**: revisão do usuário e decisão sobre push/PR da branch; depois, a Parte 04
-**Blockers**: nenhum. C4-C9, C23 e C24 exigem o serviço Firebird 3 em `localhost:3050`. C20-C22 movem o cursor real para clicar no cabeçalho (o `TcxHeader` usa a posição do cursor), então são sensíveis a mexer no mouse durante a execução
+**Next step**: revisão do usuário e decisão sobre push/PR da branch
+**Blockers**: nenhum. C11-C14 e C24 exigem o serviço Firebird 3 em `localhost:3050`. O ReportBuilder instalado é trial, então toda página impressa leva a marca "Demo Copy"; nenhum check a proíbe. Uma prova de entrega pode deixar o `CadCli.exe` de Release em execução e travar o rebuild com `F2039`
 **Uncommitted**: nada
-**Branch**: `feat/parte-03.1-pesquisa-clientes`
+**Branch**: `feat/parte-04-relatorio-clientes`
