@@ -38,6 +38,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/Visao/Visao.FormCadastroCliente.pas:178-192 (round 1, Test policy View passiva) (visao-formularios)
 - last seen: 2026-09-21T23:38:09Z
 
+### L-005 - Uma regra de ordem sem diferença de caixa só é provada por coluna se a base de teste tiver, naquela coluna, um valor em minúsculas que mude a ordem sem o UPPER.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tests/Unitarios/Testes.RepositorioClienteFirebird.pas` · harmful: 0
+- features: parte-03.1-pesquisa-clientes
+- evidence: AC 17 / C23 (tests/Unitarios/Testes.RepositorioClienteFirebird.pas)
+- last seen: 2026-09-22T16:22:37Z
+
+### L-006 - O TcxMCListBox chama OnSectionChangedSortOrder sem checar Assigned e reordena as linhas ao mudar SortOrder: troque por um handler vazio, nunca por nil.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `src/Visao` · harmful: 0
+- features: parte-03.1-pesquisa-clientes
+- evidence: src/Visao/Visao.FormPesquisaCliente.pas (src/Visao)
+- last seen: 2026-09-22T16:22:38Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

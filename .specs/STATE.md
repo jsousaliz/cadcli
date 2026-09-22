@@ -24,9 +24,9 @@
 ## Handoff
 
 **Feature**: `parte-03.1-pesquisa-clientes`
-**Where**: construída; 26 checks com provas verdes, suíte 124/124. Door 6 registrado no build (Parte 03 C14 e três testes de b255b92 reescritos sob AD-016)
-**In progress**: verificação independente
-**Next step**: Verifier sobre `76f1716..HEAD`; depois, revisão do usuário e decisão sobre push/PR
+**Where**: Parte 03.1 construída e verificada. O Verifier independente deu PASS no round 2 (`verification.md`, faixa 76f1716..ed559b9): 26/26 checks, 9/9 faltas mortas, suíte 124/124. Round 1 falhou por AC 17 sem prova em Cidade/Estado e comentários na form, corrigidos em ed559b9
+**In progress**: nada
+**Next step**: revisão do usuário e decisão sobre push/PR da branch; depois, a Parte 04
 **Blockers**: nenhum. C4-C9, C23 e C24 exigem o serviço Firebird 3 em `localhost:3050`. C20-C22 movem o cursor real para clicar no cabeçalho (o `TcxHeader` usa a posição do cursor), então são sensíveis a mexer no mouse durante a execução
 **Uncommitted**: nada
 **Branch**: `feat/parte-03.1-pesquisa-clientes`

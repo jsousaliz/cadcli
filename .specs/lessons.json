@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 5,
+  "next_id": 7,
   "lessons": [
     {
       "id": "L-001",
@@ -76,6 +76,42 @@
       ],
       "created": "2026-09-21T23:38:09Z",
       "last_seen": "2026-09-21T23:38:09Z"
+    },
+    {
+      "id": "L-005",
+      "key": "ac_gap::uma regra de ordem sem diferenca de caixa so e provada por coluna se a base de teste tiver naquela coluna um valor em minusculas que mude a ordem sem o upper",
+      "text": "Uma regra de ordem sem diferença de caixa só é provada por coluna se a base de teste tiver, naquela coluna, um valor em minúsculas que mude a ordem sem o UPPER.",
+      "signal": "ac_gap",
+      "scope": "tests/Unitarios/Testes.RepositorioClienteFirebird.pas",
+      "status": "candidate",
+      "features": [
+        "parte-03.1-pesquisa-clientes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AC 17 / C23 (tests/Unitarios/Testes.RepositorioClienteFirebird.pas)"
+      ],
+      "created": "2026-09-22T16:22:37Z",
+      "last_seen": "2026-09-22T16:22:37Z"
+    },
+    {
+      "id": "L-006",
+      "key": "spec_deviation::o tcxmclistbox chama onsectionchangedsortorder sem checar assigned e reordena as linhas ao mudar sortorder troque por um handler vazio nunca por nil",
+      "text": "O TcxMCListBox chama OnSectionChangedSortOrder sem checar Assigned e reordena as linhas ao mudar SortOrder: troque por um handler vazio, nunca por nil.",
+      "signal": "spec_deviation",
+      "scope": "src/Visao",
+      "status": "candidate",
+      "features": [
+        "parte-03.1-pesquisa-clientes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/Visao/Visao.FormPesquisaCliente.pas (src/Visao)"
+      ],
+      "created": "2026-09-22T16:22:38Z",
+      "last_seen": "2026-09-22T16:22:38Z"
     }
   ]
 }
