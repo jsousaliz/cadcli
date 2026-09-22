@@ -520,6 +520,8 @@ const
 var
   LCaso: TCaso;
   LVerificados: Integer;
+  LEstado: Integer;
+  LCidade: Integer;
 begin
   SemearBaseF5;
   LVerificados := 0;
@@ -533,6 +535,22 @@ begin
     Inc(LVerificados);
   end;
   Assert.AreEqual(16, LVerificados);
+
+  LEstado := Inteiro(Conexao, 'SELECT NEXT VALUE FOR SEQ_ESTADO FROM RDB$DATABASE', []);
+  Conexao.ExecSQL('INSERT INTO ESTADO (ID, NOME, UF) VALUES (:ID, :NOME, :UF)',
+    [LEstado, 'amapá', 'AP']);
+  LCidade := Inteiro(Conexao, 'SELECT NEXT VALUE FOR SEQ_CIDADE FROM RDB$DATABASE', []);
+  Conexao.ExecSQL('INSERT INTO CIDADE (ID, NOME, ESTADOID) VALUES (:ID, :NOME, :ESTADOID)',
+    [LCidade, 'macapá', LEstado]);
+  InserirCliente(6, 'Eva Lima', '12345678909', '68900000', LCidade, EncodeDate(1995, 5, 5));
+  Assert.AreEqual('Ana,Carlos,Denise,Eva,Bruno,bianca', PrimeirosNomes(FRepositorio.Pesquisar(
+    Default(TFiltroCliente), Ordenacao(coCidade), 50)), 'Cidade crescente sem diferença de caixa.');
+  Assert.AreEqual('Bruno,Eva,Carlos,Denise,Ana,bianca', PrimeirosNomes(FRepositorio.Pesquisar(
+    Default(TFiltroCliente), Ordenacao(coCidade, True), 50)), 'Cidade decrescente sem diferença de caixa.');
+  Assert.AreEqual('Eva,Ana,Bruno,Carlos,Denise,bianca', PrimeirosNomes(FRepositorio.Pesquisar(
+    Default(TFiltroCliente), Ordenacao(coEstado), 50)), 'Estado crescente sem diferença de caixa.');
+  Assert.AreEqual('Carlos,Denise,Ana,Bruno,Eva,bianca', PrimeirosNomes(FRepositorio.Pesquisar(
+    Default(TFiltroCliente), Ordenacao(coEstado, True), 50)), 'Estado decrescente sem diferença de caixa.');
 end;
 
 procedure TTestesRepositorioClienteFirebird.PesquisaTrazCidadeUfEEstadoDoCliente;

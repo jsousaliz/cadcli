@@ -74,9 +74,9 @@ type
     function CamposMarcados: TCamposPesquisa;
     procedure CentralizarSemResultado;
     procedure CabecalhoClicado(AHeader: TcxCustomHeader; ASection: TcxHeaderSection);
-    procedure SetaAlterada(Sender: TObject; const ASection: TcxHeaderSection;
+    procedure ManterLinhasNaOrdemDoBanco(Sender: TObject; const ASection: TcxHeaderSection;
       const ASortOrder: TcxHeaderSortOrder);
-    procedure SetaMudando(Sender: TObject; const ASection: TcxHeaderSection;
+    procedure PermitirSetaSomentePeloControlador(Sender: TObject; const ASection: TcxHeaderSection;
       const AAnterior: TcxHeaderSortOrder; var ANova: TcxHeaderSortOrder; var APermitir: Boolean);
   public
     destructor Destroy; override;
@@ -157,20 +157,18 @@ begin
   MarcarCamposPadrao;
   LCabecalho := TcxHeader(ListaClientes.HeaderSections[0].HeaderControl);
   LCabecalho.OnSectionClick := CabecalhoClicado;
-  LCabecalho.OnSectionChangedSortOrder := SetaAlterada;
-  LCabecalho.OnSectionChangingSortOrder := SetaMudando;
+  LCabecalho.OnSectionChangedSortOrder := ManterLinhasNaOrdemDoBanco;
+  LCabecalho.OnSectionChangingSortOrder := PermitirSetaSomentePeloControlador;
 end;
 
-procedure TFormPesquisaCliente.SetaAlterada(Sender: TObject; const ASection: TcxHeaderSection;
+procedure TFormPesquisaCliente.ManterLinhasNaOrdemDoBanco(Sender: TObject; const ASection: TcxHeaderSection;
   const ASortOrder: TcxHeaderSortOrder);
 begin
-  // Substitui o tratamento do TcxMCListBox, que reordenaria as linhas já trazidas do banco.
 end;
 
-procedure TFormPesquisaCliente.SetaMudando(Sender: TObject; const ASection: TcxHeaderSection;
+procedure TFormPesquisaCliente.PermitirSetaSomentePeloControlador(Sender: TObject; const ASection: TcxHeaderSection;
   const AAnterior: TcxHeaderSortOrder; var ANova: TcxHeaderSortOrder; var APermitir: Boolean);
 begin
-  // A seta só muda pelo controlador, via ExibirOrdenacao; o clique não a inverte por conta própria.
   APermitir := FExibindoOrdenacao;
 end;
 
