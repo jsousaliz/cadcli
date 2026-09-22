@@ -31,6 +31,9 @@ type
 
 implementation
 
+uses
+  FireDAC.Stan.Param;
+
 constructor TContextoMigracaoFireDAC.Create(AConexao: TFDConnection;
   AObservadorSql: TObservadorSql);
 begin
