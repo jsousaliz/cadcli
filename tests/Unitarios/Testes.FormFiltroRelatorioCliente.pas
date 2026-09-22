@@ -190,7 +190,7 @@ begin
   Assert.IsFalse(FocoEstaEm(FForm, FForm.EditorIdFinal),
     'O foco não pode ficar no editor de ID Final.');
   Assert.AreEqual(1, FApresentadorObjeto.Mensagens.Count, 'Um único aviso é apresentado.');
-  Assert.AreEqual(MENSAGEM_ID_INICIAL, FApresentadorObjeto.Mensagens[0]);
+  Assert.AreEqual('Informe um ID inicial inteiro maior que zero.', FApresentadorObjeto.Mensagens[0]);
   Assert.AreEqual(0, FGeradorObjeto.Chamadas, 'Filtro inválido não gera relatório.');
 
   FForm.GrupoModos.ItemIndex := Ord(mrCidadeEstado);
@@ -202,7 +202,7 @@ begin
   Assert.IsFalse(FocoEstaEm(FForm, FForm.ComboCidade),
     'O foco não pode ficar no combo de Cidade.');
   Assert.AreEqual(2, FApresentadorObjeto.Mensagens.Count);
-  Assert.AreEqual(MENSAGEM_ESTADO_OBRIGATORIO, FApresentadorObjeto.Mensagens[1]);
+  Assert.AreEqual('Selecione um estado.', FApresentadorObjeto.Mensagens[1]);
   Assert.AreEqual(0, FGeradorObjeto.Chamadas, 'Filtro inválido não gera relatório.');
 end;
 
@@ -278,7 +278,7 @@ begin
   Assert.AreEqual('4', FForm.EditorIdFinal.Text, 'O ID final permanece.');
   Assert.IsTrue(FForm.BotaoVisualizar.Enabled, 'Visualizar volta a ficar habilitado.');
   Assert.AreEqual(1, FApresentadorObjeto.Mensagens.Count, 'Um único erro é apresentado.');
-  Assert.AreEqual(MENSAGEM_FALHA_GERACAO, FApresentadorObjeto.Mensagens[0]);
+  Assert.AreEqual('Não foi possível gerar o relatório de clientes.', FApresentadorObjeto.Mensagens[0]);
 end;
 
 procedure TTestesFormFiltroRelatorioCliente.VisualizarDesabilitaAcaoDuranteGeracao;

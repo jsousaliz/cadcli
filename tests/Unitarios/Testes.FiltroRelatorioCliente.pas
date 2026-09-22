@@ -45,44 +45,44 @@ const
     (Modo: mrIntervalo; IdInicial: '3'; IdFinal: '3'; EstadoId: 0; CidadeId: 0;
       Valido: True; Campo: cfIdInicial; Mensagem: ''; De: 3; Ate: 3; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: ''; IdFinal: '4'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdInicial; Mensagem: MENSAGEM_ID_INICIAL;
+      Valido: False; Campo: cfIdInicial; Mensagem: 'Informe um ID inicial inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: '0'; IdFinal: '4'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdInicial; Mensagem: MENSAGEM_ID_INICIAL;
+      Valido: False; Campo: cfIdInicial; Mensagem: 'Informe um ID inicial inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: '-1'; IdFinal: '4'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdInicial; Mensagem: MENSAGEM_ID_INICIAL;
+      Valido: False; Campo: cfIdInicial; Mensagem: 'Informe um ID inicial inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: 'abc'; IdFinal: '4'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdInicial; Mensagem: MENSAGEM_ID_INICIAL;
+      Valido: False; Campo: cfIdInicial; Mensagem: 'Informe um ID inicial inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: '1,5'; IdFinal: '4'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdInicial; Mensagem: MENSAGEM_ID_INICIAL;
+      Valido: False; Campo: cfIdInicial; Mensagem: 'Informe um ID inicial inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: '2147483648'; IdFinal: '4'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdInicial; Mensagem: MENSAGEM_ID_INICIAL;
+      Valido: False; Campo: cfIdInicial; Mensagem: 'Informe um ID inicial inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: '2'; IdFinal: ''; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdFinal; Mensagem: MENSAGEM_ID_FINAL;
+      Valido: False; Campo: cfIdFinal; Mensagem: 'Informe um ID final inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: '2'; IdFinal: 'x'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdFinal; Mensagem: MENSAGEM_ID_FINAL;
+      Valido: False; Campo: cfIdFinal; Mensagem: 'Informe um ID final inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: ''; IdFinal: ''; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdInicial; Mensagem: MENSAGEM_ID_INICIAL;
+      Valido: False; Campo: cfIdInicial; Mensagem: 'Informe um ID inicial inteiro maior que zero.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrIntervalo; IdInicial: '5'; IdFinal: '4'; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfIdFinal; Mensagem: MENSAGEM_INTERVALO_INVERTIDO;
+      Valido: False; Campo: cfIdFinal; Mensagem: 'O ID inicial deve ser menor ou igual ao ID final.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrCidadeEstado; IdInicial: ''; IdFinal: ''; EstadoId: 0; CidadeId: 0;
-      Valido: False; Campo: cfEstado; Mensagem: MENSAGEM_ESTADO_OBRIGATORIO;
+      Valido: False; Campo: cfEstado; Mensagem: 'Selecione um estado.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrCidadeEstado; IdInicial: ''; IdFinal: ''; EstadoId: 1; CidadeId: 0;
       Valido: True; Campo: cfEstado; Mensagem: ''; De: 0; Ate: 0; Estado: 1; Cidade: 0),
     (Modo: mrCidadeEstado; IdInicial: ''; IdFinal: ''; EstadoId: 2; CidadeId: 5;
       Valido: True; Campo: cfEstado; Mensagem: ''; De: 0; Ate: 0; Estado: 2; Cidade: 5),
     (Modo: mrCidadeEstado; IdInicial: ''; IdFinal: ''; EstadoId: 0; CidadeId: 5;
-      Valido: False; Campo: cfEstado; Mensagem: MENSAGEM_ESTADO_OBRIGATORIO;
+      Valido: False; Campo: cfEstado; Mensagem: 'Selecione um estado.';
       De: 0; Ate: 0; Estado: 0; Cidade: 0),
     (Modo: mrTodos; IdInicial: 'abc'; IdFinal: 'x'; EstadoId: 0; CidadeId: 5;
       Valido: True; Campo: cfIdInicial; Mensagem: ''; De: 0; Ate: 0; Estado: 0; Cidade: 0),

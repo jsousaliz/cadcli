@@ -160,19 +160,19 @@ begin
   LCasos := LCasos + [Default(TCasoInvalido)];
   LCasos[0].Entrada := EntradaDoFiltro(mrIntervalo, '', '4');
   LCasos[0].Campo := cfIdInicial;
-  LCasos[0].Mensagem := MENSAGEM_ID_INICIAL;
+  LCasos[0].Mensagem := 'Informe um ID inicial inteiro maior que zero.';
   LCasos := LCasos + [Default(TCasoInvalido)];
   LCasos[1].Entrada := EntradaDoFiltro(mrIntervalo, '2', '');
   LCasos[1].Campo := cfIdFinal;
-  LCasos[1].Mensagem := MENSAGEM_ID_FINAL;
+  LCasos[1].Mensagem := 'Informe um ID final inteiro maior que zero.';
   LCasos := LCasos + [Default(TCasoInvalido)];
   LCasos[2].Entrada := EntradaDoFiltro(mrIntervalo, '5', '4');
   LCasos[2].Campo := cfIdFinal;
-  LCasos[2].Mensagem := MENSAGEM_INTERVALO_INVERTIDO;
+  LCasos[2].Mensagem := 'O ID inicial deve ser menor ou igual ao ID final.';
   LCasos := LCasos + [Default(TCasoInvalido)];
   LCasos[3].Entrada := EntradaDoFiltro(mrCidadeEstado);
   LCasos[3].Campo := cfEstado;
-  LCasos[3].Mensagem := MENSAGEM_ESTADO_OBRIGATORIO;
+  LCasos[3].Mensagem := 'Selecione um estado.';
 
   LVerificados := 0;
   for LCaso in LCasos do
@@ -207,7 +207,7 @@ begin
   FControlador.Iniciar;
 
   Assert.AreEqual(1, FVisaoObjeto.Erros.Count, 'Um único erro é exibido.');
-  Assert.AreEqual(MENSAGEM_FALHA_LOCALIDADES, FVisaoObjeto.Erros[0]);
+  Assert.AreEqual('Não foi possível carregar os estados e cidades.', FVisaoObjeto.Erros[0]);
   Assert.IsFalse(ContainsText(FVisaoObjeto.Erros[0], 'SELECT'),
     'A mensagem não pode conter o texto da exceção.');
 
@@ -314,7 +314,7 @@ begin
 
   Assert.AreEqual(0, FGeradorObjeto.Chamadas, 'Sem resultado não abre pré-visualização.');
   Assert.AreEqual(1, FVisaoObjeto.Avisos.Count, 'Um único aviso é exibido.');
-  Assert.AreEqual(MENSAGEM_SEM_RESULTADO, FVisaoObjeto.Avisos[0]);
+  Assert.AreEqual('Nenhum cliente encontrado para o filtro informado', FVisaoObjeto.Avisos[0]);
   Assert.IsFalse(FVisaoObjeto.Carregando, 'O carregamento é encerrado.');
   Assert.AreEqual(0, FVisaoObjeto.Fechamentos, 'A tela de filtros continua aberta.');
   Assert.AreEqual(0, Integer(Length(FVisaoObjeto.ModosExibidos)),
@@ -339,7 +339,7 @@ begin
 
   Assert.AreEqual(0, FGeradorObjeto.Chamadas, 'Falha na consulta não chega ao gerador.');
   Assert.AreEqual(1, FVisaoObjeto.Erros.Count, 'Um único erro de consulta.');
-  Assert.AreEqual(MENSAGEM_FALHA_CONSULTA, FVisaoObjeto.Erros[0]);
+  Assert.AreEqual('Não foi possível consultar os clientes do relatório.', FVisaoObjeto.Erros[0]);
   Assert.IsFalse(ContainsText(FVisaoObjeto.Erros[0], 'Firebird'),
     'A mensagem não pode conter o texto da exceção.');
   Assert.AreEqual(FVisaoObjeto.Registro.Count - 1,
@@ -356,7 +356,7 @@ begin
 
   Assert.AreEqual(1, FGeradorObjeto.Chamadas, 'O gerador é acionado uma vez.');
   Assert.AreEqual(1, FVisaoObjeto.Erros.Count, 'Um único erro de geração.');
-  Assert.AreEqual(MENSAGEM_FALHA_GERACAO, FVisaoObjeto.Erros[0]);
+  Assert.AreEqual('Não foi possível gerar o relatório de clientes.', FVisaoObjeto.Erros[0]);
   Assert.IsFalse(ContainsText(FVisaoObjeto.Erros[0], 'TppReport'),
     'A mensagem não pode conter o texto da exceção.');
   Assert.AreEqual(FVisaoObjeto.Registro.Count - 1,

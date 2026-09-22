@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 7,
+  "next_id": 10,
   "lessons": [
     {
       "id": "L-001",
@@ -112,6 +112,60 @@
       ],
       "created": "2026-09-22T16:22:38Z",
       "last_seen": "2026-09-22T16:22:38Z"
+    },
+    {
+      "id": "L-007",
+      "key": "ac_gap::confirme que um fonte delphi novo esta em utf 8 real nao em utf 8 duplamente codificado comparando os bytes de um literal acentuado antes de dar a mensagem por provada",
+      "text": "Confirme que um fonte Delphi novo esta em UTF-8 real, nao em UTF-8 duplamente codificado, comparando os bytes de um literal acentuado antes de dar a mensagem por provada",
+      "signal": "ac_gap",
+      "scope": "encoding",
+      "status": "candidate",
+      "features": [
+        "parte-04-relatorio-clientes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/Aplicacao/Aplicacao.ControladorRelatorioCliente.pas:55 (encoding)"
+      ],
+      "created": "2026-09-22T19:45:56Z",
+      "last_seen": "2026-09-22T19:45:56Z"
+    },
+    {
+      "id": "L-008",
+      "key": "spec_precision_gap::asserte o literal exato da mensagem no teste em vez de comparar a constante de producao consigo mesma",
+      "text": "Asserte o literal exato da mensagem no teste em vez de comparar a constante de producao consigo mesma",
+      "signal": "spec_precision_gap",
+      "scope": "mensagens",
+      "status": "candidate",
+      "features": [
+        "parte-04-relatorio-clientes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "tests/Unitarios/Testes.ControladorRelatorioCliente.pas:210 (mensagens)"
+      ],
+      "created": "2026-09-22T19:45:56Z",
+      "last_seen": "2026-09-22T19:45:56Z"
+    },
+    {
+      "id": "L-009",
+      "key": "gate_fail::um check que nomeia um texto literal so esta provado quando o teste carrega esse literal nao a constante que o produz",
+      "text": "Um check que nomeia um texto literal so esta provado quando o teste carrega esse literal, nao a constante que o produz",
+      "signal": "gate_fail",
+      "scope": "checks",
+      "status": "candidate",
+      "features": [
+        "parte-04-relatorio-clientes"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C6 (checks)"
+      ],
+      "created": "2026-09-22T19:45:57Z",
+      "last_seen": "2026-09-22T19:45:57Z"
     }
   ]
 }

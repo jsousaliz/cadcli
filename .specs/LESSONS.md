@@ -50,6 +50,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/Visao/Visao.FormPesquisaCliente.pas (src/Visao)
 - last seen: 2026-09-22T16:22:38Z
 
+### L-007 - Confirme que um fonte Delphi novo esta em UTF-8 real, nao em UTF-8 duplamente codificado, comparando os bytes de um literal acentuado antes de dar a mensagem por provada
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `encoding` · harmful: 0
+- features: parte-04-relatorio-clientes
+- evidence: src/Aplicacao/Aplicacao.ControladorRelatorioCliente.pas:55 (encoding)
+- last seen: 2026-09-22T19:45:56Z
+
+### L-008 - Asserte o literal exato da mensagem no teste em vez de comparar a constante de producao consigo mesma
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `mensagens` · harmful: 0
+- features: parte-04-relatorio-clientes
+- evidence: tests/Unitarios/Testes.ControladorRelatorioCliente.pas:210 (mensagens)
+- last seen: 2026-09-22T19:45:56Z
+
+### L-009 - Um check que nomeia um texto literal so esta provado quando o teste carrega esse literal, nao a constante que o produz
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `checks` · harmful: 0
+- features: parte-04-relatorio-clientes
+- evidence: C6 (checks)
+- last seen: 2026-09-22T19:45:57Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -52,9 +52,9 @@ type
 const
   CIDADE_TODAS = 'Todas as cidades';
   MENSAGEM_SEM_RESULTADO = 'Nenhum cliente encontrado para o filtro informado';
-  MENSAGEM_FALHA_LOCALIDADES = 'NÃ£o foi possÃ­vel carregar os estados e cidades.';
-  MENSAGEM_FALHA_CONSULTA = 'NÃ£o foi possÃ­vel consultar os clientes do relatÃ³rio.';
-  MENSAGEM_FALHA_GERACAO = 'NÃ£o foi possÃ­vel gerar o relatÃ³rio de clientes.';
+  MENSAGEM_FALHA_LOCALIDADES = 'Não foi possível carregar os estados e cidades.';
+  MENSAGEM_FALHA_CONSULTA = 'Não foi possível consultar os clientes do relatório.';
+  MENSAGEM_FALHA_GERACAO = 'Não foi possível gerar o relatório de clientes.';
   DESCRICAO_TODOS = 'Filtro: Todos';
   DESCRICAO_INTERVALO = 'Filtro: ID Inicial %d e ID Final %d';
   DESCRICAO_ESTADO = 'Filtro: Estado %s';
@@ -68,13 +68,13 @@ constructor TControladorRelatorioCliente.Create(const AVisao: IVisaoRelatorioCli
 begin
   inherited Create;
   if not Assigned(AVisao) then
-    raise EArgumentNilException.Create('A visÃ£o do relatÃ³rio deve ser informada.');
+    raise EArgumentNilException.Create('A visão do relatório deve ser informada.');
   if not Assigned(ARepositorio) then
-    raise EArgumentNilException.Create('O repositÃ³rio de clientes deve ser informado.');
+    raise EArgumentNilException.Create('O repositório de clientes deve ser informado.');
   if not Assigned(AGerador) then
-    raise EArgumentNilException.Create('O gerador do relatÃ³rio deve ser informado.');
+    raise EArgumentNilException.Create('O gerador do relatório deve ser informado.');
   if not Assigned(ARelogio) then
-    raise EArgumentNilException.Create('O relÃ³gio deve ser informado.');
+    raise EArgumentNilException.Create('O relógio deve ser informado.');
   FVisao := AVisao;
   FRepositorio := ARepositorio;
   FGerador := AGerador;
