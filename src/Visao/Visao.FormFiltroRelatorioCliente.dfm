@@ -90,21 +90,25 @@ object FormFiltroRelatorioCliente: TFormFiltroRelatorioCliente
     Width = 282
   end
   object BotaoVisualizar: TcxButton
-    Left = 12
+    Left = 92
     Top = 302
-    Width = 130
+    Width = 100
     Height = 30
     Caption = 'Visualizar'
+    OptionsImage.ImageIndex = 7
+    OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
     TabOrder = 5
     OnClick = BotaoVisualizarClick
   end
   object BotaoFechar: TcxButton
-    Left = 164
+    Left = 198
     Top = 302
-    Width = 130
+    Width = 100
     Height = 30
     Caption = 'Fechar'
     ModalResult = 2
+    OptionsImage.ImageIndex = 8
+    OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
     TabOrder = 6
   end
 end

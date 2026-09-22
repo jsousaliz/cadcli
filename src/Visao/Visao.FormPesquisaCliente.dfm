@@ -1,7 +1,7 @@
 object FormPesquisaCliente: TFormPesquisaCliente
   Left = 0
   Top = 0
-  Caption = 'Clientes'
+  Caption = 'Cliente'
   ClientHeight = 560
   ClientWidth = 900
   Color = clBtnFace
@@ -92,6 +92,8 @@ object FormPesquisaCliente: TFormPesquisaCliente
       Width = 90
       Height = 27
       Caption = '&Pesquisar'
+      OptionsImage.ImageIndex = 3
+      OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
       TabOrder = 3
       OnClick = BotaoPesquisarClick
     end
@@ -101,6 +103,8 @@ object FormPesquisaCliente: TFormPesquisaCliente
       Width = 90
       Height = 27
       Caption = '&Limpar'
+      OptionsImage.ImageIndex = 4
+      OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
       TabOrder = 4
       OnClick = BotaoLimparClick
     end
@@ -109,7 +113,7 @@ object FormPesquisaCliente: TFormPesquisaCliente
     Left = 0
     Top = 64
     Width = 900
-    Height = 426
+    Height = 427
     Align = alClient
     Delimiter = #9
     HeaderSections = <
@@ -158,7 +162,7 @@ object FormPesquisaCliente: TFormPesquisaCliente
   object RotuloLimite: TcxLabel
     AlignWithMargins = True
     Left = 12
-    Top = 492
+    Top = 493
     Margins.Left = 12
     Margins.Top = 2
     Margins.Right = 12
@@ -189,6 +193,8 @@ object FormPesquisaCliente: TFormPesquisaCliente
       Width = 90
       Height = 28
       Caption = 'Novo'
+      OptionsImage.ImageIndex = 0
+      OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
       TabOrder = 0
       OnClick = BotaoNovoClick
     end
@@ -198,6 +204,8 @@ object FormPesquisaCliente: TFormPesquisaCliente
       Width = 90
       Height = 28
       Caption = 'Editar'
+      OptionsImage.ImageIndex = 1
+      OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
       TabOrder = 1
       OnClick = BotaoEditarClick
     end
@@ -207,6 +215,8 @@ object FormPesquisaCliente: TFormPesquisaCliente
       Width = 90
       Height = 28
       Caption = 'Excluir'
+      OptionsImage.ImageIndex = 2
+      OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
       TabOrder = 2
       OnClick = BotaoExcluirClick
     end

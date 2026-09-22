@@ -24,8 +24,6 @@ object FormCadastroCliente: TFormCadastroCliente
     Align = alClient
     PanelStyle.Active = True
     TabOrder = 0
-    ExplicitWidth = 558
-    ExplicitHeight = 300
     Height = 308
     Width = 560
     object RotuloNome: TcxLabel
@@ -200,8 +198,6 @@ object FormCadastroCliente: TFormCadastroCliente
     Align = alBottom
     PanelStyle.Active = True
     TabOrder = 1
-    ExplicitTop = 300
-    ExplicitWidth = 558
     Height = 48
     Width = 560
     object BotaoSalvar: TcxButton
@@ -210,6 +206,8 @@ object FormCadastroCliente: TFormCadastroCliente
       Width = 100
       Height = 28
       Caption = 'Salvar'
+      OptionsImage.ImageIndex = 5
+      OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
       TabOrder = 0
       OnClick = BotaoSalvarClick
     end
@@ -219,6 +217,8 @@ object FormCadastroCliente: TFormCadastroCliente
       Width = 100
       Height = 28
       Caption = 'Cancelar'
+      OptionsImage.ImageIndex = 6
+      OptionsImage.Images = ModuloIconesAcao.ListaIconesAcao
       TabOrder = 1
       OnClick = BotaoCancelarClick
     end

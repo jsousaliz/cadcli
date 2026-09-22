@@ -25,7 +25,7 @@ uses
   Aplicacao.ExecutorMigracoes,
   Aplicacao.GeradorRelatorioCliente,
   Aplicacao.RepositorioCliente,
-  Visao.ApresentadorErro;
+  Visao.ApresentadorErro, Vcl.Menus, Vcl.StdCtrls;
 
 type
   TFormFiltroRelatorioCliente = class(TForm, IVisaoRelatorioCliente)
@@ -73,7 +73,8 @@ implementation
 
 uses
   System.SysUtils,
-  System.UITypes;
+  System.UITypes,
+  Visao.ModuloIconesAcao;
 
 {$R *.dfm}
 

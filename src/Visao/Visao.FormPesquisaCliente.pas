@@ -31,7 +31,8 @@ uses
   Aplicacao.RepositorioCliente,
   Aplicacao.Transacao,
   Visao.ApresentadorErro, Vcl.ComCtrls, dxCore, cxDateUtils, Vcl.Menus,
-  Vcl.StdCtrls, cxGeometry, dxFramedControl, dxPanel, cxCheckBox;
+  Vcl.StdCtrls, cxGeometry, dxFramedControl, dxPanel, cxCheckBox,
+  System.ImageList, Vcl.ImgList, cxImageList;
 
 type
   TFormPesquisaCliente = class(TForm, IVisaoPesquisaCliente)
@@ -97,7 +98,8 @@ implementation
 
 uses
   System.SysUtils,
-  System.UITypes;
+  System.UITypes,
+  Visao.ModuloIconesAcao;
 
 {$R *.dfm}
 

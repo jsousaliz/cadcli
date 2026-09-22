@@ -37,7 +37,8 @@ uses
   Aplicacao.GeradorRelatorioCliente in 'src\Aplicacao\Aplicacao.GeradorRelatorioCliente.pas',
   Aplicacao.ControladorRelatorioCliente in 'src\Aplicacao\Aplicacao.ControladorRelatorioCliente.pas',
   Infraestrutura.GeradorRelatorioClienteReportBuilder in 'src\Infraestrutura\Infraestrutura.GeradorRelatorioClienteReportBuilder.pas',
-  Visao.FormFiltroRelatorioCliente in 'src\Visao\Visao.FormFiltroRelatorioCliente.pas' {FormFiltroRelatorioCliente};
+  Visao.FormFiltroRelatorioCliente in 'src\Visao\Visao.FormFiltroRelatorioCliente.pas' {FormFiltroRelatorioCliente},
+  Visao.ModuloIconesAcao in 'src\Visao\Visao.ModuloIconesAcao.pas' {ModuloIconesAcao: TDataModule};
 
 type
   TAutorizadorInterfaceAplicacao = class(TInterfacedObject, IAutorizadorInterface)
@@ -73,7 +74,8 @@ var
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.Title := 'CadCli';
+  Application.Title := 'Cadastro de Clientes';
+  Application.CreateForm(TModuloIconesAcao, ModuloIconesAcao);
   LCatalogo := CriarCatalogoPadrao;
   try
     LBanco := TInicializadorBanco.Create(CaminhoBancoAplicacao, LCatalogo);

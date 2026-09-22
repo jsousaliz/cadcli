@@ -90,7 +90,7 @@ Este arquivo contém as regras gerais do projeto CadCli. Ele se aplica a todo o 
 ## Interface e recursos visuais
 
 - Mantenha rótulos ou hints textuais mesmo quando uma ação possuir ícone.
-- Use SVGs próprios por meio de `TcxImageCollection` para os ícones de ação.
+- Use SVGs próprios por meio de `TcxImageList` para os ícones de ação; `TcxImageCollection` não é `TCustomImageList` e não pode ser atribuído a `OptionsImage.Images` de um `TcxButton` (AD-019).
 - Preserve os arquivos-fonte dos ícones e registre sua autoria em `assets/README.md`.
 - Verifique os recursos visuais em escalas de 100%, 150% e 200%.
 - Confirmações destrutivas devem identificar claramente o registro ou dado afetado.

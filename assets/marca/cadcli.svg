@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="fundoCadCli" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2F6FE4"/>
+      <stop offset="1" stop-color="#1B45A8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="52" ry="52" fill="url(#fundoCadCli)"/>
+  <g fill="#FFFFFF" fill-opacity="0.5">
+    <circle cx="74" cy="110" r="26"/>
+    <path d="M120 230H38a12 12 0 0 1-12-12v-4c0-30 22-52 48-52 8 0 15 2 21 5-17 13-27 33-27 55v8z"/>
+  </g>
+  <g fill="#FFFFFF">
+    <circle cx="148" cy="96" r="40"/>
+    <path d="M80 214c0-38 30-68 68-68s68 30 68 68v6a10 10 0 0 1-10 10H90a10 10 0 0 1-10-10z"/>
+  </g>
+</svg>
