@@ -22,12 +22,15 @@ type
     FRegistro: TStrings;
   public
     Clientes: TClientes;
-    ChamadasListarTodos: Integer;
+    ChamadasPesquisar: Integer;
+    Filtros: TArray<TFiltroCliente>;
+    Ordenacoes: TArray<TOrdenacaoCliente>;
+    Limites: TArray<Integer>;
     ChamadasIncluir: Integer;
     ChamadasAlterar: Integer;
     ChamadasExcluir: Integer;
     ChamadasResolverCidade: Integer;
-    FalharListarAPartirDe: Integer;
+    FalharPesquisarAPartirDe: Integer;
     FalharIncluir: Boolean;
     FalharAlterar: Boolean;
     FalharExcluir: Boolean;
@@ -46,9 +49,12 @@ type
     procedure Alterar(const ACliente: TCliente);
     procedure Excluir(AId: Integer);
     function ObterPorId(AId: Integer): TCliente;
-    function ListarTodos: TClientes;
+    function Pesquisar(const AFiltro: TFiltroCliente; const AOrdenacao: TOrdenacaoCliente;
+      ALimite: Integer): TClientes;
     function ResolverCidade(const ANomeCidade, AUf, ANomeEstado: string): Integer;
     function TotalChamadas: Integer;
+    function UltimoFiltro: TFiltroCliente;
+    function UltimaOrdenacao: TOrdenacaoCliente;
   end;
 
   TTransacaoFake = class(TInterfacedObject, ITransacao)
@@ -94,6 +100,7 @@ type
     FErros: TStringList;
     FAvisos: TStringList;
     FSemResultado: TStringList;
+    procedure Registrar(const ATexto: string);
   public
     Exibidos: TClientes;
     Exibicoes: Integer;
@@ -101,12 +108,15 @@ type
     Selecionado: Integer;
     Carregando: Boolean;
     CargasSinalizadas: Integer;
+    Ordenacoes: TArray<TOrdenacaoCliente>;
+    Registro: TStrings;
     constructor Create;
     destructor Destroy; override;
     procedure SinalizarCarregamento(AAtivo: Boolean);
     procedure ExibirClientes(const AClientes: TClientes);
     procedure ExibirSemResultado(const AMensagem: string);
     procedure HabilitarEdicaoEExclusao(AHabilitar: Boolean);
+    procedure ExibirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
     function IdSelecionado: Integer;
     procedure ExibirErro(const AMensagem: string);
     procedure ExibirAviso(const AMensagem: string);
@@ -303,13 +313,27 @@ begin
   raise Exception.CreateFmt('Cliente %d inexistente.', [AId]);
 end;
 
-function TRepositorioClienteFake.ListarTodos: TClientes;
+function TRepositorioClienteFake.Pesquisar(const AFiltro: TFiltroCliente;
+  const AOrdenacao: TOrdenacaoCliente; ALimite: Integer): TClientes;
 begin
-  Inc(ChamadasListarTodos);
-  Registrar(FRegistro, 'ListarTodos');
-  if (FalharListarAPartirDe > 0) and (ChamadasListarTodos >= FalharListarAPartirDe) then
+  Inc(ChamadasPesquisar);
+  Filtros := Filtros + [AFiltro];
+  Ordenacoes := Ordenacoes + [AOrdenacao];
+  Limites := Limites + [ALimite];
+  Registrar(FRegistro, 'Pesquisar');
+  if (FalharPesquisarAPartirDe > 0) and (ChamadasPesquisar >= FalharPesquisarAPartirDe) then
     raise Exception.Create(MensagemFalha);
   Result := Copy(Clientes);
+end;
+
+function TRepositorioClienteFake.UltimoFiltro: TFiltroCliente;
+begin
+  Result := Filtros[High(Filtros)];
+end;
+
+function TRepositorioClienteFake.UltimaOrdenacao: TOrdenacaoCliente;
+begin
+  Result := Ordenacoes[High(Ordenacoes)];
 end;
 
 function TRepositorioClienteFake.ResolverCidade(const ANomeCidade, AUf,
@@ -325,7 +349,7 @@ end;
 
 function TRepositorioClienteFake.TotalChamadas: Integer;
 begin
-  Result := ChamadasListarTodos + ChamadasIncluir + ChamadasAlterar + ChamadasExcluir +
+  Result := ChamadasPesquisar + ChamadasIncluir + ChamadasAlterar + ChamadasExcluir +
     ChamadasResolverCidade;
 end;
 
@@ -406,8 +430,15 @@ begin
   inherited;
 end;
 
+procedure TVisaoPesquisaClienteFake.Registrar(const ATexto: string);
+begin
+  if Assigned(Registro) then
+    Registro.Add(ATexto);
+end;
+
 procedure TVisaoPesquisaClienteFake.SinalizarCarregamento(AAtivo: Boolean);
 begin
+  Registrar('Carregamento:' + BoolToStr(AAtivo, True));
   Carregando := AAtivo;
   if AAtivo then
     Inc(CargasSinalizadas);
@@ -415,6 +446,7 @@ end;
 
 procedure TVisaoPesquisaClienteFake.ExibirClientes(const AClientes: TClientes);
 begin
+  Registrar('ExibirClientes');
   Inc(Exibicoes);
   Exibidos := Copy(AClientes);
   FSemResultado.Clear;
@@ -428,6 +460,12 @@ end;
 procedure TVisaoPesquisaClienteFake.HabilitarEdicaoEExclusao(AHabilitar: Boolean);
 begin
   AcoesHabilitadas := AHabilitar;
+end;
+
+procedure TVisaoPesquisaClienteFake.ExibirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
+begin
+  Registrar('ExibirOrdenacao');
+  Ordenacoes := Ordenacoes + [AOrdenacao];
 end;
 
 function TVisaoPesquisaClienteFake.IdSelecionado: Integer;

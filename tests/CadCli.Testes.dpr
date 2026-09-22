@@ -23,7 +23,6 @@ uses
   Testes.InicializadorAplicacao in 'Unitarios\Testes.InicializadorAplicacao.pas',
   Testes.IntegracaoFirebird in 'Unitarios\Testes.IntegracaoFirebird.pas',
   Testes.NavegadorAplicacao in 'Unitarios\Testes.NavegadorAplicacao.pas',
-  Testes.FiltroCliente in 'Unitarios\Testes.FiltroCliente.pas',
   Testes.ValidacaoCliente in 'Unitarios\Testes.ValidacaoCliente.pas',
   Testes.ControladorPesquisaCliente in 'Unitarios\Testes.ControladorPesquisaCliente.pas',
   Testes.ControladorCadastroCliente in 'Unitarios\Testes.ControladorCadastroCliente.pas',
@@ -86,8 +85,6 @@ begin
     Exit('Testes.ControladorPrincipal.' + Result);
   if StartsText('TTestesNavegadorAplicacao.', Result) then
     Exit('Testes.NavegadorAplicacao.' + Result);
-  if StartsText('TTestesFiltroCliente.', Result) then
-    Exit('Testes.FiltroCliente.' + Result);
   if StartsText('TTestesValidacaoCliente.', Result) or
      StartsText('TTestesTabelaUfs.', Result) then
     Exit('Testes.ValidacaoCliente.' + Result);

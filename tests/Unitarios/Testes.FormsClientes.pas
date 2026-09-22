@@ -30,9 +30,23 @@ type
     [TearDown]
     procedure Limpar;
     [Test]
-    procedure GradeNaoVinculadaComFiltrosPropriosDesligados;
+    procedure RotuloDeLimiteAbaixoDaListaEmFonteMenor;
     [Test]
-    procedure CadaEntradaDoPainelFiltraAGradePeloControlador;
+    procedure PesquisarEnterELimparConsultamORepositorioComOFiltroDaTela;
+    [Test]
+    procedure ListaExibeClientesNaOrdemDevolvida;
+    [Test]
+    procedure LimparVoltaOrdenacaoParaNomeCrescente;
+    [Test]
+    procedure CliqueNoCabecalhoOrdenaEMarcaASetaDaColuna;
+    [Test]
+    procedure AberturaMarcaNomeCrescenteECabecalhosClicaveis;
+    [Test]
+    procedure CamposPadraoSaoIdENome;
+    [Test]
+    procedure EnterNosFiltrosAcionaAPesquisa;
+    [Test]
+    procedure LimparRestauraFiltrosEPesquisaSemFiltro;
     [Test]
     procedure FalhaNaCargaMantemFiltrosEEsvaziaGrade;
     [Test]
@@ -98,6 +112,8 @@ type
     procedure ControladorDeCadastroSoConheceTEnderecoViaCep;
     [Test]
     procedure CadaFormTemSeuControladorESemInfraestrutura;
+    [Test]
+    procedure PesquisaSoPeloRepositorioSemFiltroEmMemoria;
   end;
 
 implementation
@@ -117,13 +133,18 @@ uses
   Vcl.Controls,
   Vcl.Forms,
   cxButtons,
+  cxCheckComboBox,
   cxDateUtils,
   cxDropDownEdit,
   cxEdit,
+  cxHeader,
   cxLabel,
+  cxLookAndFeelPainters,
   cxTextEdit,
   Dominio.Cliente,
+  Dominio.FiltroCliente,
   Dominio.UnidadesFederativas,
+  dxCore,
   Aplicacao.ControladorCadastroCliente,
   Aplicacao.ControladorPesquisaCliente,
   Aplicacao.NavegadorClientes,
@@ -143,6 +164,27 @@ begin
       Result := Result + ',';
     Result := Result + AForm.ListaClientes.Items[I].Split([AForm.ListaClientes.Delimiter])[0];
   end;
+end;
+
+procedure MarcarSomente(AForm: TFormPesquisaCliente; ACampos: TCamposPesquisa);
+var
+  LCampo: TCampoPesquisa;
+begin
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if LCampo in ACampos then
+      AForm.ComboCampos.States[Ord(LCampo)] := cbsChecked
+    else
+      AForm.ComboCampos.States[Ord(LCampo)] := cbsUnchecked;
+end;
+
+function CamposDoCombo(AForm: TFormPesquisaCliente): TCamposPesquisa;
+var
+  LCampo: TCampoPesquisa;
+begin
+  Result := [];
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if AForm.ComboCampos.States[Ord(LCampo)] = cbsChecked then
+      Include(Result, LCampo);
 end;
 
 function TextosDaClasse(AForm: TForm; AClasse: TClass): TArray<string>;
@@ -208,138 +250,321 @@ begin
   FTransacao := nil;
 end;
 
-procedure TTestesFormPesquisaCliente.GradeNaoVinculadaComFiltrosPropriosDesligados;
+procedure ClicarSecao(AForm: TFormPesquisaCliente; AIndice: Integer);
+var
+  LCabecalho: TWinControl;
+  LSecao: TcxHeaderSection;
+  LCentro: TPoint;
+  LTela: TPoint;
+  LPonto: LPARAM;
+begin
+  LCabecalho := AForm.ListaClientes.HeaderSections[AIndice].HeaderControl;
+  LSecao := AForm.ListaClientes.HeaderSections[AIndice];
+  LCentro := Point((LSecao.Left + LSecao.Right) div 2, LCabecalho.Height div 2);
+  LTela := LCabecalho.ClientToScreen(LCentro);
+  SetCursorPos(LTela.X, LTela.Y);
+  LPonto := MakeLParam(LCentro.X, LCentro.Y);
+  SendMessage(LCabecalho.Handle, WM_MOUSEMOVE, 0, LPonto);
+  SendMessage(LCabecalho.Handle, WM_LBUTTONDOWN, MK_LBUTTON, LPonto);
+  SendMessage(LCabecalho.Handle, WM_LBUTTONUP, 0, LPonto);
+  Application.ProcessMessages;
+end;
+
+function Setas(AForm: TFormPesquisaCliente): string;
+const
+  NOMES: array[TcxHeaderSortOrder] of string = ('-', 'asc', 'desc');
 var
   I: Integer;
+begin
+  Result := '';
+  for I := 0 to AForm.ListaClientes.HeaderSections.Count - 1 do
+  begin
+    if Result <> '' then
+      Result := Result + ',';
+    Result := Result + NOMES[AForm.ListaClientes.HeaderSections[I].SortOrder];
+  end;
+end;
+
+function SetasSomente(AIndice: Integer; const ASeta: string): string;
+var
+  I: Integer;
+begin
+  Result := '';
+  for I := 0 to 7 do
+  begin
+    if Result <> '' then
+      Result := Result + ',';
+    if I = AIndice then
+      Result := Result + ASeta
+    else
+      Result := Result + '-';
+  end;
+end;
+
+procedure TTestesFormPesquisaCliente.RotuloDeLimiteAbaixoDaListaEmFonteMenor;
+begin
+  FRepositorioObjeto.Clientes := [];
+  Criar;
+  Assert.AreEqual('TcxLabel', FForm.RotuloLimite.ClassName);
+  Assert.AreEqual('A pesquisa lista no máximo 50 clientes.', FForm.RotuloLimite.Caption);
+  Assert.IsTrue(FForm.RotuloLimite.Style.Font.Size < FForm.Font.Size,
+    'A fonte do rótulo deve ser menor que a da form.');
+  Assert.AreEqual(0, FForm.ListaClientes.Items.Count);
+  Assert.IsTrue(FForm.RotuloLimite.Visible and FForm.RotuloLimite.Showing, 'Visível sem resultados.');
+
+  FRepositorioObjeto.Clientes := [ClientesDaFixture[0], ClientesDaFixture[1], ClientesDaFixture[2]];
+  FForm.BotaoPesquisar.Click;
+  Assert.AreEqual(3, FForm.ListaClientes.Items.Count);
+  Assert.IsTrue(FForm.RotuloLimite.Visible and FForm.RotuloLimite.Showing, 'Visível com resultados.');
+
+  Assert.IsTrue(FForm.ListaClientes.Top + FForm.ListaClientes.Height <= FForm.RotuloLimite.Top,
+    'O rótulo fica abaixo da lista.');
+  Assert.IsTrue(FForm.RotuloLimite.Top + FForm.RotuloLimite.Height <= FForm.BarraAcoes.Top,
+    'O rótulo fica acima da barra de ações.');
+end;
+
+procedure TTestesFormPesquisaCliente.PesquisarEnterELimparConsultamORepositorioComOFiltroDaTela;
+var
+  LChamadas: Integer;
+  LTecla: Char;
+  LCampo: TCampoPesquisa;
+
+  procedure AssegurarFiltroDaTela(const AAcao: string);
+  begin
+    Assert.AreEqual(LChamadas + 1, FRepositorioObjeto.ChamadasPesquisar, AAcao + ' gera 1 chamada.');
+    Assert.AreEqual('silva', FRepositorioObjeto.UltimoFiltro.Texto, AAcao);
+    Assert.IsTrue(FRepositorioObjeto.UltimoFiltro.Campos = [cpNome, cpCidade], AAcao);
+    Assert.AreEqual('15/03/1990', FRepositorioObjeto.UltimoFiltro.DataNascimento, AAcao);
+    Assert.AreEqual(50, FRepositorioObjeto.Limites[High(FRepositorioObjeto.Limites)], AAcao);
+  end;
+
+begin
+  Criar;
+  Assert.AreEqual(1, FRepositorioObjeto.ChamadasPesquisar, 'A abertura pesquisa uma vez.');
+  FForm.EditorPesquisa.Text := 'silva';
+  MarcarSomente(FForm, [cpNome, cpCidade]);
+  FForm.EditorDataNascimento.Date := EncodeDate(1990, 3, 15);
+
+  LChamadas := FRepositorioObjeto.ChamadasPesquisar;
+  FForm.BotaoPesquisar.Click;
+  AssegurarFiltroDaTela('Pesquisar');
+
+  LChamadas := FRepositorioObjeto.ChamadasPesquisar;
+  LTecla := #13;
+  FForm.EditorPesquisa.OnKeyPress(FForm.EditorPesquisa, LTecla);
+  AssegurarFiltroDaTela('Enter');
+
+  LChamadas := FRepositorioObjeto.ChamadasPesquisar;
+  FForm.BotaoLimpar.Click;
+  Assert.AreEqual(LChamadas + 1, FRepositorioObjeto.ChamadasPesquisar, 'Limpar gera 1 chamada.');
+  Assert.AreEqual('', FRepositorioObjeto.UltimoFiltro.Texto);
+  Assert.IsTrue(FRepositorioObjeto.UltimoFiltro.Campos = [cpId, cpNome]);
+  Assert.AreEqual('', FRepositorioObjeto.UltimoFiltro.DataNascimento);
+
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+  begin
+    MarcarSomente(FForm, [LCampo]);
+    FForm.BotaoPesquisar.Click;
+    Assert.IsTrue(FRepositorioObjeto.UltimoFiltro.Campos = [LCampo],
+      'O item ' + IntToStr(Ord(LCampo)) + ' do combo vira o campo de mesmo índice.');
+  end;
+end;
+
+procedure TTestesFormPesquisaCliente.ListaExibeClientesNaOrdemDevolvida;
 begin
   FRepositorioObjeto.Clientes := [
     NovoCliente(8, 'Oito', '52998224725', '30130000', 'Contagem', 'MG', 'Minas Gerais', EncodeDate(1980, 1, 8)),
     NovoCliente(1, 'Um', '52998224725', '30130000', 'Contagem', 'MG', 'Minas Gerais', EncodeDate(1980, 1, 1)),
     NovoCliente(5, 'Cinco', '52998224725', '30130000', 'Contagem', 'MG', 'Minas Gerais', EncodeDate(1980, 1, 5))];
   Criar;
-  Assert.AreEqual('TcxMCListBox', FForm.ListaClientes.ClassName, 'A lista deve ser um TcxMCListBox.');
-  Assert.AreEqual(8, FForm.ListaClientes.HeaderSections.Count);
-  Assert.IsFalse(FForm.ListaClientes.Sorted, 'A lista não pode reordenar as linhas.');
-  for I := 0 to FForm.ListaClientes.HeaderSections.Count - 1 do
-    Assert.IsFalse(FForm.ListaClientes.HeaderSections[I].AllowClick,
-      'Nenhuma coluna pode ordenar ou filtrar por clique.');
-  for I := 0 to FForm.ComponentCount - 1 do
-  begin
-    Assert.IsFalse(ContainsText(FForm.Components[I].ClassName, 'Grid'),
-      'A form não pode conter grade: ' + FForm.Components[I].ClassName);
-    Assert.IsFalse(ContainsText(FForm.Components[I].ClassName, 'FilterRow') or
-      ContainsText(FForm.Components[I].ClassName, 'FindPanel'),
-      'A form não pode conter filtro próprio de grade: ' + FForm.Components[I].ClassName);
-  end;
-  Assert.AreEqual('1,5,8', IdsDaLista(FForm), 'As linhas seguem a ordem entregue pelo controlador.');
+  Assert.AreEqual(3, FForm.ListaClientes.Items.Count);
+  Assert.AreEqual('8,1,5', IdsDaLista(FForm), 'As linhas seguem a ordem devolvida.');
+  FForm.ListaClientes.ItemIndex := 1;
+  Assert.AreEqual(1, FForm.IdSelecionado, 'A segunda linha é o ID 1.');
 end;
 
-procedure TTestesFormPesquisaCliente.CadaEntradaDoPainelFiltraAGradePeloControlador;
-type
-  TCaso = record
-    Entrada: Integer;
-    Valor: string;
-    Esperados: string;
-  end;
-const
-  CASOS: array[0..7] of TCaso = (
-    (Entrada: 0; Valor: '1'; Esperados: '1'),
-    (Entrada: 1; Valor: 'silva'; Esperados: '1,15'),
-    (Entrada: 2; Valor: '529.982.247-25'; Esperados: '1'),
-    (Entrada: 3; Valor: '01001-000'; Esperados: '23'),
-    (Entrada: 4; Valor: 'campinas'; Esperados: '15,150'),
-    (Entrada: 5; Valor: 'MG'; Esperados: '1,10'),
-    (Entrada: 6; Valor: '15/03/1990'; Esperados: '1'),
-    (Entrada: 7; Valor: 'silva campinas'; Esperados: '15'));
-var
-  LCaso: TCaso;
-  LData: TDate;
-  LEditores: TArray<TcxTextEdit>;
-  LEditor: TcxTextEdit;
+procedure TTestesFormPesquisaCliente.LimparVoltaOrdenacaoParaNomeCrescente;
 begin
   Criar;
-  Assert.AreEqual('1,10,15,23,150', IdsDaLista(FForm));
-  LEditores := [FForm.EditorId, FForm.EditorNome, FForm.EditorCpfCnpj, FForm.EditorCep,
-    FForm.EditorCidade, FForm.EditorEstado, nil, FForm.EditorBuscaGeral];
-  for LCaso in CASOS do
+  ClicarSecao(FForm, Ord(coCidade));
+  ClicarSecao(FForm, Ord(coCidade));
+  Assert.AreEqual(SetasSomente(Ord(coCidade), 'desc'), Setas(FForm));
+  FForm.BotaoLimpar.Click;
+  Assert.AreEqual(SetasSomente(Ord(coNome), 'asc'), Setas(FForm),
+    'Limpar deixa Nome crescente e Cidade sem seta.');
+end;
+
+procedure TTestesFormPesquisaCliente.CliqueNoCabecalhoOrdenaEMarcaASetaDaColuna;
+var
+  LCampo: TCampoOrdenacao;
+  LChamadas: Integer;
+  LPrimeira: string;
+  LSegunda: string;
+  LVerificados: Integer;
+begin
+  LVerificados := 0;
+  for LCampo := Low(TCampoOrdenacao) to High(TCampoOrdenacao) do
   begin
-    for LEditor in LEditores do
-      if Assigned(LEditor) then
-        LEditor.Text := '';
-    FForm.EditorDataNascimento.Clear;
-    if LCaso.Entrada = 6 then
+    FRepositorio := nil;
+    FRepositorioObjeto := TRepositorioClienteFake.Create;
+    FRepositorio := FRepositorioObjeto as IInterface;
+    FRepositorioObjeto.Clientes := ClientesDaFixture;
+    Criar;
+    if LCampo = coNome then
     begin
-      Assert.IsTrue(TentarLerData(LCaso.Valor, LData));
-      FForm.EditorDataNascimento.Date := LData;
+      LPrimeira := 'desc';
+      LSegunda := 'asc';
     end
     else
-      LEditores[LCaso.Entrada].Text := LCaso.Valor;
-    FForm.BotaoPesquisar.Click;
-    Assert.AreEqual(LCaso.Esperados, IdsDaLista(FForm), 'Entrada ' + IntToStr(LCaso.Entrada) + ': ' + LCaso.Valor);
+    begin
+      LPrimeira := 'asc';
+      LSegunda := 'desc';
+    end;
+
+    LChamadas := FRepositorioObjeto.ChamadasPesquisar;
+    ClicarSecao(FForm, Ord(LCampo));
+    Assert.AreEqual(LChamadas + 1, FRepositorioObjeto.ChamadasPesquisar,
+      'Um clique gera 1 chamada: seção ' + IntToStr(Ord(LCampo)));
+    Assert.IsTrue(FRepositorioObjeto.UltimaOrdenacao.Campo = LCampo,
+      'A seção ' + IntToStr(Ord(LCampo)) + ' ordena pela coluna de mesmo índice.');
+    Assert.AreEqual(LPrimeira = 'desc', FRepositorioObjeto.UltimaOrdenacao.Descendente);
+    Assert.AreEqual(SetasSomente(Ord(LCampo), LPrimeira), Setas(FForm),
+      'Seta após o primeiro clique na seção ' + IntToStr(Ord(LCampo)));
+
+    ClicarSecao(FForm, Ord(LCampo));
+    Assert.AreEqual(LChamadas + 2, FRepositorioObjeto.ChamadasPesquisar,
+      'O segundo clique gera 1 chamada: seção ' + IntToStr(Ord(LCampo)));
+    Assert.IsTrue(FRepositorioObjeto.UltimaOrdenacao.Campo = LCampo);
+    Assert.AreEqual(LSegunda = 'desc', FRepositorioObjeto.UltimaOrdenacao.Descendente);
+    Assert.AreEqual(SetasSomente(Ord(LCampo), LSegunda), Setas(FForm),
+      'Seta após o segundo clique na seção ' + IntToStr(Ord(LCampo)));
+    Assert.AreEqual('1,10,15,150,23', IdsDaLista(FForm), 'A lista não reordena as linhas sozinha.');
+    FreeAndNil(FForm);
+    Inc(LVerificados);
   end;
-  Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos,
-    'Filtrar pelo painel não pode consultar o repositório de novo.');
+  Assert.AreEqual(8, LVerificados);
+end;
+
+procedure TTestesFormPesquisaCliente.AberturaMarcaNomeCrescenteECabecalhosClicaveis;
+var
+  I: Integer;
+begin
+  Criar;
+  Assert.AreEqual('TcxMCListBox', FForm.ListaClientes.ClassName, 'A lista deve ser um TcxMCListBox.');
+  Assert.AreEqual(8, FForm.ListaClientes.HeaderSections.Count);
+  Assert.AreEqual(SetasSomente(Ord(coNome), 'asc'), Setas(FForm), 'Nome crescente ao abrir.');
+  for I := 0 to FForm.ListaClientes.HeaderSections.Count - 1 do
+    Assert.IsTrue(FForm.ListaClientes.HeaderSections[I].AllowClick,
+      'Toda seção do cabeçalho é clicável: ' + IntToStr(I));
+  Assert.IsFalse(FForm.ListaClientes.Sorted, 'A lista não pode reordenar as linhas.');
+  for I := 0 to FForm.ComponentCount - 1 do
+    Assert.IsFalse(ContainsText(FForm.Components[I].ClassName, 'Grid'),
+      'A form não pode conter grade: ' + FForm.Components[I].ClassName);
+end;
+
+procedure TTestesFormPesquisaCliente.CamposPadraoSaoIdENome;
+begin
+  Criar;
+  Assert.AreEqual(6, FForm.ComboCampos.Properties.Items.Count);
+  Assert.IsTrue(CamposDoCombo(FForm) = [cpId, cpNome], 'Ao abrir, só ID e Nome ficam marcados.');
+  FForm.EditorPesquisa.Text := 'campinas';
+  FForm.BotaoPesquisar.Click;
+  Assert.AreEqual('campinas', FRepositorioObjeto.UltimoFiltro.Texto);
+  Assert.IsTrue(FRepositorioObjeto.UltimoFiltro.Campos = [cpId, cpNome],
+    'Com o padrão, a cidade não entra na pesquisa.');
+end;
+
+procedure TTestesFormPesquisaCliente.EnterNosFiltrosAcionaAPesquisa;
+var
+  LTecla: Char;
+  LChamadas: Integer;
+begin
+  Criar;
+  Assert.IsTrue(Assigned(FForm.EditorPesquisa.OnKeyPress), 'O texto da pesquisa deve tratar o Enter.');
+  Assert.IsTrue(Assigned(FForm.ComboCampos.OnKeyPress), 'O combo de campos deve tratar o Enter.');
+  Assert.IsTrue(Assigned(FForm.EditorDataNascimento.OnKeyPress), 'A data deve tratar o Enter.');
+
+  FForm.EditorPesquisa.Text := 'silva';
+  LChamadas := FRepositorioObjeto.ChamadasPesquisar;
+  LTecla := 'a';
+  FForm.EditorPesquisa.OnKeyPress(FForm.EditorPesquisa, LTecla);
+  Assert.AreEqual(LChamadas, FRepositorioObjeto.ChamadasPesquisar, 'Outra tecla não pode pesquisar.');
+  Assert.AreEqual('a', LTecla);
+
+  LTecla := #13;
+  FForm.EditorPesquisa.OnKeyPress(FForm.EditorPesquisa, LTecla);
+  Assert.AreEqual(LChamadas + 1, FRepositorioObjeto.ChamadasPesquisar, 'Enter deve acionar a pesquisa.');
+  Assert.AreEqual('silva', FRepositorioObjeto.UltimoFiltro.Texto);
+  Assert.AreEqual(#0, LTecla, 'O Enter deve ser consumido.');
+end;
+
+procedure TTestesFormPesquisaCliente.LimparRestauraFiltrosEPesquisaSemFiltro;
+var
+  LChamadas: Integer;
+begin
+  Criar;
+  FForm.EditorPesquisa.Text := 'campinas';
+  MarcarSomente(FForm, [cpCidade]);
+  FForm.EditorDataNascimento.Date := EncodeDate(2000, 11, 30);
+  FForm.BotaoPesquisar.Click;
+  Assert.AreEqual('campinas', FRepositorioObjeto.UltimoFiltro.Texto);
+
+  LChamadas := FRepositorioObjeto.ChamadasPesquisar;
+  FForm.BotaoLimpar.Click;
+  Assert.AreEqual('', FForm.EditorPesquisa.Text);
+  Assert.IsTrue(CamposDoCombo(FForm) = [cpId, cpNome], 'Limpar volta aos campos padrão.');
+  Assert.AreEqual(Double(NullDate), Double(FForm.EditorDataNascimento.Date));
+  Assert.AreEqual(LChamadas + 1, FRepositorioObjeto.ChamadasPesquisar, 'Limpar pesquisa de novo.');
+  Assert.AreEqual('', FRepositorioObjeto.UltimoFiltro.Texto, 'Limpar pesquisa sem texto.');
+  Assert.AreEqual('', FRepositorioObjeto.UltimoFiltro.DataNascimento, 'Limpar pesquisa sem data.');
 end;
 
 procedure TTestesFormPesquisaCliente.FalhaNaCargaMantemFiltrosEEsvaziaGrade;
 begin
-  FRepositorioObjeto.FalharListarAPartirDe := 2;
-  FNavegadorObjeto.Salvar := True;
+  FRepositorioObjeto.FalharPesquisarAPartirDe := 2;
   Criar;
   Assert.AreEqual(5, FForm.ListaClientes.Items.Count);
-  FForm.EditorId.Text := '1';
-  FForm.EditorNome.Text := 'silva';
-  FForm.EditorCpfCnpj.Text := '529';
-  FForm.EditorCep.Text := '01001';
-  FForm.EditorCidade.Text := 'campinas';
-  FForm.EditorEstado.Text := 'SP';
+  FForm.EditorPesquisa.Text := 'silva';
+  MarcarSomente(FForm, [cpCidade]);
   FForm.EditorDataNascimento.Date := EncodeDate(1990, 3, 15);
-  FForm.EditorBuscaGeral.Text := 'ana';
-  FForm.BotaoNovo.Click;
+  FForm.BotaoPesquisar.Click;
   Assert.AreEqual(1, FApresentadorObjeto.Mensagens.Count, 'O erro deve ser apresentado exatamente 1 vez.');
   Assert.AreEqual('Não foi possível carregar os clientes.', FApresentadorObjeto.Mensagens[0]);
-  Assert.AreEqual(0, FForm.ListaClientes.Items.Count, 'A grade deve ficar com 0 linhas.');
-  Assert.IsTrue(FForm.RotuloSemResultado.Visible, 'A grade deve exibir o aviso de vazio.');
-  Assert.AreEqual('Nenhum cliente encontrado', FForm.RotuloSemResultado.Caption);
-  Assert.AreEqual('1', FForm.EditorId.Text);
-  Assert.AreEqual('silva', FForm.EditorNome.Text);
-  Assert.AreEqual('529', FForm.EditorCpfCnpj.Text);
-  Assert.AreEqual('01001', FForm.EditorCep.Text);
-  Assert.AreEqual('campinas', FForm.EditorCidade.Text);
-  Assert.AreEqual('SP', FForm.EditorEstado.Text);
+  Assert.AreEqual(0, FForm.ListaClientes.Items.Count, 'A lista deve ficar com 0 linhas.');
+  Assert.AreEqual('silva', FForm.EditorPesquisa.Text);
+  Assert.IsTrue(CamposDoCombo(FForm) = [cpCidade], 'Somente Cidade continua marcado.');
   Assert.AreEqual(Double(EncodeDate(1990, 3, 15)), Double(FForm.EditorDataNascimento.Date));
-  Assert.AreEqual('ana', FForm.EditorBuscaGeral.Text);
 end;
 
 procedure TTestesFormPesquisaCliente.TextosDaPesquisaSaoOsDefinidos;
 const
   COLUNAS: array[0..7] of string = ('ID', 'Nome', 'CPF/CNPJ', 'CEP', 'Cidade', 'UF', 'Estado',
     'Data de nascimento');
+  CAMPOS: array[0..5] of string = ('ID', 'Nome', 'CPF/CNPJ', 'CEP', 'Cidade', 'Estado');
 var
   I: Integer;
 begin
   Criar;
-  Assert.AreEqual('Pesquisa de Clientes', FForm.Caption);
-  Assert.AreEqual('ID', FForm.RotuloId.Caption);
-  Assert.AreEqual('Nome', FForm.RotuloNome.Caption);
-  Assert.AreEqual('CPF/CNPJ', FForm.RotuloCpfCnpj.Caption);
-  Assert.AreEqual('CEP', FForm.RotuloCep.Caption);
-  Assert.AreEqual('Cidade', FForm.RotuloCidade.Caption);
-  Assert.AreEqual('Estado', FForm.RotuloEstado.Caption);
+  Assert.AreEqual('Clientes', FForm.Caption);
+  Assert.AreEqual('Pesquisar por', FForm.RotuloPesquisa.Caption);
+  Assert.AreEqual('Campos da pesquisa', FForm.RotuloCampos.Caption);
   Assert.AreEqual('Data de nascimento', FForm.RotuloDataNascimento.Caption);
-  Assert.AreEqual('Buscar em todos os campos', FForm.RotuloBuscaGeral.Caption);
-  Assert.AreEqual('Pesquisar', FForm.BotaoPesquisar.Caption);
+  for I := 0 to High(CAMPOS) do
+    Assert.AreEqual(CAMPOS[I], FForm.ComboCampos.Properties.Items[I].Description, 'Campo ' + IntToStr(I));
+  Assert.AreEqual('&Pesquisar', FForm.BotaoPesquisar.Caption);
+  Assert.AreEqual('&Limpar', FForm.BotaoLimpar.Caption);
   Assert.AreEqual('Novo', FForm.BotaoNovo.Caption);
   Assert.AreEqual('Editar', FForm.BotaoEditar.Caption);
   Assert.AreEqual('Excluir', FForm.BotaoExcluir.Caption);
   Assert.AreEqual(8, FForm.ListaClientes.HeaderSections.Count);
   for I := 0 to High(COLUNAS) do
     Assert.AreEqual(COLUNAS[I], FForm.ListaClientes.HeaderSections[I].Text, 'Coluna ' + IntToStr(I));
-  Assert.AreEqual('Nenhum cliente encontrado', FForm.RotuloSemResultado.Caption);
-  Assert.AreEqual(Ordenados(['ID', 'Nome', 'CPF/CNPJ', 'CEP', 'Cidade', 'Estado', 'Data de nascimento',
-    'Buscar em todos os campos', 'Nenhum cliente encontrado']),
+  Assert.AreEqual('Nenhum cliente encontrado...', FForm.RotuloSemResultado.Caption);
+  Assert.AreEqual('A pesquisa lista no máximo 50 clientes.', FForm.RotuloLimite.Caption);
+  Assert.AreEqual(Ordenados(['Pesquisar por', 'Campos da pesquisa', 'Data de nascimento',
+    'Nenhum cliente encontrado...', 'A pesquisa lista no máximo 50 clientes.']),
     string.Join('|', TextosDaClasse(FForm, TcxLabel)), 'Nenhum rótulo além dos definidos.');
-  Assert.AreEqual(Ordenados(['Pesquisar', 'Novo', 'Editar', 'Excluir']),
+  Assert.AreEqual(Ordenados(['&Pesquisar', '&Limpar', 'Novo', 'Editar', 'Excluir']),
     string.Join('|', TextosDaClasse(FForm, TcxButton)), 'Nenhum botão além dos definidos.');
 end;
 
@@ -357,6 +582,8 @@ begin
   Assert.IsTrue(FForm.BotaoNovo.Left < FForm.BotaoEditar.Left, 'Novo à esquerda de Editar.');
   Assert.IsTrue(FForm.BotaoEditar.Left < FForm.BotaoExcluir.Left, 'Editar à esquerda de Excluir.');
   Assert.IsTrue(FForm.BotaoPesquisar.Parent = FForm.PainelFiltros, 'Pesquisar fica no painel de filtros.');
+  Assert.IsTrue(FForm.BotaoLimpar.Parent = FForm.PainelFiltros, 'Limpar fica no painel de filtros.');
+  Assert.IsTrue(FForm.BotaoPesquisar.Left < FForm.BotaoLimpar.Left, 'Pesquisar à esquerda de Limpar.');
 end;
 
 procedure TTestesFormCadastroCliente.Preparar;
@@ -934,6 +1161,40 @@ begin
         'TControladorCadastroCliente não pode excluir: ' + LMetodo.Name);
   Assert.IsNotNull(LContexto.GetType(TControladorPesquisaCliente).GetMethod('Excluir'),
     'A exclusão fica em TControladorPesquisaCliente.');
+end;
+
+procedure TTestesArquiteturaClientes.PesquisaSoPeloRepositorioSemFiltroEmMemoria;
+var
+  LArquivo: string;
+  LTexto: string;
+  LVerificados: Integer;
+
+  function TextoCompacto(const AUnit: string): string;
+  begin
+    Result := TRegEx.Replace(TFile.ReadAllText(ArquivoDaUnit(AUnit)), '\s+', ' ');
+  end;
+
+begin
+  LVerificados := 0;
+  for LArquivo in TDirectory.GetFiles(TPath.Combine(RaizRepositorio, 'src'), '*.pas',
+    TSearchOption.soAllDirectories) do
+  begin
+    LTexto := TFile.ReadAllText(LArquivo);
+    Assert.IsFalse(ContainsStr(LTexto, 'ListarTodos'), 'ListarTodos não pode existir: ' + LArquivo);
+    Assert.IsFalse(ContainsStr(LTexto, 'Atende'), 'Atende não pode existir: ' + LArquivo);
+    Inc(LVerificados);
+  end;
+  Assert.IsTrue(LVerificados > 20, 'A varredura deve alcançar os fontes de src.');
+
+  Assert.IsTrue(ContainsStr(TextoCompacto('Aplicacao.ControladorPesquisaCliente'),
+    'LIMITE_PESQUISA_CLIENTES = 50;'), 'O limite da pesquisa é 50.');
+  Assert.IsTrue(ContainsStr(TextoCompacto('Aplicacao.RepositorioCliente'),
+    'function Pesquisar(const AFiltro: TFiltroCliente; const AOrdenacao: TOrdenacaoCliente; ' +
+    'ALimite: Integer): TClientes;'), 'O contrato de pesquisa do repositório é o do door 1.');
+  LTexto := TFile.ReadAllText(ArquivoDaUnit('Visao.FormPesquisaCliente'));
+  Assert.IsTrue(ContainsStr(LTexto, 'SortOrder'), 'A form marca a seta pelo SortOrder.');
+  Assert.IsFalse(ContainsText(StringReplace(LTexto, 'SortOrder', '', [rfReplaceAll]), 'Sort'),
+    'A form não pode ordenar as linhas.');
 end;
 
 initialization

@@ -1,7 +1,7 @@
 object FormPesquisaCliente: TFormPesquisaCliente
   Left = 0
   Top = 0
-  Caption = 'Pesquisa de Clientes'
+  Caption = 'Clientes'
   ClientHeight = 560
   ClientWidth = 900
   Color = clBtnFace
@@ -11,6 +11,8 @@ object FormPesquisaCliente: TFormPesquisaCliente
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poOwnerFormCenter
+  OnCreate = FormCreate
+  OnResize = FormResize
   OnShow = FormShow
   TextHeight = 15
   object PainelFiltros: TcxGroupBox
@@ -19,174 +21,159 @@ object FormPesquisaCliente: TFormPesquisaCliente
     Align = alTop
     PanelStyle.Active = True
     TabOrder = 0
-    ExplicitWidth = 898
-    Height = 112
+    Height = 64
     Width = 900
-    object RotuloId: TcxLabel
+    object RotuloPesquisa: TcxLabel
       Left = 12
       Top = 8
-      Caption = 'ID'
-      TabOrder = 9
+      Caption = 'Pesquisar por'
+      TabOrder = 5
       Transparent = True
     end
-    object EditorId: TcxTextEdit
+    object EditorPesquisa: TcxTextEdit
       Left = 12
       Top = 28
       TabOrder = 0
-      Width = 70
+      OnKeyPress = FiltroKeyPress
+      Width = 280
     end
-    object RotuloNome: TcxLabel
-      Left = 94
+    object RotuloCampos: TcxLabel
+      Left = 301
       Top = 8
-      Caption = 'Nome'
-      TabOrder = 10
+      Caption = 'Campos da pesquisa'
+      TabOrder = 6
       Transparent = True
     end
-    object EditorNome: TcxTextEdit
-      Left = 94
+    object ComboCampos: TcxCheckComboBox
+      Left = 301
       Top = 28
+      Properties.Delimiter = ' - '
+      Properties.EmptySelectionText = 'Todos os campos'
+      Properties.Items = <
+        item
+          Description = 'ID'
+        end
+        item
+          Description = 'Nome'
+        end
+        item
+          Description = 'CPF/CNPJ'
+        end
+        item
+          Description = 'CEP'
+        end
+        item
+          Description = 'Cidade'
+        end
+        item
+          Description = 'Estado'
+        end>
       TabOrder = 1
-      Width = 260
-    end
-    object RotuloCpfCnpj: TcxLabel
-      Left = 366
-      Top = 8
-      Caption = 'CPF/CNPJ'
-      TabOrder = 11
-      Transparent = True
-    end
-    object EditorCpfCnpj: TcxTextEdit
-      Left = 366
-      Top = 28
-      TabOrder = 2
-      Width = 150
-    end
-    object RotuloCep: TcxLabel
-      Left = 528
-      Top = 8
-      Caption = 'CEP'
-      TabOrder = 12
-      Transparent = True
-    end
-    object EditorCep: TcxTextEdit
-      Left = 528
-      Top = 28
-      TabOrder = 3
-      Width = 100
-    end
-    object RotuloCidade: TcxLabel
-      Left = 12
-      Top = 56
-      Caption = 'Cidade'
-      TabOrder = 13
-      Transparent = True
-    end
-    object EditorCidade: TcxTextEdit
-      Left = 12
-      Top = 76
-      TabOrder = 4
-      Width = 170
-    end
-    object RotuloEstado: TcxLabel
-      Left = 194
-      Top = 56
-      Caption = 'Estado'
-      TabOrder = 14
-      Transparent = True
-    end
-    object EditorEstado: TcxTextEdit
-      Left = 194
-      Top = 76
-      TabOrder = 5
-      Width = 160
+      OnKeyPress = FiltroKeyPress
+      Width = 255
     end
     object RotuloDataNascimento: TcxLabel
-      Left = 366
-      Top = 56
+      Left = 565
+      Top = 8
       Caption = 'Data de nascimento'
-      TabOrder = 15
+      TabOrder = 7
       Transparent = True
     end
     object EditorDataNascimento: TcxDateEdit
-      Left = 366
-      Top = 76
-      TabOrder = 6
-      Width = 150
-    end
-    object RotuloBuscaGeral: TcxLabel
-      Left = 528
-      Top = 56
-      Caption = 'Buscar em todos os campos'
-      TabOrder = 16
-      Transparent = True
-    end
-    object EditorBuscaGeral: TcxTextEdit
-      Left = 528
-      Top = 76
-      TabOrder = 7
-      Width = 230
+      Left = 565
+      Top = 28
+      TabOrder = 2
+      OnKeyPress = FiltroKeyPress
+      Width = 120
     end
     object BotaoPesquisar: TcxButton
-      Left = 770
-      Top = 74
-      Width = 110
+      Left = 695
+      Top = 26
+      Width = 90
       Height = 27
-      Caption = 'Pesquisar'
-      TabOrder = 8
+      Caption = '&Pesquisar'
+      TabOrder = 3
       OnClick = BotaoPesquisarClick
+    end
+    object BotaoLimpar: TcxButton
+      Left = 790
+      Top = 26
+      Width = 90
+      Height = 27
+      Caption = '&Limpar'
+      TabOrder = 4
+      OnClick = BotaoLimparClick
     end
   end
   object ListaClientes: TcxMCListBox
     Left = 0
-    Top = 112
+    Top = 64
     Width = 900
-    Height = 400
+    Height = 426
     Align = alClient
     Delimiter = #9
     HeaderSections = <
       item
+        AllowClick = True
         Text = 'ID'
       end
       item
+        AllowClick = True
         Text = 'Nome'
         Width = 180
       end
       item
+        AllowClick = True
         Text = 'CPF/CNPJ'
         Width = 120
       end
       item
+        AllowClick = True
         Text = 'CEP'
         Width = 75
       end
       item
+        AllowClick = True
         Text = 'Cidade'
         Width = 120
       end
       item
+        AllowClick = True
         Text = 'UF'
         Width = 35
       end
       item
+        AllowClick = True
         Text = 'Estado'
         Width = 110
       end
       item
+        AllowClick = True
         Text = 'Data de nascimento'
         Width = 110
       end>
     TabOrder = 1
     OnDblClick = ListaClientesDblClick
-    ExplicitWidth = 898
-    ExplicitHeight = 392
   end
-  object RotuloSemResultado: TcxLabel
-    Left = 16
-    Top = 144
-    Caption = 'Nenhum cliente encontrado'
-    TabOrder = 3
+  object RotuloLimite: TcxLabel
+    AlignWithMargins = True
+    Left = 12
+    Top = 492
+    Margins.Left = 12
+    Margins.Top = 2
+    Margins.Right = 12
+    Margins.Bottom = 2
+    Align = alBottom
+    Caption = 'A pesquisa lista no m'#225'ximo 50 clientes.'
+    ParentFont = False
+    Style.Font.Charset = DEFAULT_CHARSET
+    Style.Font.Color = clGrayText
+    Style.Font.Height = -11
+    Style.Font.Name = 'Segoe UI'
+    Style.Font.Style = []
+    Style.IsFontAssigned = True
+    TabOrder = 4
     Transparent = True
-    Visible = False
   end
   object BarraAcoes: TcxGroupBox
     Left = 0
@@ -194,8 +181,6 @@ object FormPesquisaCliente: TFormPesquisaCliente
     Align = alBottom
     PanelStyle.Active = True
     TabOrder = 2
-    ExplicitTop = 504
-    ExplicitWidth = 898
     Height = 48
     Width = 900
     object BotaoNovo: TcxButton
@@ -224,6 +209,21 @@ object FormPesquisaCliente: TFormPesquisaCliente
       Caption = 'Excluir'
       TabOrder = 2
       OnClick = BotaoExcluirClick
+    end
+  end
+  object PanelSemResultado: TdxPanel
+    Left = 321
+    Top = 232
+    Width = 210
+    Height = 80
+    TabOrder = 3
+    Visible = False
+    object RotuloSemResultado: TcxLabel
+      Left = 24
+      Top = 28
+      Caption = 'Nenhum cliente encontrado...'
+      TabOrder = 0
+      Transparent = True
     end
   end
 end

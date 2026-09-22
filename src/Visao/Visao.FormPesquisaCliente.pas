@@ -8,6 +8,7 @@ uses
   Vcl.Forms,
   cxGraphics,
   cxControls,
+  cxHeader,
   cxLookAndFeels,
   cxLookAndFeelPainters,
   cxContainer,
@@ -21,6 +22,7 @@ uses
   cxDropDownEdit,
   cxCalendar,
   cxButtons,
+  cxCheckComboBox,
   Dominio.Cliente,
   Dominio.FiltroCliente,
   Aplicacao.Confirmacao,
@@ -29,46 +31,53 @@ uses
   Aplicacao.RepositorioCliente,
   Aplicacao.Transacao,
   Visao.ApresentadorErro, Vcl.ComCtrls, dxCore, cxDateUtils, Vcl.Menus,
-  Vcl.StdCtrls;
+  Vcl.StdCtrls, cxGeometry, dxFramedControl, dxPanel, cxCheckBox;
 
 type
   TFormPesquisaCliente = class(TForm, IVisaoPesquisaCliente)
     PainelFiltros: TcxGroupBox;
-    RotuloId: TcxLabel;
-    EditorId: TcxTextEdit;
-    RotuloNome: TcxLabel;
-    EditorNome: TcxTextEdit;
-    RotuloCpfCnpj: TcxLabel;
-    EditorCpfCnpj: TcxTextEdit;
-    RotuloCep: TcxLabel;
-    EditorCep: TcxTextEdit;
-    RotuloCidade: TcxLabel;
-    EditorCidade: TcxTextEdit;
-    RotuloEstado: TcxLabel;
-    EditorEstado: TcxTextEdit;
+    RotuloPesquisa: TcxLabel;
+    EditorPesquisa: TcxTextEdit;
+    RotuloCampos: TcxLabel;
+    ComboCampos: TcxCheckComboBox;
     RotuloDataNascimento: TcxLabel;
     EditorDataNascimento: TcxDateEdit;
-    RotuloBuscaGeral: TcxLabel;
-    EditorBuscaGeral: TcxTextEdit;
     BotaoPesquisar: TcxButton;
     ListaClientes: TcxMCListBox;
-    RotuloSemResultado: TcxLabel;
     BarraAcoes: TcxGroupBox;
     BotaoNovo: TcxButton;
     BotaoEditar: TcxButton;
     BotaoExcluir: TcxButton;
+    BotaoLimpar: TcxButton;
+    PanelSemResultado: TdxPanel;
+    RotuloSemResultado: TcxLabel;
+    RotuloLimite: TcxLabel;
+    procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure BotaoPesquisarClick(Sender: TObject);
     procedure BotaoNovoClick(Sender: TObject);
     procedure BotaoEditarClick(Sender: TObject);
     procedure BotaoExcluirClick(Sender: TObject);
     procedure ListaClientesDblClick(Sender: TObject);
+    procedure BotaoLimparClick(Sender: TObject);
+    procedure FormResize(Sender: TObject);
+    procedure FiltroKeyPress(Sender: TObject; var Key: Char);
   private
     FControlador: TControladorPesquisaCliente;
     FApresentadorErro: IApresentadorErro;
     FIdsExibidos: TArray<Integer>;
+    FExibindoOrdenacao: Boolean;
     function MontarFiltro: TFiltroCliente;
     function Linha(const ACliente: TCliente): string;
+    procedure LimparFiltros;
+    procedure MarcarCamposPadrao;
+    function CamposMarcados: TCamposPesquisa;
+    procedure CentralizarSemResultado;
+    procedure CabecalhoClicado(AHeader: TcxCustomHeader; ASection: TcxHeaderSection);
+    procedure ManterLinhasNaOrdemDoBanco(Sender: TObject; const ASection: TcxHeaderSection;
+      const ASortOrder: TcxHeaderSortOrder);
+    procedure PermitirSetaSomentePeloControlador(Sender: TObject; const ASection: TcxHeaderSection;
+      const AAnterior: TcxHeaderSortOrder; var ANova: TcxHeaderSortOrder; var APermitir: Boolean);
   public
     destructor Destroy; override;
     procedure Conectar(const ARepositorio: IRepositorioCliente; const ATransacao: ITransacao;
@@ -78,6 +87,7 @@ type
     procedure ExibirClientes(const AClientes: TClientes);
     procedure ExibirSemResultado(const AMensagem: string);
     procedure HabilitarEdicaoEExclusao(AHabilitar: Boolean);
+    procedure ExibirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
     function IdSelecionado: Integer;
     procedure ExibirErro(const AMensagem: string);
     procedure ExibirAviso(const AMensagem: string);
@@ -108,17 +118,64 @@ end;
 
 function TFormPesquisaCliente.MontarFiltro: TFiltroCliente;
 begin
-  Result.Id := EditorId.Text;
-  Result.Nome := EditorNome.Text;
-  Result.CpfCnpj := EditorCpfCnpj.Text;
-  Result.Cep := EditorCep.Text;
-  Result.Cidade := EditorCidade.Text;
-  Result.Estado := EditorEstado.Text;
+  Result := Default(TFiltroCliente);
+  Result.Texto := EditorPesquisa.Text;
+  Result.Campos := CamposMarcados;
   if EditorDataNascimento.Date = NullDate then
     Result.DataNascimento := ''
   else
     Result.DataNascimento := FormatarData(EditorDataNascimento.Date);
-  Result.BuscaGeral := EditorBuscaGeral.Text;
+end;
+
+function TFormPesquisaCliente.CamposMarcados: TCamposPesquisa;
+var
+  LCampo: TCampoPesquisa;
+begin
+  Result := [];
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if ComboCampos.States[Ord(LCampo)] = cbsChecked then
+      Include(Result, LCampo);
+end;
+
+procedure TFormPesquisaCliente.MarcarCamposPadrao;
+const
+  CAMPOS_PADRAO: TCamposPesquisa = [cpId, cpNome];
+var
+  LCampo: TCampoPesquisa;
+begin
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if LCampo in CAMPOS_PADRAO then
+      ComboCampos.States[Ord(LCampo)] := cbsChecked
+    else
+      ComboCampos.States[Ord(LCampo)] := cbsUnchecked;
+end;
+
+procedure TFormPesquisaCliente.FormCreate(Sender: TObject);
+var
+  LCabecalho: TcxHeader;
+begin
+  MarcarCamposPadrao;
+  LCabecalho := TcxHeader(ListaClientes.HeaderSections[0].HeaderControl);
+  LCabecalho.OnSectionClick := CabecalhoClicado;
+  LCabecalho.OnSectionChangedSortOrder := ManterLinhasNaOrdemDoBanco;
+  LCabecalho.OnSectionChangingSortOrder := PermitirSetaSomentePeloControlador;
+end;
+
+procedure TFormPesquisaCliente.ManterLinhasNaOrdemDoBanco(Sender: TObject; const ASection: TcxHeaderSection;
+  const ASortOrder: TcxHeaderSortOrder);
+begin
+end;
+
+procedure TFormPesquisaCliente.PermitirSetaSomentePeloControlador(Sender: TObject; const ASection: TcxHeaderSection;
+  const AAnterior: TcxHeaderSortOrder; var ANova: TcxHeaderSortOrder; var APermitir: Boolean);
+begin
+  APermitir := FExibindoOrdenacao;
+end;
+
+procedure TFormPesquisaCliente.CabecalhoClicado(AHeader: TcxCustomHeader;
+  ASection: TcxHeaderSection);
+begin
+  FControlador.Ordenar(TCampoOrdenacao(ASection.Index));
 end;
 
 procedure TFormPesquisaCliente.FormShow(Sender: TObject);
@@ -129,6 +186,41 @@ end;
 procedure TFormPesquisaCliente.BotaoPesquisarClick(Sender: TObject);
 begin
   FControlador.Pesquisar(MontarFiltro);
+end;
+
+procedure TFormPesquisaCliente.FiltroKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key <> #13 then
+    Exit;
+  Key := #0;
+  FControlador.Pesquisar(MontarFiltro);
+end;
+
+procedure TFormPesquisaCliente.BotaoLimparClick(Sender: TObject);
+begin
+  LimparFiltros;
+  FControlador.Limpar(MontarFiltro);
+end;
+
+procedure TFormPesquisaCliente.LimparFiltros;
+begin
+  EditorPesquisa.Clear;
+  MarcarCamposPadrao;
+  EditorDataNascimento.Clear;
+  ActiveControl := EditorPesquisa;
+end;
+
+procedure TFormPesquisaCliente.FormResize(Sender: TObject);
+begin
+  CentralizarSemResultado;
+end;
+
+procedure TFormPesquisaCliente.CentralizarSemResultado;
+begin
+  PanelSemResultado.Left := (ClientWidth - PanelSemResultado.Width) div 2;
+  PanelSemResultado.Top := (ClientHeight - PanelSemResultado.Height) div 2;
+  RotuloSemResultado.Left := (PanelSemResultado.ClientWidth - RotuloSemResultado.Width) div 2;
+  RotuloSemResultado.Top := (PanelSemResultado.ClientHeight - RotuloSemResultado.Height) div 2;
 end;
 
 procedure TFormPesquisaCliente.BotaoNovoClick(Sender: TObject);
@@ -153,6 +245,8 @@ end;
 
 procedure TFormPesquisaCliente.SinalizarCarregamento(AAtivo: Boolean);
 begin
+  BotaoPesquisar.Enabled := not AAtivo;
+  BotaoLimpar.Enabled := not AAtivo;
   ListaClientes.Enabled := not AAtivo;
   if AAtivo then
     Screen.Cursor := crHourGlass
@@ -177,7 +271,7 @@ procedure TFormPesquisaCliente.ExibirClientes(const AClientes: TClientes);
 var
   LCliente: TCliente;
 begin
-  RotuloSemResultado.Visible := False;
+  PanelSemResultado.Visible := False;
   FIdsExibidos := [];
   ListaClientes.Items.BeginUpdate;
   try
@@ -197,14 +291,33 @@ end;
 procedure TFormPesquisaCliente.ExibirSemResultado(const AMensagem: string);
 begin
   RotuloSemResultado.Caption := AMensagem;
-  RotuloSemResultado.Visible := True;
-  RotuloSemResultado.BringToFront;
+  CentralizarSemResultado;
+  PanelSemResultado.Visible := True;
+  PanelSemResultado.BringToFront;
 end;
 
 procedure TFormPesquisaCliente.HabilitarEdicaoEExclusao(AHabilitar: Boolean);
 begin
   BotaoEditar.Enabled := AHabilitar;
   BotaoExcluir.Enabled := AHabilitar;
+end;
+
+procedure TFormPesquisaCliente.ExibirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
+const
+  SETAS: array[Boolean] of TcxHeaderSortOrder = (soAscending, soDescending);
+var
+  I: Integer;
+begin
+  FExibindoOrdenacao := True;
+  try
+    for I := 0 to ListaClientes.HeaderSections.Count - 1 do
+      if I = Ord(AOrdenacao.Campo) then
+        ListaClientes.HeaderSections[I].SortOrder := SETAS[AOrdenacao.Descendente]
+      else
+        ListaClientes.HeaderSections[I].SortOrder := soNone;
+  finally
+    FExibindoOrdenacao := False;
+  end;
 end;
 
 function TFormPesquisaCliente.IdSelecionado: Integer;
