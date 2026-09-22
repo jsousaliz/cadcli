@@ -3,7 +3,8 @@
 interface
 
 uses
-  Dominio.Cliente;
+  Dominio.Cliente,
+  Dominio.FiltroCliente;
 
 type
   IRepositorioCliente = interface
@@ -12,7 +13,8 @@ type
     procedure Alterar(const ACliente: TCliente);
     procedure Excluir(AId: Integer);
     function ObterPorId(AId: Integer): TCliente;
-    function ListarTodos: TClientes;
+    function Pesquisar(const AFiltro: TFiltroCliente; const AOrdenacao: TOrdenacaoCliente;
+      ALimite: Integer): TClientes;
     function ResolverCidade(const ANomeCidade, AUf, ANomeEstado: string): Integer;
   end;
 

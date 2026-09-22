@@ -109,43 +109,71 @@ object FormPesquisaCliente: TFormPesquisaCliente
     Left = 0
     Top = 64
     Width = 900
-    Height = 448
+    Height = 426
     Align = alClient
     Delimiter = #9
     HeaderSections = <
       item
+        AllowClick = True
         Text = 'ID'
       end
       item
+        AllowClick = True
         Text = 'Nome'
         Width = 180
       end
       item
+        AllowClick = True
         Text = 'CPF/CNPJ'
         Width = 120
       end
       item
+        AllowClick = True
         Text = 'CEP'
         Width = 75
       end
       item
+        AllowClick = True
         Text = 'Cidade'
         Width = 120
       end
       item
+        AllowClick = True
         Text = 'UF'
         Width = 35
       end
       item
+        AllowClick = True
         Text = 'Estado'
         Width = 110
       end
       item
+        AllowClick = True
         Text = 'Data de nascimento'
         Width = 110
       end>
     TabOrder = 1
     OnDblClick = ListaClientesDblClick
+  end
+  object RotuloLimite: TcxLabel
+    AlignWithMargins = True
+    Left = 12
+    Top = 492
+    Margins.Left = 12
+    Margins.Top = 2
+    Margins.Right = 12
+    Margins.Bottom = 2
+    Align = alBottom
+    Caption = 'A pesquisa lista no m'#225'ximo 50 clientes.'
+    ParentFont = False
+    Style.Font.Charset = DEFAULT_CHARSET
+    Style.Font.Color = clGrayText
+    Style.Font.Height = -11
+    Style.Font.Name = 'Segoe UI'
+    Style.Font.Style = []
+    Style.IsFontAssigned = True
+    TabOrder = 4
+    Transparent = True
   end
   object BarraAcoes: TcxGroupBox
     Left = 0

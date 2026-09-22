@@ -30,17 +30,25 @@ type
     [TearDown]
     procedure Limpar;
     [Test]
-    procedure AberturaCarregaUmaVezEExibePorIdCrescente;
+    procedure AberturaPesquisaUmaVezPorNomeComLimiteEExibeNaOrdemDevolvida;
     [Test]
-    procedure FiltrarNaoConsultaORepositorio;
+    procedure PesquisarRepassaFiltroOrdenacaoELimiteUmaVezPorAcao;
+    [Test]
+    procedure RepositorioFalsoNaoFiltraNemOrdena;
+    [Test]
+    procedure RecargaAposSalvarOuExcluirRepeteFiltroEOrdenacaoVigentes;
+    [Test]
+    procedure FalhaNaPesquisaExibeErroEsvaziaEDesabilitaAcoes;
     [Test]
     procedure SemResultadoExibeMensagemEDesabilitaAcoes;
     [Test]
-    procedure FalhaNaCargaExibeErroEEsvaziaAListaEmMemoria;
+    procedure AberturaExibeOrdenacaoPadraoPorNomeCrescente;
     [Test]
-    procedure NovoAbreInclusaoERecarregaComFiltroSoQuandoSalvo;
+    procedure OrdenarPorOutraColunaPesquisaEmOrdemCrescente;
     [Test]
-    procedure EditarAbreEdicaoDoSelecionadoERecarregaSoQuandoSalvo;
+    procedure OrdenarPelaColunaVigenteInverteADirecao;
+    [Test]
+    procedure LimparRestauraOrdenacaoPorNomeCrescente;
     [Test]
     procedure ExclusaoPedeConfirmacaoComIdENome;
     [Test]
@@ -54,9 +62,14 @@ type
 implementation
 
 uses
+  System.IOUtils,
+  System.StrUtils,
   System.SysUtils,
+  System.TypInfo,
   Dominio.Cliente,
-  Dominio.FiltroCliente;
+  Dominio.FiltroCliente,
+  Aplicacao.RepositorioCliente,
+  Suporte.CaminhosTeste;
 
 function FiltroPor(ACampo: TCampoPesquisa; const ATexto: string): TFiltroCliente;
 begin
@@ -68,6 +81,38 @@ end;
 function FiltroNome(const ANome: string): TFiltroCliente;
 begin
   Result := FiltroPor(cpNome, ANome);
+end;
+
+function Descrever(const AOrdenacao: TOrdenacaoCliente): string;
+const
+  DIRECOES: array[Boolean] of string = ('crescente', 'decrescente');
+begin
+  Result := GetEnumName(TypeInfo(TCampoOrdenacao), Ord(AOrdenacao.Campo)) + ' ' +
+    DIRECOES[AOrdenacao.Descendente];
+end;
+
+function DescreverTodas(const AOrdenacoes: TArray<TOrdenacaoCliente>; AInicio: Integer): string;
+var
+  I: Integer;
+begin
+  Result := '';
+  for I := AInicio to High(AOrdenacoes) do
+  begin
+    if Result <> '' then
+      Result := Result + '|';
+    Result := Result + Descrever(AOrdenacoes[I]);
+  end;
+end;
+
+function TresClientes: TClientes;
+begin
+  Result := [
+    NovoCliente(8, 'Oito', '52998224725', '30130000', 'Belo Horizonte', 'MG', 'Minas Gerais',
+      EncodeDate(1980, 1, 8)),
+    NovoCliente(1, 'Um', '11144477735', '01001000', 'Campinas', 'SP', 'São Paulo',
+      EncodeDate(1981, 2, 1)),
+    NovoCliente(5, 'Cinco', '11222333000181', '40010000', 'Salvador', 'BA', 'Bahia',
+      EncodeDate(1982, 3, 5))];
 end;
 
 procedure TTestesControladorPesquisaCliente.Preparar;
@@ -90,6 +135,7 @@ end;
 procedure TTestesControladorPesquisaCliente.Limpar;
 begin
   FreeAndNil(FControlador);
+  FVisaoObjeto.Registro := nil;
   FVisao := nil;
   FRepositorio := nil;
   FTransacao := nil;
@@ -98,165 +144,259 @@ begin
   FreeAndNil(FRegistro);
 end;
 
-procedure TTestesControladorPesquisaCliente.AberturaCarregaUmaVezEExibePorIdCrescente;
+procedure TTestesControladorPesquisaCliente.AberturaPesquisaUmaVezPorNomeComLimiteEExibeNaOrdemDevolvida;
 var
   LEsperados: TClientes;
   I: Integer;
 begin
-  LEsperados := [
-    NovoCliente(8, 'Oito', '52998224725', '30130000', 'Belo Horizonte', 'MG', 'Minas Gerais',
-      EncodeDate(1980, 1, 8)),
-    NovoCliente(1, 'Um', '11144477735', '01001000', 'Campinas', 'SP', 'São Paulo',
-      EncodeDate(1981, 2, 1)),
-    NovoCliente(5, 'Cinco', '11222333000181', '40010000', 'Salvador', 'BA', 'Bahia',
-      EncodeDate(1982, 3, 5))];
+  LEsperados := TresClientes;
   FRepositorioObjeto.Clientes := LEsperados;
   FControlador.Abrir;
-  Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos, 'A abertura deve carregar uma única vez.');
+  Assert.AreEqual(1, FRepositorioObjeto.ChamadasPesquisar, 'A abertura deve pesquisar uma única vez.');
+  Assert.AreEqual('', FRepositorioObjeto.Filtros[0].Texto);
+  Assert.IsTrue(FRepositorioObjeto.Filtros[0].Campos = [], 'A abertura não marca campos.');
+  Assert.AreEqual('', FRepositorioObjeto.Filtros[0].DataNascimento);
+  Assert.AreEqual('coNome crescente', Descrever(FRepositorioObjeto.Ordenacoes[0]));
+  Assert.AreEqual(50, FRepositorioObjeto.Limites[0]);
   Assert.AreEqual(3, Integer(Length(FVisaoObjeto.Exibidos)));
-  Assert.AreEqual('1,5,8', FVisaoObjeto.IdsExibidos, 'A grade deve vir por ID crescente.');
+  Assert.AreEqual('8,1,5', FVisaoObjeto.IdsExibidos, 'A visão recebe a ordem devolvida.');
   for I := 0 to 2 do
   begin
-    Assert.AreEqual(LEsperados[(I + 1) mod 3].Id, FVisaoObjeto.Exibidos[I].Id);
-    Assert.AreEqual(LEsperados[(I + 1) mod 3].Nome, FVisaoObjeto.Exibidos[I].Nome);
-    Assert.AreEqual(LEsperados[(I + 1) mod 3].CpfCnpj, FVisaoObjeto.Exibidos[I].CpfCnpj);
-    Assert.AreEqual(LEsperados[(I + 1) mod 3].Cep, FVisaoObjeto.Exibidos[I].Cep);
-    Assert.AreEqual(LEsperados[(I + 1) mod 3].Cidade, FVisaoObjeto.Exibidos[I].Cidade);
-    Assert.AreEqual(LEsperados[(I + 1) mod 3].Uf, FVisaoObjeto.Exibidos[I].Uf);
-    Assert.AreEqual(LEsperados[(I + 1) mod 3].Estado, FVisaoObjeto.Exibidos[I].Estado);
-    Assert.AreEqual(Double(LEsperados[(I + 1) mod 3].DataNascimento),
-      Double(FVisaoObjeto.Exibidos[I].DataNascimento));
+    Assert.AreEqual(LEsperados[I].Nome, FVisaoObjeto.Exibidos[I].Nome);
+    Assert.AreEqual(LEsperados[I].Cidade, FVisaoObjeto.Exibidos[I].Cidade);
   end;
   Assert.IsFalse(FVisaoObjeto.Carregando, 'O carregamento deve terminar desligado.');
-  Assert.AreEqual(1, FVisaoObjeto.CargasSinalizadas);
 end;
 
-procedure TTestesControladorPesquisaCliente.FiltrarNaoConsultaORepositorio;
+procedure TTestesControladorPesquisaCliente.PesquisarRepassaFiltroOrdenacaoELimiteUmaVezPorAcao;
+var
+  LFiltro: TFiltroCliente;
+  LSequencia: string;
+  LLinha: string;
 begin
-  FRepositorioObjeto.Clientes := ClientesDaFixture;
+  FRepositorioObjeto.Clientes := TresClientes;
   FControlador.Abrir;
-  Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos);
+  LFiltro := Default(TFiltroCliente);
+  LFiltro.Texto := 'silva';
+  LFiltro.Campos := [cpNome, cpCidade];
+  LFiltro.DataNascimento := '15/03/1990';
+  FRegistro.Clear;
+  FVisaoObjeto.Registro := FRegistro;
 
+  FControlador.Pesquisar(LFiltro);
+  Assert.AreEqual(2, FRepositorioObjeto.ChamadasPesquisar, 'Pesquisar gera exatamente 1 chamada nova.');
+  Assert.AreEqual('silva', FRepositorioObjeto.UltimoFiltro.Texto);
+  Assert.IsTrue(FRepositorioObjeto.UltimoFiltro.Campos = [cpNome, cpCidade]);
+  Assert.AreEqual('15/03/1990', FRepositorioObjeto.UltimoFiltro.DataNascimento);
+  Assert.AreEqual('coNome crescente', Descrever(FRepositorioObjeto.UltimaOrdenacao));
+  Assert.AreEqual(50, FRepositorioObjeto.Limites[High(FRepositorioObjeto.Limites)]);
+
+  FControlador.Pesquisar(LFiltro);
+  FControlador.Pesquisar(LFiltro);
+  Assert.AreEqual(4, FRepositorioObjeto.ChamadasPesquisar, '3 pesquisas geram exatamente 3 chamadas.');
+
+  LSequencia := '';
+  for LLinha in FRegistro do
+    if StartsText('Carregamento:', LLinha) or (LLinha = 'Pesquisar') then
+    begin
+      if LSequencia <> '' then
+        LSequencia := LSequencia + '|';
+      LSequencia := LSequencia + LLinha;
+    end;
+  Assert.AreEqual(
+    'Carregamento:True|Pesquisar|Carregamento:False|' +
+    'Carregamento:True|Pesquisar|Carregamento:False|' +
+    'Carregamento:True|Pesquisar|Carregamento:False', LSequencia,
+    'Cada pesquisa sinaliza o carregamento antes e depois da chamada ao repositório.');
+end;
+
+procedure TTestesControladorPesquisaCliente.RepositorioFalsoNaoFiltraNemOrdena;
+var
+  LRegra: string;
+  LArquivo: string;
+begin
+  FRepositorioObjeto.Clientes := TresClientes;
+  Assert.AreEqual(3, Integer(Length((FRepositorioObjeto as IRepositorioCliente).Pesquisar(
+    FiltroNome('zzz'), Default(TOrdenacaoCliente), 50))), 'O repositório falso não filtra.');
+  FControlador.Pesquisar(FiltroNome('zzz'));
+  Assert.AreEqual('8,1,5', FVisaoObjeto.IdsExibidos, 'O repositório falso não filtra nem reordena.');
+
+  LRegra := '.Aten' + 'de(';
+  for LArquivo in TDirectory.GetFiles(TPath.Combine(RaizRepositorio, 'tests'), '*.pas',
+    TSearchOption.soAllDirectories) do
+    Assert.IsFalse(ContainsText(TFile.ReadAllText(LArquivo), LRegra),
+      'Nenhuma unit de teste pode chamar regra de filtro em memória: ' + LArquivo);
+end;
+
+procedure TTestesControladorPesquisaCliente.RecargaAposSalvarOuExcluirRepeteFiltroEOrdenacaoVigentes;
+
+  procedure AssegurarChamadaVigente(AChamadas: Integer; const AAcao: string);
+  begin
+    Assert.AreEqual(AChamadas, FRepositorioObjeto.ChamadasPesquisar, AAcao);
+    Assert.AreEqual('silva', FRepositorioObjeto.UltimoFiltro.Texto, AAcao);
+    Assert.IsTrue(FRepositorioObjeto.UltimoFiltro.Campos = [cpNome], AAcao);
+    Assert.AreEqual('coCidade crescente', Descrever(FRepositorioObjeto.UltimaOrdenacao), AAcao);
+    Assert.AreEqual(50, FRepositorioObjeto.Limites[High(FRepositorioObjeto.Limites)], AAcao);
+  end;
+
+var
+  LChamadas: Integer;
+begin
+  FRepositorioObjeto.Clientes := TresClientes + [NovoCliente(7, 'Ana Silva', '52998224725',
+    '30130000', 'Belo Horizonte', 'MG', 'Minas Gerais', EncodeDate(1990, 3, 15))];
+  FControlador.Abrir;
   FControlador.Pesquisar(FiltroNome('silva'));
-  Assert.AreEqual('1,15', FVisaoObjeto.IdsExibidos);
-  FControlador.Pesquisar(FiltroPor(cpCidade, 'campinas'));
-  Assert.AreEqual('15,150', FVisaoObjeto.IdsExibidos);
-  FControlador.Pesquisar(FiltroPor(cpEstado, 'MG'));
-  Assert.AreEqual('1,10', FVisaoObjeto.IdsExibidos);
+  FControlador.Ordenar(coCidade);
+  LChamadas := FRepositorioObjeto.ChamadasPesquisar;
+  AssegurarChamadaVigente(LChamadas, 'Estado vigente antes das recargas.');
 
-  Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos,
-    'Filtrar não pode consultar o repositório de novo.');
-  Assert.AreEqual(1, FRepositorioObjeto.TotalChamadas, 'Filtrar não pode chamar o repositório.');
-  Assert.AreEqual(4, FVisaoObjeto.CargasSinalizadas, 'Cada pesquisa deve sinalizar carregamento.');
-  Assert.IsFalse(FVisaoObjeto.Carregando, 'A pesquisa deve terminar com o carregamento desligado.');
+  FNavegadorObjeto.Salvar := False;
+  FControlador.Novo;
+  Assert.AreEqual(1, FNavegadorObjeto.ChamadasInclusao, 'Novo abre a inclusão uma vez.');
+  Assert.AreEqual(LChamadas, FRepositorioObjeto.ChamadasPesquisar, 'Novo não salvo não pesquisa.');
+
+  FVisaoObjeto.Selecionado := 7;
+  FControlador.Editar;
+  Assert.AreEqual(1, FNavegadorObjeto.ChamadasEdicao, 'Editar abre a edição uma vez.');
+  Assert.AreEqual(1, FNavegadorObjeto.ChamadasInclusao, 'Editar não abre a inclusão.');
+  Assert.AreEqual(7, FNavegadorObjeto.UltimoIdEdicao);
+  Assert.AreEqual(LChamadas, FRepositorioObjeto.ChamadasPesquisar, 'Edição não salva não pesquisa.');
+
+  FNavegadorObjeto.Salvar := True;
+  FControlador.Novo;
+  Assert.AreEqual(2, FNavegadorObjeto.ChamadasInclusao);
+  Inc(LChamadas);
+  AssegurarChamadaVigente(LChamadas, 'Novo salvo repete a pesquisa vigente.');
+
+  FControlador.Editar;
+  Assert.AreEqual(2, FNavegadorObjeto.ChamadasEdicao);
+  Assert.AreEqual(7, FNavegadorObjeto.UltimoIdEdicao);
+  Inc(LChamadas);
+  AssegurarChamadaVigente(LChamadas, 'Edição salva repete a pesquisa vigente.');
+
+  FConfirmacaoObjeto.Resposta := True;
+  FControlador.Excluir;
+  Assert.AreEqual(1, FRepositorioObjeto.ChamadasExcluir);
+  Assert.AreEqual(7, FRepositorioObjeto.UltimoIdExcluido);
+  Inc(LChamadas);
+  AssegurarChamadaVigente(LChamadas, 'Exclusão confirmada repete a pesquisa vigente.');
+end;
+
+procedure TTestesControladorPesquisaCliente.FalhaNaPesquisaExibeErroEsvaziaEDesabilitaAcoes;
+begin
+  FRepositorioObjeto.FalharPesquisarAPartirDe := 1;
+  FRepositorioObjeto.MensagemFalha := 'SYSDBA masterkey localhost:3050';
+  FControlador.Abrir;
+  Assert.AreEqual(1, FVisaoObjeto.Erros.Count, 'O erro deve ser exibido exatamente uma vez.');
+  Assert.AreEqual('Não foi possível carregar os clientes.', FVisaoObjeto.Erros[0]);
+  Assert.IsFalse(FVisaoObjeto.Erros[0].Contains('masterkey'), 'O texto da exceção não aparece.');
+  Assert.AreEqual(1, FVisaoObjeto.Exibicoes, 'A visão recebe a lista vazia.');
+  Assert.AreEqual(0, Integer(Length(FVisaoObjeto.Exibidos)));
+  Assert.IsFalse(FVisaoObjeto.AcoesHabilitadas, 'Editar e Excluir ficam desabilitadas.');
+  Assert.IsFalse(FVisaoObjeto.Carregando, 'O carregamento deve ser desligado.');
+  FreeAndNil(FControlador);
+
+  FVisaoObjeto.Erros.Clear;
+  FRepositorioObjeto.ChamadasPesquisar := 0;
+  FRepositorioObjeto.FalharPesquisarAPartirDe := 2;
+  FRepositorioObjeto.Clientes := TresClientes;
+  FControlador := TControladorPesquisaCliente.Create(FVisaoObjeto, FRepositorioObjeto,
+    FTransacaoObjeto, FNavegadorObjeto, FConfirmacaoObjeto);
+  FControlador.Abrir;
+  Assert.AreEqual(3, Integer(Length(FVisaoObjeto.Exibidos)));
+  Assert.IsTrue(FVisaoObjeto.AcoesHabilitadas);
+  FControlador.Pesquisar(FiltroNome('um'));
+  Assert.AreEqual(1, FVisaoObjeto.Erros.Count);
+  Assert.AreEqual('Não foi possível carregar os clientes.', FVisaoObjeto.Erros[0]);
+  Assert.AreEqual(0, Integer(Length(FVisaoObjeto.Exibidos)));
+  Assert.IsFalse(FVisaoObjeto.AcoesHabilitadas);
+  Assert.IsFalse(FVisaoObjeto.Carregando);
+
+  FVisaoObjeto.Selecionado := 8;
+  FConfirmacaoObjeto.Resposta := True;
+  FControlador.Excluir;
+  Assert.AreEqual(0, FConfirmacaoObjeto.Mensagens.Count,
+    'Depois da falha, Excluir não abre confirmação.');
+  Assert.AreEqual(0, FRepositorioObjeto.ChamadasExcluir);
 end;
 
 procedure TTestesControladorPesquisaCliente.SemResultadoExibeMensagemEDesabilitaAcoes;
 begin
   FRepositorioObjeto.Clientes := [];
   FControlador.Abrir;
+  Assert.AreEqual(1, FVisaoObjeto.Exibicoes);
   Assert.AreEqual(0, Integer(Length(FVisaoObjeto.Exibidos)));
   Assert.AreEqual('Nenhum cliente encontrado', FVisaoObjeto.SemResultado.Text.Trim);
   Assert.IsFalse(FVisaoObjeto.AcoesHabilitadas, 'Editar e Excluir devem ficar desabilitadas.');
-  FreeAndNil(FControlador);
 
-  FRepositorioObjeto.Clientes := ClientesDaFixture;
-  FControlador := TControladorPesquisaCliente.Create(FVisaoObjeto, FRepositorioObjeto,
-    FTransacaoObjeto, FNavegadorObjeto, FConfirmacaoObjeto);
-  FControlador.Abrir;
-  Assert.AreEqual(5, Integer(Length(FVisaoObjeto.Exibidos)));
-  Assert.AreEqual(0, FVisaoObjeto.SemResultado.Count, 'Com resultados não há aviso de vazio.');
-  Assert.IsTrue(FVisaoObjeto.AcoesHabilitadas, 'Editar e Excluir devem ficar habilitadas.');
-
-  FControlador.Pesquisar(FiltroNome('inexistente'));
-  Assert.AreEqual(0, Integer(Length(FVisaoObjeto.Exibidos)));
-  Assert.AreEqual('Nenhum cliente encontrado', FVisaoObjeto.SemResultado.Text.Trim);
-  Assert.IsFalse(FVisaoObjeto.AcoesHabilitadas);
-
-  FControlador.Pesquisar(FiltroNome('ana'));
+  FRepositorioObjeto.Clientes := [TresClientes[1]];
+  FControlador.Pesquisar(FiltroNome('um'));
   Assert.AreEqual(1, Integer(Length(FVisaoObjeto.Exibidos)));
-  Assert.IsTrue(FVisaoObjeto.AcoesHabilitadas, 'Com 1 cliente exibido as ações ficam habilitadas.');
+  Assert.AreEqual(0, FVisaoObjeto.SemResultado.Count, 'Com resultado não há aviso de vazio.');
+  Assert.IsTrue(FVisaoObjeto.AcoesHabilitadas, 'Com 1 cliente as ações ficam habilitadas.');
 end;
 
-procedure TTestesControladorPesquisaCliente.FalhaNaCargaExibeErroEEsvaziaAListaEmMemoria;
+procedure TTestesControladorPesquisaCliente.AberturaExibeOrdenacaoPadraoPorNomeCrescente;
 begin
-  FRepositorioObjeto.FalharListarAPartirDe := 1;
-  FRepositorioObjeto.MensagemFalha := 'SYSDBA masterkey localhost:3050';
+  FRepositorioObjeto.Clientes := TresClientes;
+  FVisaoObjeto.Registro := FRegistro;
   FControlador.Abrir;
-  Assert.AreEqual(1, FVisaoObjeto.Erros.Count, 'O erro deve ser exibido exatamente uma vez.');
-  Assert.AreEqual('Não foi possível carregar os clientes.', FVisaoObjeto.Erros[0]);
-  Assert.IsFalse(FVisaoObjeto.Erros[0].Contains('masterkey'));
-  Assert.AreEqual(0, Integer(Length(FVisaoObjeto.Exibidos)));
-  FreeAndNil(FControlador);
-
-  FVisaoObjeto.Erros.Clear;
-  FRepositorioObjeto.ChamadasListarTodos := 0;
-  FRepositorioObjeto.FalharListarAPartirDe := 2;
-  FRepositorioObjeto.Clientes := ClientesDaFixture;
-  FNavegadorObjeto.Salvar := True;
-  FControlador := TControladorPesquisaCliente.Create(FVisaoObjeto, FRepositorioObjeto,
-    FTransacaoObjeto, FNavegadorObjeto, FConfirmacaoObjeto);
-  FControlador.Abrir;
-  Assert.AreEqual(5, Integer(Length(FVisaoObjeto.Exibidos)));
-  FControlador.Novo;
-  Assert.AreEqual(2, FRepositorioObjeto.ChamadasListarTodos);
-  Assert.AreEqual(1, FVisaoObjeto.Erros.Count);
-  Assert.AreEqual('Não foi possível carregar os clientes.', FVisaoObjeto.Erros[0]);
-  FControlador.Pesquisar(Default(TFiltroCliente));
-  Assert.AreEqual(0, Integer(Length(FVisaoObjeto.Exibidos)),
-    'Depois da recarga que falha, a lista em memória deve estar vazia.');
+  Assert.AreEqual(1, Integer(Length(FVisaoObjeto.Ordenacoes)), 'A abertura exibe a ordenação uma vez.');
+  Assert.AreEqual('coNome crescente', Descrever(FVisaoObjeto.Ordenacoes[0]));
+  Assert.IsTrue(FRegistro.IndexOf('ExibirOrdenacao') >= 0);
+  Assert.IsTrue(FRegistro.IndexOf('ExibirOrdenacao') < FRegistro.IndexOf('ExibirClientes'),
+    'A ordenação é exibida antes dos clientes.');
+  Assert.AreEqual('coNome crescente', Descrever(FRepositorioObjeto.Ordenacoes[0]));
 end;
 
-procedure TTestesControladorPesquisaCliente.NovoAbreInclusaoERecarregaComFiltroSoQuandoSalvo;
-var
-  LRepositorio: TRepositorioClienteFake;
+procedure TTestesControladorPesquisaCliente.OrdenarPorOutraColunaPesquisaEmOrdemCrescente;
 begin
-  FRepositorioObjeto.Clientes := ClientesDaFixture;
+  FRepositorioObjeto.Clientes := TresClientes;
   FControlador.Abrir;
   FControlador.Pesquisar(FiltroNome('silva'));
+  Assert.AreEqual(2, FRepositorioObjeto.ChamadasPesquisar);
 
-  FNavegadorObjeto.Salvar := False;
-  FControlador.Novo;
-  Assert.AreEqual(1, FNavegadorObjeto.ChamadasInclusao);
-  Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos, 'Sem salvar não há recarga.');
-
-  LRepositorio := FRepositorioObjeto;
-  FNavegadorObjeto.Salvar := True;
-  FNavegadorObjeto.AoSalvar :=
-    procedure
-    begin
-      LRepositorio.Clientes := LRepositorio.Clientes + [NovoCliente(200, 'Eva Silva',
-        '12345678909', '13010000', 'Campinas', 'SP', 'São Paulo', EncodeDate(1995, 5, 5))];
-    end;
-  FControlador.Novo;
-  Assert.AreEqual(2, FNavegadorObjeto.ChamadasInclusao);
-  Assert.AreEqual(2, FRepositorioObjeto.ChamadasListarTodos, 'Salvo deve recarregar uma vez.');
-  Assert.AreEqual('1,15,200', FVisaoObjeto.IdsExibidos,
-    'O filtro vigente deve ser reaplicado: Eva Silva aparece e Bruno Costa não.');
-  FNavegadorObjeto.AoSalvar := nil;
+  FControlador.Ordenar(coCidade);
+  Assert.AreEqual(3, FRepositorioObjeto.ChamadasPesquisar, 'Ordenar gera exatamente 1 chamada.');
+  Assert.AreEqual('silva', FRepositorioObjeto.UltimoFiltro.Texto, 'O filtro vigente é mantido.');
+  Assert.IsTrue(FRepositorioObjeto.UltimoFiltro.Campos = [cpNome]);
+  Assert.AreEqual('coCidade crescente', Descrever(FRepositorioObjeto.UltimaOrdenacao));
+  Assert.AreEqual(50, FRepositorioObjeto.Limites[High(FRepositorioObjeto.Limites)]);
+  Assert.AreEqual('coCidade crescente',
+    Descrever(FVisaoObjeto.Ordenacoes[High(FVisaoObjeto.Ordenacoes)]));
 end;
 
-procedure TTestesControladorPesquisaCliente.EditarAbreEdicaoDoSelecionadoERecarregaSoQuandoSalvo;
+procedure TTestesControladorPesquisaCliente.OrdenarPelaColunaVigenteInverteADirecao;
+const
+  ESPERADO = 'coNome decrescente|coNome crescente|coNome decrescente|coCidade crescente';
 begin
-  FRepositorioObjeto.Clientes := ClientesDaFixture + [NovoCliente(7, 'Ana Silva', '52998224725',
-    '30130000', 'Belo Horizonte', 'MG', 'Minas Gerais', EncodeDate(1990, 3, 15))];
+  FRepositorioObjeto.Clientes := TresClientes;
   FControlador.Abrir;
-  FControlador.Pesquisar(FiltroNome('silva'));
-  FVisaoObjeto.Selecionado := 7;
+  FControlador.Ordenar(coNome);
+  FControlador.Ordenar(coNome);
+  FControlador.Ordenar(coNome);
+  FControlador.Ordenar(coCidade);
+  Assert.AreEqual(5, FRepositorioObjeto.ChamadasPesquisar);
+  Assert.AreEqual(ESPERADO, DescreverTodas(FRepositorioObjeto.Ordenacoes, 1),
+    'Ordenações passadas ao repositório.');
+  Assert.AreEqual(ESPERADO, DescreverTodas(FVisaoObjeto.Ordenacoes, 1),
+    'Ordenações exibidas pela visão.');
+end;
 
-  FNavegadorObjeto.Salvar := False;
-  FControlador.Editar;
-  Assert.AreEqual(1, FNavegadorObjeto.ChamadasEdicao);
-  Assert.AreEqual(0, FNavegadorObjeto.ChamadasInclusao);
-  Assert.AreEqual(7, FNavegadorObjeto.UltimoIdEdicao);
-  Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos, 'Sem salvar não há recarga.');
+procedure TTestesControladorPesquisaCliente.LimparRestauraOrdenacaoPorNomeCrescente;
+begin
+  FRepositorioObjeto.Clientes := TresClientes;
+  FControlador.Abrir;
+  FControlador.Ordenar(coCidade);
+  FControlador.Ordenar(coCidade);
+  Assert.AreEqual('coCidade decrescente', Descrever(FRepositorioObjeto.UltimaOrdenacao));
+  Assert.AreEqual(3, FRepositorioObjeto.ChamadasPesquisar);
 
-  FNavegadorObjeto.Salvar := True;
-  FControlador.Editar;
-  Assert.AreEqual(2, FNavegadorObjeto.ChamadasEdicao);
-  Assert.AreEqual(7, FNavegadorObjeto.UltimoIdEdicao);
-  Assert.AreEqual(2, FRepositorioObjeto.ChamadasListarTodos, 'Salvo deve recarregar uma vez.');
-  Assert.AreEqual('1,7,15', FVisaoObjeto.IdsExibidos, 'O filtro vigente deve ser reaplicado.');
+  FControlador.Limpar(Default(TFiltroCliente));
+  Assert.AreEqual(4, FRepositorioObjeto.ChamadasPesquisar, 'Limpar gera exatamente 1 chamada.');
+  Assert.AreEqual('coNome crescente', Descrever(FRepositorioObjeto.UltimaOrdenacao));
+  Assert.AreEqual('coNome crescente',
+    Descrever(FVisaoObjeto.Ordenacoes[High(FVisaoObjeto.Ordenacoes)]));
 end;
 
 procedure TTestesControladorPesquisaCliente.ExclusaoPedeConfirmacaoComIdENome;
@@ -278,8 +418,13 @@ end;
 
 procedure TTestesControladorPesquisaCliente.ExclusaoConfirmadaExcluiEmTransacaoERecarrega;
 begin
-  FRepositorioObjeto.Clientes := ClientesDaFixture + [NovoCliente(7, 'Ana Silva', '52998224725',
-    '30130000', 'Belo Horizonte', 'MG', 'Minas Gerais', EncodeDate(1990, 3, 15))];
+  FRepositorioObjeto.Clientes := [
+    NovoCliente(1, 'Ana Souza Silva', '52998224725', '30130000', 'Belo Horizonte', 'MG',
+      'Minas Gerais', EncodeDate(1990, 3, 15)),
+    NovoCliente(7, 'Ana Silva', '52998224725', '30130000', 'Belo Horizonte', 'MG', 'Minas Gerais',
+      EncodeDate(1990, 3, 15)),
+    NovoCliente(15, 'Carlos Silva', '11222333000181', '13010000', 'Campinas', 'SP', 'São Paulo',
+      EncodeDate(1978, 1, 2))];
   FControlador.Abrir;
   FControlador.Pesquisar(FiltroNome('silva'));
   Assert.AreEqual('1,7,15', FVisaoObjeto.IdsExibidos);
@@ -287,13 +432,14 @@ begin
   FVisaoObjeto.Selecionado := 7;
   FConfirmacaoObjeto.Resposta := True;
   FControlador.Excluir;
-  Assert.AreEqual('Confirmacao|Iniciar|Excluir:7|Confirmar|ListarTodos',
+  Assert.AreEqual('Confirmacao|Iniciar|Excluir:7|Confirmar|Pesquisar',
     string.Join('|', FRegistro.ToStringArray));
   Assert.AreEqual(1, FRepositorioObjeto.ChamadasExcluir);
   Assert.AreEqual(7, FRepositorioObjeto.UltimoIdExcluido);
   Assert.AreEqual(0, FTransacaoObjeto.Revertidas);
+  Assert.AreEqual('silva', FRepositorioObjeto.UltimoFiltro.Texto, 'A recarga usa o filtro vigente.');
   Assert.AreEqual('1,15', FVisaoObjeto.IdsExibidos,
-    'O ID 7 some e os demais aceitos pelo filtro vigente continuam.');
+    'O ID 7 some e os demais devolvidos pela recarga continuam.');
 end;
 
 procedure TTestesControladorPesquisaCliente.IdsProtegidosNaoAbremTransacao;

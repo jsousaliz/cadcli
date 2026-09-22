@@ -18,6 +18,7 @@ type
     procedure ExibirClientes(const AClientes: TClientes);
     procedure ExibirSemResultado(const AMensagem: string);
     procedure HabilitarEdicaoEExclusao(AHabilitar: Boolean);
+    procedure ExibirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
     function IdSelecionado: Integer;
     procedure ExibirErro(const AMensagem: string);
     procedure ExibirAviso(const AMensagem: string);
@@ -32,8 +33,10 @@ type
     FConfirmacao: IConfirmacao;
     FClientes: TClientes;
     FFiltro: TFiltroCliente;
+    FOrdenacao: TOrdenacaoCliente;
     procedure Carregar;
-    procedure AplicarFiltro;
+    procedure Exibir;
+    procedure DefinirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
     procedure RecarregarSe(ASalvo: Boolean);
     function ClienteEmMemoria(AId: Integer; out ACliente: TCliente): Boolean;
   public
@@ -42,12 +45,16 @@ type
       const AConfirmacao: IConfirmacao);
     procedure Abrir;
     procedure Pesquisar(const AFiltro: TFiltroCliente);
+    procedure Ordenar(ACampo: TCampoOrdenacao);
+    procedure Limpar(const AFiltro: TFiltroCliente);
     procedure Novo;
     procedure Editar;
     procedure Excluir;
   end;
 
 const
+  LIMITE_PESQUISA_CLIENTES = 50;
+  ORDENACAO_PADRAO: TOrdenacaoCliente = (Campo: coNome; Descendente: False);
   IDS_PROTEGIDOS: array[0..4] of Integer = (1, 5, 8, 10, 15);
   MENSAGEM_NENHUM_CLIENTE = 'Nenhum cliente encontrado';
   MENSAGEM_FALHA_CARGA = 'Não foi possível carregar os clientes.';
@@ -58,10 +65,6 @@ const
 function ClienteProtegido(AId: Integer): Boolean;
 
 implementation
-
-uses
-  System.Generics.Collections,
-  System.Generics.Defaults;
 
 function ClienteProtegido(AId: Integer): Boolean;
 var
@@ -100,12 +103,7 @@ begin
   FVisao.SinalizarCarregamento(True);
   try
     try
-      FClientes := FRepositorio.ListarTodos;
-      TArray.Sort<TCliente>(FClientes, TComparer<TCliente>.Construct(
-        function(const AEsquerdo, ADireito: TCliente): Integer
-        begin
-          Result := AEsquerdo.Id - ADireito.Id;
-        end));
+      FClientes := FRepositorio.Pesquisar(FFiltro, FOrdenacao, LIMITE_PESQUISA_CLIENTES);
     except
       on Exception do
       begin
@@ -116,29 +114,27 @@ begin
   finally
     FVisao.SinalizarCarregamento(False);
   end;
+  Exibir;
 end;
 
-procedure TControladorPesquisaCliente.AplicarFiltro;
-var
-  LCliente: TCliente;
-  LResultado: TClientes;
+procedure TControladorPesquisaCliente.Exibir;
 begin
-  LResultado := [];
-  for LCliente in FClientes do
-    if FFiltro.Atende(LCliente) then
-      LResultado := LResultado + [LCliente];
-  FVisao.ExibirClientes(LResultado);
-  if Length(LResultado) = 0 then
+  FVisao.ExibirClientes(FClientes);
+  if Length(FClientes) = 0 then
     FVisao.ExibirSemResultado(MENSAGEM_NENHUM_CLIENTE);
-  FVisao.HabilitarEdicaoEExclusao(Length(LResultado) > 0);
+  FVisao.HabilitarEdicaoEExclusao(Length(FClientes) > 0);
+end;
+
+procedure TControladorPesquisaCliente.DefinirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
+begin
+  FOrdenacao := AOrdenacao;
+  FVisao.ExibirOrdenacao(FOrdenacao);
 end;
 
 procedure TControladorPesquisaCliente.RecarregarSe(ASalvo: Boolean);
 begin
-  if not ASalvo then
-    Exit;
-  Carregar;
-  AplicarFiltro;
+  if ASalvo then
+    Carregar;
 end;
 
 function TControladorPesquisaCliente.ClienteEmMemoria(AId: Integer; out ACliente: TCliente): Boolean;
@@ -157,19 +153,30 @@ end;
 procedure TControladorPesquisaCliente.Abrir;
 begin
   FFiltro := Default(TFiltroCliente);
+  DefinirOrdenacao(ORDENACAO_PADRAO);
   Carregar;
-  AplicarFiltro;
 end;
 
 procedure TControladorPesquisaCliente.Pesquisar(const AFiltro: TFiltroCliente);
 begin
   FFiltro := AFiltro;
-  FVisao.SinalizarCarregamento(True);
-  try
-    AplicarFiltro;
-  finally
-    FVisao.SinalizarCarregamento(False);
-  end;
+  Carregar;
+end;
+
+procedure TControladorPesquisaCliente.Ordenar(ACampo: TCampoOrdenacao);
+var
+  LOrdenacao: TOrdenacaoCliente;
+begin
+  LOrdenacao.Campo := ACampo;
+  LOrdenacao.Descendente := (ACampo = FOrdenacao.Campo) and not FOrdenacao.Descendente;
+  DefinirOrdenacao(LOrdenacao);
+  Carregar;
+end;
+
+procedure TControladorPesquisaCliente.Limpar(const AFiltro: TFiltroCliente);
+begin
+  DefinirOrdenacao(ORDENACAO_PADRAO);
+  Pesquisar(AFiltro);
 end;
 
 procedure TControladorPesquisaCliente.Novo;
@@ -213,7 +220,6 @@ begin
     end;
   end;
   Carregar;
-  AplicarFiltro;
 end;
 
 end.

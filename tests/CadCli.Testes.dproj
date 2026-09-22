@@ -57,7 +57,6 @@
     <DCCReference Include="Unitarios\Testes.InicializadorAplicacao.pas" />
     <DCCReference Include="Unitarios\Testes.IntegracaoFirebird.pas" />
     <DCCReference Include="Unitarios\Testes.NavegadorAplicacao.pas" />
-    <DCCReference Include="Unitarios\Testes.FiltroCliente.pas" />
     <DCCReference Include="Unitarios\Testes.ValidacaoCliente.pas" />
     <DCCReference Include="Unitarios\Testes.ControladorPesquisaCliente.pas" />
     <DCCReference Include="Unitarios\Testes.ControladorCadastroCliente.pas" />

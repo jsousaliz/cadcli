@@ -19,13 +19,14 @@
 | AD-013 | O aviso trial do DevExpress (`TfrmNewTrialDialog`, janela modal aberta na inicialização do pacote, antes do `begin` do programa) é fechado com `WM_CLOSE` somente pelos testes: no runner, `Suporte.AvisoTrialDevExpress` (primeira unit do `uses`) fecha o aviso do próprio processo e o runner processa mensagens antes de rodar, liberando a form do aviso; as provas de executável fecham o aviso do processo filho antes de procurar a form principal ou aguardar o encerramento. O `CadCli.exe` entregue continua mostrando o aviso ao usuário | sem isso o runner e toda prova de executável travam esperando uma pessoa; nenhuma asserção muda, e a form do aviso fica em `Screen.Forms` até a próxima rodada de mensagens, o que deixaria vermelha a Parte 01 C3 | active | 2026-09-21 |
 | AD-014 | Os artefatos `.specs` da Parte 02 não são alterados; a prova da Parte 02 C23 (`TTestesNavegadorAplicacao.DestinoSemTelaRegistradaFalhaSemCriarForm`), que a Parte 03 torna falsa ao registrar a tela real de clientes, é reescrita pela Parte 03 para asserir somente `AbrirRelatorio` sem tela, e a abertura de clientes passa a ser provada por `ClientesAbrePesquisaRealSobreABase` (Parte 03 C51); ambas são obrigações da Parte 03 | AD-010 previa o registro das telas reais pelas Partes 03 e 04; a asserção de clientes fica falsa por construção, e a de relatório continua verdadeira até a Parte 04 | active | 2026-09-21 |
 | AD-015 | A lista de resultados da pesquisa de clientes é um `TcxMCListBox` (door 5 da Parte 03), não uma grade `TcxGridTableView`; a Parte 03 C11 foi reescrita para esse controle | com o Delphi 12.1 instalado (29.0.51961) os `.dcp` do DevExpress 2026.1.4 trial exigem recompilar `cxLibraryRS29` em toda unit que dependa de `cxInplaceContainer` (`cxGrid`, `cxTreeList`, `cxVerticalGrid`, `cxListView`, `cxImage`), erro E2225; sem fontes do DevExpress não há recompilação | active | 2026-09-21 |
+| AD-016 | A pesquisa de clientes consulta o banco a cada abertura, pesquisa, reordenação e recarga por `IRepositorioCliente.Pesquisar(filtro, ordenação, limite 50)`, que substitui `ListarTodos`; a regra do filtro existe só no SQL do repositório FireDAC e `TFiltroCliente.Atende` é removido. Os artefatos `.specs` da Parte 03 não são alterados; as provas das Partes 03 C1-C13, C44 e C48 são reescritas pela Parte 03.1 e passam a ser obrigações dela | ler a tabela inteira travava a tela; duas implementações da mesma regra só concordariam por coincidência; segue o precedente de AD-012 e AD-014 | active | 2026-09-22 |
 
 ## Handoff
 
-**Feature**: `parte-03-clientes-crud`
-**Where**: Parte 03 construída e verificada. O Verifier independente deu PASS no round 2 (`verification.md`, faixa c436143..0220fa2): 52/52 checks, 5/5 faltas mortas, suíte 108/108. Door 5 e AD-015 foram registrados durante o build (`TcxMCListBox` no lugar da grade)
-**In progress**: nada
-**Next step**: revisão do usuário e decisão sobre push/PR da branch; depois, a Parte 04
-**Blockers**: nenhum. C39, C41, C47, C48, C51 e C52 exigem o serviço Firebird 3 em `localhost:3050`. `cxGrid` não compila neste ambiente (AD-015). C25 (Enter/foco) falhou uma vez no round 2 e passou nas repetições; é sensível a outra janela tomar o foco
+**Feature**: `parte-03.1-pesquisa-clientes`
+**Where**: construída; 26 checks com provas verdes, suíte 124/124. Door 6 registrado no build (Parte 03 C14 e três testes de b255b92 reescritos sob AD-016)
+**In progress**: verificação independente
+**Next step**: Verifier sobre `76f1716..HEAD`; depois, revisão do usuário e decisão sobre push/PR
+**Blockers**: nenhum. C4-C9, C23 e C24 exigem o serviço Firebird 3 em `localhost:3050`. C20-C22 movem o cursor real para clicar no cabeçalho (o `TcxHeader` usa a posição do cursor), então são sensíveis a mexer no mouse durante a execução
 **Uncommitted**: nada
-**Branch**: `feat/parte-03-clientes-crud`
+**Branch**: `feat/parte-03.1-pesquisa-clientes`

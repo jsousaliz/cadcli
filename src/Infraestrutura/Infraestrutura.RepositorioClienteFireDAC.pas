@@ -6,6 +6,7 @@ uses
   System.SysUtils,
   FireDAC.Comp.Client,
   Dominio.Cliente,
+  Dominio.FiltroCliente,
   Aplicacao.RepositorioCliente,
   Aplicacao.Transacao;
 
@@ -18,13 +19,15 @@ type
     function ObterId(const ASql: string; const AParametros: array of Variant): Integer;
     procedure DefinirParametros(AConsulta: TFDQuery; const ACliente: TCliente);
     function LerClientes(const ASql: string; const AParametros: array of Variant): TClientes;
+    function LerClientesDaConsulta(AConsulta: TFDQuery): TClientes;
   public
     constructor Create(AConexao: TFDConnection);
     function Incluir(const ACliente: TCliente): Integer;
     procedure Alterar(const ACliente: TCliente);
     procedure Excluir(AId: Integer);
     function ObterPorId(AId: Integer): TCliente;
-    function ListarTodos: TClientes;
+    function Pesquisar(const AFiltro: TFiltroCliente; const AOrdenacao: TOrdenacaoCliente;
+      ALimite: Integer): TClientes;
     function ResolverCidade(const ANomeCidade, AUf, ANomeEstado: string): Integer;
   end;
 
@@ -43,17 +46,26 @@ type
 implementation
 
 uses
+  System.Classes,
+  System.Variants,
   FireDAC.DApt,
   FireDAC.Stan.Async,
   FireDAC.Stan.Param;
 
 const
-  SQL_SELECAO_CLIENTES =
-    'SELECT C.ID, C.NOME, C.CPF_CNPJ, C.CEP, C.ENDERECO, C.NUMERO, C.COMPLEMENTO, C.BAIRRO, ' +
+  SQL_CAMPOS_CLIENTES =
+    'C.ID, C.NOME, C.CPF_CNPJ, C.CEP, C.ENDERECO, C.NUMERO, C.COMPLEMENTO, C.BAIRRO, ' +
     'C.CIDADEID, C.DATANASCIMENTO, CI.NOME AS CIDADE, E.UF, E.NOME AS ESTADO ' +
     'FROM CLIENTE C ' +
     'LEFT JOIN CIDADE CI ON CI.ID = C.CIDADEID ' +
     'LEFT JOIN ESTADO E ON E.ID = CI.ESTADOID ';
+  SQL_SELECAO_CLIENTES = 'SELECT ' + SQL_CAMPOS_CLIENTES;
+  COLUNAS_ORDENACAO: array[TCampoOrdenacao] of string = ('C.ID', 'UPPER(C.NOME)', 'C.CPF_CNPJ',
+    'C.CEP', 'UPPER(CI.NOME)', 'E.UF', 'UPPER(E.NOME)', 'C.DATANASCIMENTO');
+  TAMANHO_UF = 2;
+  TAMANHO_NOME_CLIENTE = 80;
+  TAMANHO_NOME_CIDADE = 50;
+  TAMANHO_NOME_ESTADO = 50;
 
 constructor TRepositorioClienteFireDAC.Create(AConexao: TFDConnection);
 begin
@@ -110,34 +122,40 @@ function TRepositorioClienteFireDAC.LerClientes(const ASql: string;
   const AParametros: array of Variant): TClientes;
 var
   LConsulta: TFDQuery;
-  LCliente: TCliente;
 begin
-  Result := [];
   LConsulta := TFDQuery.Create(nil);
   try
     LConsulta.Connection := FConexao;
     LConsulta.Open(ASql, AParametros);
-    while not LConsulta.Eof do
-    begin
-      LCliente := Default(TCliente);
-      LCliente.Id := LConsulta.FieldByName('ID').AsInteger;
-      LCliente.Nome := LConsulta.FieldByName('NOME').AsString;
-      LCliente.CpfCnpj := LConsulta.FieldByName('CPF_CNPJ').AsString;
-      LCliente.Cep := Trim(LConsulta.FieldByName('CEP').AsString);
-      LCliente.Endereco := LConsulta.FieldByName('ENDERECO').AsString;
-      LCliente.Numero := LConsulta.FieldByName('NUMERO').AsString;
-      LCliente.Complemento := LConsulta.FieldByName('COMPLEMENTO').AsString;
-      LCliente.Bairro := LConsulta.FieldByName('BAIRRO').AsString;
-      LCliente.CidadeId := LConsulta.FieldByName('CIDADEID').AsInteger;
-      LCliente.DataNascimento := LConsulta.FieldByName('DATANASCIMENTO').AsDateTime;
-      LCliente.Cidade := LConsulta.FieldByName('CIDADE').AsString;
-      LCliente.Uf := Trim(LConsulta.FieldByName('UF').AsString);
-      LCliente.Estado := LConsulta.FieldByName('ESTADO').AsString;
-      Result := Result + [LCliente];
-      LConsulta.Next;
-    end;
+    Result := LerClientesDaConsulta(LConsulta);
   finally
     LConsulta.Free;
+  end;
+end;
+
+function TRepositorioClienteFireDAC.LerClientesDaConsulta(AConsulta: TFDQuery): TClientes;
+var
+  LCliente: TCliente;
+begin
+  Result := [];
+  while not AConsulta.Eof do
+  begin
+    LCliente := Default(TCliente);
+    LCliente.Id := AConsulta.FieldByName('ID').AsInteger;
+    LCliente.Nome := AConsulta.FieldByName('NOME').AsString;
+    LCliente.CpfCnpj := AConsulta.FieldByName('CPF_CNPJ').AsString;
+    LCliente.Cep := Trim(AConsulta.FieldByName('CEP').AsString);
+    LCliente.Endereco := AConsulta.FieldByName('ENDERECO').AsString;
+    LCliente.Numero := AConsulta.FieldByName('NUMERO').AsString;
+    LCliente.Complemento := AConsulta.FieldByName('COMPLEMENTO').AsString;
+    LCliente.Bairro := AConsulta.FieldByName('BAIRRO').AsString;
+    LCliente.CidadeId := AConsulta.FieldByName('CIDADEID').AsInteger;
+    LCliente.DataNascimento := AConsulta.FieldByName('DATANASCIMENTO').AsDateTime;
+    LCliente.Cidade := AConsulta.FieldByName('CIDADE').AsString;
+    LCliente.Uf := Trim(AConsulta.FieldByName('UF').AsString);
+    LCliente.Estado := AConsulta.FieldByName('ESTADO').AsString;
+    Result := Result + [LCliente];
+    AConsulta.Next;
   end;
 end;
 
@@ -194,9 +212,96 @@ begin
   Result := LClientes[0];
 end;
 
-function TRepositorioClienteFireDAC.ListarTodos: TClientes;
+function PredicadosDoTexto(const ATexto: string; ACampos: TCamposPesquisa;
+  APredicados: TStrings): Boolean;
+var
+  LId: Integer;
+  LDigitos: string;
 begin
-  Result := LerClientes(SQL_SELECAO_CLIENTES + 'ORDER BY C.ID', []);
+  if ACampos = [] then
+    ACampos := [Low(TCampoPesquisa)..High(TCampoPesquisa)];
+  LDigitos := SomenteDigitos(ATexto);
+  if (cpId in ACampos) and TryStrToInt(ATexto, LId) then
+    APredicados.Add('C.ID = :ID');
+  if (cpNome in ACampos) and (Length(ATexto) <= TAMANHO_NOME_CLIENTE) then
+    APredicados.Add('C.NOME CONTAINING :NOME');
+  if (cpCpfCnpj in ACampos) and (LDigitos <> '') and (Length(LDigitos) <= TAMANHO_CNPJ) then
+    APredicados.Add('C.CPF_CNPJ = :CPF_CNPJ');
+  if (cpCep in ACampos) and (Length(LDigitos) = TAMANHO_CEP) then
+    APredicados.Add('C.CEP = :CEP');
+  if (cpCidade in ACampos) and (Length(ATexto) <= TAMANHO_NOME_CIDADE) then
+    APredicados.Add('CI.NOME CONTAINING :CIDADE');
+  if (cpEstado in ACampos) and (Length(ATexto) = TAMANHO_UF) then
+    APredicados.Add('E.UF = :UF');
+  if (cpEstado in ACampos) and (Length(ATexto) <= TAMANHO_NOME_ESTADO) then
+    APredicados.Add('E.NOME CONTAINING :ESTADO');
+  Result := APredicados.Count > 0;
+end;
+
+procedure DefinirParametroSeExistir(AConsulta: TFDQuery; const ANome: string; const AValor: Variant);
+var
+  LParametro: TFDParam;
+begin
+  LParametro := AConsulta.Params.FindParam(ANome);
+  if Assigned(LParametro) then
+    LParametro.Value := AValor;
+end;
+
+function TRepositorioClienteFireDAC.Pesquisar(const AFiltro: TFiltroCliente;
+  const AOrdenacao: TOrdenacaoCliente; ALimite: Integer): TClientes;
+const
+  DIRECOES: array[Boolean] of string = ('ASC', 'DESC');
+var
+  LTexto: string;
+  LData: TDate;
+  LCondicoes: TStringList;
+  LPredicados: TStringList;
+  LSql: string;
+  LConsulta: TFDQuery;
+begin
+  LTexto := Trim(AFiltro.Texto);
+  LData := 0;
+  LCondicoes := TStringList.Create;
+  LPredicados := TStringList.Create;
+  try
+    if LTexto <> '' then
+    begin
+      if not PredicadosDoTexto(LTexto, AFiltro.Campos, LPredicados) then
+        Exit(nil);
+      LCondicoes.Add('(' + string.Join(' OR ', LPredicados.ToStringArray) + ')');
+    end;
+    if Trim(AFiltro.DataNascimento) <> '' then
+    begin
+      if not TentarLerData(AFiltro.DataNascimento, LData) then
+        Exit(nil);
+      LCondicoes.Add('C.DATANASCIMENTO = :DATANASCIMENTO');
+    end;
+    LSql := 'SELECT FIRST :LIMITE ' + SQL_CAMPOS_CLIENTES;
+    if LCondicoes.Count > 0 then
+      LSql := LSql + 'WHERE ' + string.Join(' AND ', LCondicoes.ToStringArray) + ' ';
+    LSql := LSql + 'ORDER BY ' + COLUNAS_ORDENACAO[AOrdenacao.Campo] + ' ' +
+      DIRECOES[AOrdenacao.Descendente] + ' NULLS LAST, C.ID ASC';
+  finally
+    LPredicados.Free;
+    LCondicoes.Free;
+  end;
+  LConsulta := CriarConsulta(LSql);
+  try
+    LConsulta.ParamByName('LIMITE').AsInteger := ALimite;
+    DefinirParametroSeExistir(LConsulta, 'ID', StrToIntDef(LTexto, 0));
+    DefinirParametroSeExistir(LConsulta, 'NOME', LTexto);
+    DefinirParametroSeExistir(LConsulta, 'CPF_CNPJ', SomenteDigitos(LTexto));
+    DefinirParametroSeExistir(LConsulta, 'CEP', SomenteDigitos(LTexto));
+    DefinirParametroSeExistir(LConsulta, 'CIDADE', LTexto);
+    DefinirParametroSeExistir(LConsulta, 'UF', UpperCase(LTexto));
+    DefinirParametroSeExistir(LConsulta, 'ESTADO', LTexto);
+    if Assigned(LConsulta.Params.FindParam('DATANASCIMENTO')) then
+      LConsulta.ParamByName('DATANASCIMENTO').AsDate := LData;
+    LConsulta.Open;
+    Result := LerClientesDaConsulta(LConsulta);
+  finally
+    LConsulta.Free;
+  end;
 end;
 
 function TRepositorioClienteFireDAC.ResolverCidade(const ANomeCidade, AUf,

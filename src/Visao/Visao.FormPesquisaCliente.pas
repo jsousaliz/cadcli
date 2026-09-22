@@ -8,6 +8,7 @@ uses
   Vcl.Forms,
   cxGraphics,
   cxControls,
+  cxHeader,
   cxLookAndFeels,
   cxLookAndFeelPainters,
   cxContainer,
@@ -50,6 +51,7 @@ type
     BotaoLimpar: TcxButton;
     PanelSemResultado: TdxPanel;
     RotuloSemResultado: TcxLabel;
+    RotuloLimite: TcxLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure BotaoPesquisarClick(Sender: TObject);
@@ -64,12 +66,18 @@ type
     FControlador: TControladorPesquisaCliente;
     FApresentadorErro: IApresentadorErro;
     FIdsExibidos: TArray<Integer>;
+    FExibindoOrdenacao: Boolean;
     function MontarFiltro: TFiltroCliente;
     function Linha(const ACliente: TCliente): string;
     procedure LimparFiltros;
     procedure MarcarCamposPadrao;
     function CamposMarcados: TCamposPesquisa;
     procedure CentralizarSemResultado;
+    procedure CabecalhoClicado(AHeader: TcxCustomHeader; ASection: TcxHeaderSection);
+    procedure SetaAlterada(Sender: TObject; const ASection: TcxHeaderSection;
+      const ASortOrder: TcxHeaderSortOrder);
+    procedure SetaMudando(Sender: TObject; const ASection: TcxHeaderSection;
+      const AAnterior: TcxHeaderSortOrder; var ANova: TcxHeaderSortOrder; var APermitir: Boolean);
   public
     destructor Destroy; override;
     procedure Conectar(const ARepositorio: IRepositorioCliente; const ATransacao: ITransacao;
@@ -79,6 +87,7 @@ type
     procedure ExibirClientes(const AClientes: TClientes);
     procedure ExibirSemResultado(const AMensagem: string);
     procedure HabilitarEdicaoEExclusao(AHabilitar: Boolean);
+    procedure ExibirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
     function IdSelecionado: Integer;
     procedure ExibirErro(const AMensagem: string);
     procedure ExibirAviso(const AMensagem: string);
@@ -142,8 +151,33 @@ begin
 end;
 
 procedure TFormPesquisaCliente.FormCreate(Sender: TObject);
+var
+  LCabecalho: TcxHeader;
 begin
   MarcarCamposPadrao;
+  LCabecalho := TcxHeader(ListaClientes.HeaderSections[0].HeaderControl);
+  LCabecalho.OnSectionClick := CabecalhoClicado;
+  LCabecalho.OnSectionChangedSortOrder := SetaAlterada;
+  LCabecalho.OnSectionChangingSortOrder := SetaMudando;
+end;
+
+procedure TFormPesquisaCliente.SetaAlterada(Sender: TObject; const ASection: TcxHeaderSection;
+  const ASortOrder: TcxHeaderSortOrder);
+begin
+  // Substitui o tratamento do TcxMCListBox, que reordenaria as linhas já trazidas do banco.
+end;
+
+procedure TFormPesquisaCliente.SetaMudando(Sender: TObject; const ASection: TcxHeaderSection;
+  const AAnterior: TcxHeaderSortOrder; var ANova: TcxHeaderSortOrder; var APermitir: Boolean);
+begin
+  // A seta só muda pelo controlador, via ExibirOrdenacao; o clique não a inverte por conta própria.
+  APermitir := FExibindoOrdenacao;
+end;
+
+procedure TFormPesquisaCliente.CabecalhoClicado(AHeader: TcxCustomHeader;
+  ASection: TcxHeaderSection);
+begin
+  FControlador.Ordenar(TCampoOrdenacao(ASection.Index));
 end;
 
 procedure TFormPesquisaCliente.FormShow(Sender: TObject);
@@ -167,7 +201,7 @@ end;
 procedure TFormPesquisaCliente.BotaoLimparClick(Sender: TObject);
 begin
   LimparFiltros;
-  FControlador.Pesquisar(MontarFiltro);
+  FControlador.Limpar(MontarFiltro);
 end;
 
 procedure TFormPesquisaCliente.LimparFiltros;
@@ -268,6 +302,24 @@ procedure TFormPesquisaCliente.HabilitarEdicaoEExclusao(AHabilitar: Boolean);
 begin
   BotaoEditar.Enabled := AHabilitar;
   BotaoExcluir.Enabled := AHabilitar;
+end;
+
+procedure TFormPesquisaCliente.ExibirOrdenacao(const AOrdenacao: TOrdenacaoCliente);
+const
+  SETAS: array[Boolean] of TcxHeaderSortOrder = (soAscending, soDescending);
+var
+  I: Integer;
+begin
+  FExibindoOrdenacao := True;
+  try
+    for I := 0 to ListaClientes.HeaderSections.Count - 1 do
+      if I = Ord(AOrdenacao.Campo) then
+        ListaClientes.HeaderSections[I].SortOrder := SETAS[AOrdenacao.Descendente]
+      else
+        ListaClientes.HeaderSections[I].SortOrder := soNone;
+  finally
+    FExibindoOrdenacao := False;
+  end;
 end;
 
 function TFormPesquisaCliente.IdSelecionado: Integer;

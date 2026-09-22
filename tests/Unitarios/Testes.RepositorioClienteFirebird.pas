@@ -5,7 +5,9 @@ interface
 uses
   DUnitX.TestFramework,
   FireDAC.Comp.Client,
+  Dominio.FiltroCliente,
   Aplicacao.CatalogoMigracoes,
+  Aplicacao.RepositorioCliente,
   Infraestrutura.InicializadorBancoFireDAC;
 
 type
@@ -15,8 +17,14 @@ type
     FDiretorio: string;
     FCatalogo: TCatalogoMigracoes;
     FInicializador: TInicializadorBanco;
+    FRepositorio: IRepositorioCliente;
     function Conexao: TFDConnection;
     function Contar(const ATabela: string): Integer;
+    procedure InserirCliente(AId: Integer; const ANome, ACpfCnpj, ACep: string; ACidadeId: Integer;
+      ADataNascimento: TDate);
+    function CidadeId(const ANome: string): Integer;
+    procedure SemearBaseF5;
+    function PesquisarNomes(const AFiltro: TFiltroCliente): string;
   public
     [Setup]
     procedure Preparar;
@@ -29,17 +37,34 @@ type
     [Test]
     procedure IncluiAlteraEExcluiPorParametrosESequencia;
     [Test]
-    procedure ListarTodosTrazCidadeEEstadoPorIdCrescente;
+    procedure PesquisaSemFiltroDevolveOsPrimeiros50PelaOrdenacao;
+    [Test]
+    procedure CadaCampoMarcadoAceitaERejeitaOsCasosDaTabela;
+    [Test]
+    procedure CamposMarcadosCombinamPorOr;
+    [Test]
+    procedure NenhumCampoMarcadoPesquisaNosSeisCampos;
+    [Test]
+    procedure DataCombinaPorAndComOTexto;
+    [Test]
+    procedure TextoComApostrofoEPesquisadoPorParametro;
+    [Test]
+    procedure TextoLongoNaoGeraErro;
+    [Test]
+    procedure OrdenaPorCadaColunaNasDuasDirecoesComAusentesPorUltimo;
+    [Test]
+    procedure PesquisaTrazCidadeUfEEstadoDoCliente;
   end;
 
 implementation
 
 uses
+  Data.DB,
   System.IOUtils,
+  System.StrUtils,
   System.SysUtils,
   Dominio.Cliente,
   Aplicacao.ControladorCadastroCliente,
-  Aplicacao.RepositorioCliente,
   Aplicacao.Transacao,
   Infraestrutura.CatalogoPadraoMigracoes,
   Infraestrutura.RepositorioClienteFireDAC,
@@ -88,6 +113,7 @@ end;
 
 procedure TTestesRepositorioClienteFirebird.Limpar;
 begin
+  FRepositorio := nil;
   FreeAndNil(FInicializador);
   FreeAndNil(FCatalogo);
   if TDirectory.Exists(FDiretorio) then
@@ -243,43 +269,287 @@ begin
     ['CLIENTE']), 'A tabela CLIENTE deve continuar existindo.');
 end;
 
-procedure TTestesRepositorioClienteFirebird.ListarTodosTrazCidadeEEstadoPorIdCrescente;
+function PrimeirosNomes(const AClientes: TClientes): string;
 var
-  LRepositorio: IRepositorioCliente;
-  LClientes: TClientes;
-  LId: Integer;
-  LCidadeCampinas: Integer;
-  LCidadeSalvador: Integer;
-  LCidade: Integer;
+  LCliente: TCliente;
 begin
-  LCidadeCampinas := Inteiro(Conexao, 'SELECT ID FROM CIDADE WHERE NOME = :N', ['Campinas']);
-  LCidadeSalvador := Inteiro(Conexao, 'SELECT ID FROM CIDADE WHERE NOME = :N', ['Salvador']);
-  for LId in TArray<Integer>.Create(30, 10, 20) do
+  Result := '';
+  for LCliente in AClientes do
   begin
-    if LId = 20 then
-      LCidade := LCidadeSalvador
-    else
-      LCidade := LCidadeCampinas;
-    Conexao.ExecSQL('INSERT INTO CLIENTE (ID, NOME, CEP, CPF_CNPJ, ENDERECO, NUMERO, BAIRRO, ' +
-      'CIDADEID, DATANASCIMENTO) VALUES (:ID, :NOME, :CEP, :DOC, :END, :NUM, :BAIRRO, :CID, :NASC)',
-      [LId, 'Cliente ' + IntToStr(LId), '13010000', '52998224725', 'Rua A', '1', 'Centro',
-       LCidade, EncodeDate(1980, 1, 1)]);
+    if Result <> '' then
+      Result := Result + ',';
+    Result := Result + LCliente.Nome.Split([' '])[0];
   end;
-  LRepositorio := TRepositorioClienteFireDAC.Create(Conexao);
-  LClientes := LRepositorio.ListarTodos;
-  Assert.AreEqual(3, Integer(Length(LClientes)));
-  Assert.AreEqual(10, LClientes[0].Id);
-  Assert.AreEqual(20, LClientes[1].Id);
-  Assert.AreEqual(30, LClientes[2].Id);
+end;
+
+function Filtro(const ATexto: string; ACampos: TCamposPesquisa;
+  const ADataNascimento: string = ''): TFiltroCliente;
+begin
+  Result := Default(TFiltroCliente);
+  Result.Texto := ATexto;
+  Result.Campos := ACampos;
+  Result.DataNascimento := ADataNascimento;
+end;
+
+function Ordenacao(ACampo: TCampoOrdenacao; ADescendente: Boolean = False): TOrdenacaoCliente;
+begin
+  Result.Campo := ACampo;
+  Result.Descendente := ADescendente;
+end;
+
+procedure TTestesRepositorioClienteFirebird.InserirCliente(AId: Integer; const ANome, ACpfCnpj,
+  ACep: string; ACidadeId: Integer; ADataNascimento: TDate);
+var
+  LConsulta: TFDQuery;
+begin
+  LConsulta := TFDQuery.Create(nil);
+  try
+    LConsulta.Connection := Conexao;
+    LConsulta.SQL.Text := 'INSERT INTO CLIENTE (ID, NOME, CEP, CPF_CNPJ, ENDERECO, NUMERO, BAIRRO, ' +
+      'CIDADEID, DATANASCIMENTO) VALUES (:ID, :NOME, :CEP, :DOC, :END, :NUM, :BAIRRO, :CID, :NASC)';
+    LConsulta.ParamByName('ID').AsInteger := AId;
+    LConsulta.ParamByName('NOME').AsString := ANome;
+    LConsulta.ParamByName('CEP').AsString := ACep;
+    LConsulta.ParamByName('DOC').AsString := ACpfCnpj;
+    LConsulta.ParamByName('END').AsString := 'Rua A';
+    LConsulta.ParamByName('NUM').AsString := '1';
+    LConsulta.ParamByName('BAIRRO').AsString := 'Centro';
+    LConsulta.ParamByName('CID').DataType := ftInteger;
+    if ACidadeId > 0 then
+      LConsulta.ParamByName('CID').AsInteger := ACidadeId
+    else
+      LConsulta.ParamByName('CID').Clear;
+    LConsulta.ParamByName('NASC').DataType := ftDate;
+    if ADataNascimento > 0 then
+      LConsulta.ParamByName('NASC').AsDate := ADataNascimento
+    else
+      LConsulta.ParamByName('NASC').Clear;
+    LConsulta.ExecSQL;
+  finally
+    LConsulta.Free;
+  end;
+end;
+
+function TTestesRepositorioClienteFirebird.CidadeId(const ANome: string): Integer;
+begin
+  Result := Inteiro(Conexao, 'SELECT ID FROM CIDADE WHERE NOME = :N', [ANome]);
+end;
+
+procedure TTestesRepositorioClienteFirebird.SemearBaseF5;
+var
+  LMariana: Integer;
+begin
+  LMariana := Inteiro(Conexao, 'SELECT NEXT VALUE FOR SEQ_CIDADE FROM RDB$DATABASE', []);
+  Conexao.ExecSQL('INSERT INTO CIDADE (ID, NOME, ESTADOID) VALUES (:ID, :NOME, ' +
+    '(SELECT ID FROM ESTADO WHERE UF = :UF))', [LMariana, 'Mariana', 'MG']);
+  InserirCliente(1, 'Ana Silva', '52998224725', '30130010', CidadeId('Belo Horizonte'),
+    EncodeDate(1990, 3, 15));
+  InserirCliente(2, 'Bruno Costa', '11144477735', '35420000', LMariana, EncodeDate(1985, 7, 20));
+  InserirCliente(3, 'Carlos Silva', '11222333000181', '13010000', CidadeId('Campinas'),
+    EncodeDate(1990, 3, 15));
+  InserirCliente(4, 'Denise D''Avila', '39053344705', '13015000', CidadeId('Campinas'),
+    EncodeDate(2000, 1, 1));
+  InserirCliente(5, 'bianca souza', '71428793860', '01001000', 0, 0);
+  FRepositorio := TRepositorioClienteFireDAC.Create(Conexao);
+end;
+
+function TTestesRepositorioClienteFirebird.PesquisarNomes(const AFiltro: TFiltroCliente): string;
+begin
+  Result := PrimeirosNomes(FRepositorio.Pesquisar(AFiltro, Ordenacao(coId), 50));
+end;
+
+procedure TTestesRepositorioClienteFirebird.PesquisaSemFiltroDevolveOsPrimeiros50PelaOrdenacao;
+var
+  I: Integer;
+  LClientes: TClientes;
+begin
+  for I := 60 downto 1 do
+    InserirCliente(I, Format('Cliente %.2d', [61 - I]), '52998224725', '13010000',
+      CidadeId('Campinas'), EncodeDate(1980, 1, 1));
+  FRepositorio := TRepositorioClienteFireDAC.Create(Conexao);
+
+  LClientes := FRepositorio.Pesquisar(Default(TFiltroCliente), Ordenacao(coNome), 50);
+  Assert.AreEqual(50, Integer(Length(LClientes)), 'Mais de 50 corta em 50.');
+  Assert.AreEqual('Cliente 01', LClientes[0].Nome);
+  Assert.AreEqual('Cliente 50', LClientes[49].Nome);
+
+  LClientes := FRepositorio.Pesquisar(Default(TFiltroCliente), Ordenacao(coNome, True), 50);
+  Assert.AreEqual(50, Integer(Length(LClientes)));
+  Assert.AreEqual('Cliente 60', LClientes[0].Nome);
+  Assert.AreEqual('Cliente 11', LClientes[49].Nome);
+
+  Conexao.ExecSQL('DELETE FROM CLIENTE');
+  SemearBaseF5;
+  LClientes := FRepositorio.Pesquisar(Default(TFiltroCliente), Ordenacao(coNome), 50);
+  Assert.AreEqual(5, Integer(Length(LClientes)), 'Menos de 50 devolve todos.');
+end;
+
+procedure TTestesRepositorioClienteFirebird.CadaCampoMarcadoAceitaERejeitaOsCasosDaTabela;
+type
+  TCaso = record
+    Campo: TCampoPesquisa;
+    Valor: string;
+    Esperados: string;
+  end;
+const
+  CASOS: array[0..10] of TCaso = (
+    (Campo: cpId; Valor: '1'; Esperados: 'Ana'),
+    (Campo: cpId; Valor: 'abc'; Esperados: ''),
+    (Campo: cpNome; Valor: 'SIL'; Esperados: 'Ana,Carlos'),
+    (Campo: cpNome; Valor: '  SIL  '; Esperados: 'Ana,Carlos'),
+    (Campo: cpCpfCnpj; Valor: '529.982.247-25'; Esperados: 'Ana'),
+    (Campo: cpCpfCnpj; Valor: '529982247'; Esperados: ''),
+    (Campo: cpCep; Valor: '30130-010'; Esperados: 'Ana'),
+    (Campo: cpCep; Valor: '3013001'; Esperados: ''),
+    (Campo: cpCidade; Valor: 'campi'; Esperados: 'Carlos,Denise'),
+    (Campo: cpEstado; Valor: 'mg'; Esperados: 'Ana,Bruno'),
+    (Campo: cpEstado; Valor: 'paulo'; Esperados: 'Carlos,Denise'));
+var
+  LCaso: TCaso;
+  LVerificados: Integer;
+begin
+  SemearBaseF5;
+  Assert.AreEqual(1, Inteiro(Conexao, 'SELECT ID FROM CLIENTE WHERE NOME = :N', ['Ana Silva']),
+    'O caso de ID usa o ID de Ana.');
+  LVerificados := 0;
+  for LCaso in CASOS do
+  begin
+    Assert.AreEqual(LCaso.Esperados, PesquisarNomes(Filtro(LCaso.Valor, [LCaso.Campo])),
+      'Campo ' + IntToStr(Ord(LCaso.Campo)) + ' com "' + LCaso.Valor + '"');
+    Inc(LVerificados);
+  end;
+  Assert.AreEqual(11, LVerificados);
+end;
+
+procedure TTestesRepositorioClienteFirebird.CamposMarcadosCombinamPorOr;
+begin
+  SemearBaseF5;
+  Assert.AreEqual('Ana', PesquisarNomes(Filtro('ana', [cpNome])));
+  Assert.AreEqual('Bruno', PesquisarNomes(Filtro('ana', [cpCidade])));
+  Assert.AreEqual('Ana,Bruno', PesquisarNomes(Filtro('ana', [cpNome, cpCidade])));
+end;
+
+procedure TTestesRepositorioClienteFirebird.NenhumCampoMarcadoPesquisaNosSeisCampos;
+type
+  TCaso = record
+    Campo: TCampoPesquisa;
+    Valor: string;
+  end;
+const
+  CASOS: array[0..5] of TCaso = (
+    (Campo: cpId; Valor: '1'),
+    (Campo: cpNome; Valor: 'SIL'),
+    (Campo: cpCpfCnpj; Valor: '529.982.247-25'),
+    (Campo: cpCep; Valor: '30130-010'),
+    (Campo: cpCidade; Valor: 'campi'),
+    (Campo: cpEstado; Valor: 'mg'));
+var
+  LCaso: TCaso;
+  LSozinho: string;
+  LTodos: TArray<string>;
+  LNome: string;
+  LVerificados: Integer;
+begin
+  SemearBaseF5;
+  Assert.AreEqual('Ana,Bruno', PesquisarNomes(Filtro('ana', [])));
+  LVerificados := 0;
+  for LCaso in CASOS do
+  begin
+    LSozinho := PesquisarNomes(Filtro(LCaso.Valor, [LCaso.Campo]));
+    Assert.AreNotEqual('', LSozinho, 'O valor deve encontrar alguém: ' + LCaso.Valor);
+    LTodos := PesquisarNomes(Filtro(LCaso.Valor, [])).Split([',']);
+    for LNome in LSozinho.Split([',']) do
+      Assert.IsTrue(MatchStr(LNome, LTodos),
+        LNome + ' deve aparecer sem campos marcados para "' + LCaso.Valor + '"');
+    Inc(LVerificados);
+  end;
+  Assert.AreEqual(6, LVerificados);
+end;
+
+procedure TTestesRepositorioClienteFirebird.DataCombinaPorAndComOTexto;
+begin
+  SemearBaseF5;
+  Assert.AreEqual('Ana,Carlos', PesquisarNomes(Filtro('', [], '15/03/1990')));
+  Assert.AreEqual('Ana,Carlos', PesquisarNomes(Filtro('silva', [cpNome], '15/03/1990')));
+  Assert.AreEqual('', PesquisarNomes(Filtro('costa', [cpNome], '15/03/1990')));
+  Assert.AreEqual('Bruno', PesquisarNomes(Filtro('ana', [cpNome, cpCidade], '20/07/1985')));
+end;
+
+procedure TTestesRepositorioClienteFirebird.TextoComApostrofoEPesquisadoPorParametro;
+begin
+  SemearBaseF5;
+  Assert.AreEqual('Denise', PesquisarNomes(Filtro('d''avila', [cpNome])));
+  Assert.AreEqual('', PesquisarNomes(Filtro(''' OR 1=1 --', [])));
+  Assert.AreEqual(5, Contar('CLIENTE'));
+end;
+
+procedure TTestesRepositorioClienteFirebird.TextoLongoNaoGeraErro;
+begin
+  SemearBaseF5;
+  Assert.AreEqual('', PesquisarNomes(Filtro(StringOfChar('a', 300), [])),
+    'Texto maior que as colunas não pode gerar erro.');
+  Assert.AreEqual('', PesquisarNomes(Filtro(StringOfChar('1', 30), [])),
+    'Dígitos além do CPF/CNPJ não podem gerar erro.');
+end;
+
+procedure TTestesRepositorioClienteFirebird.OrdenaPorCadaColunaNasDuasDirecoesComAusentesPorUltimo;
+type
+  TCaso = record
+    Campo: TCampoOrdenacao;
+    Crescente: string;
+    Decrescente: string;
+  end;
+const
+  CASOS: array[0..7] of TCaso = (
+    (Campo: coId; Crescente: 'Ana,Bruno,Carlos,Denise,bianca';
+      Decrescente: 'bianca,Denise,Carlos,Bruno,Ana'),
+    (Campo: coNome; Crescente: 'Ana,bianca,Bruno,Carlos,Denise';
+      Decrescente: 'Denise,Carlos,Bruno,bianca,Ana'),
+    (Campo: coCpfCnpj; Crescente: 'Bruno,Carlos,Denise,Ana,bianca';
+      Decrescente: 'bianca,Ana,Denise,Carlos,Bruno'),
+    (Campo: coCep; Crescente: 'bianca,Carlos,Denise,Ana,Bruno';
+      Decrescente: 'Bruno,Ana,Denise,Carlos,bianca'),
+    (Campo: coCidade; Crescente: 'Ana,Carlos,Denise,Bruno,bianca';
+      Decrescente: 'Bruno,Carlos,Denise,Ana,bianca'),
+    (Campo: coUf; Crescente: 'Ana,Bruno,Carlos,Denise,bianca';
+      Decrescente: 'Carlos,Denise,Ana,Bruno,bianca'),
+    (Campo: coEstado; Crescente: 'Ana,Bruno,Carlos,Denise,bianca';
+      Decrescente: 'Carlos,Denise,Ana,Bruno,bianca'),
+    (Campo: coDataNascimento; Crescente: 'Bruno,Ana,Carlos,Denise,bianca';
+      Decrescente: 'Denise,Ana,Carlos,Bruno,bianca'));
+var
+  LCaso: TCaso;
+  LVerificados: Integer;
+begin
+  SemearBaseF5;
+  LVerificados := 0;
+  for LCaso in CASOS do
+  begin
+    Assert.AreEqual(LCaso.Crescente, PrimeirosNomes(FRepositorio.Pesquisar(Default(TFiltroCliente),
+      Ordenacao(LCaso.Campo), 50)), 'Coluna ' + IntToStr(Ord(LCaso.Campo)) + ' crescente');
+    Inc(LVerificados);
+    Assert.AreEqual(LCaso.Decrescente, PrimeirosNomes(FRepositorio.Pesquisar(Default(TFiltroCliente),
+      Ordenacao(LCaso.Campo, True), 50)), 'Coluna ' + IntToStr(Ord(LCaso.Campo)) + ' decrescente');
+    Inc(LVerificados);
+  end;
+  Assert.AreEqual(16, LVerificados);
+end;
+
+procedure TTestesRepositorioClienteFirebird.PesquisaTrazCidadeUfEEstadoDoCliente;
+var
+  LClientes: TClientes;
+begin
+  SemearBaseF5;
+  LClientes := FRepositorio.Pesquisar(Filtro('carlos', [cpNome]), Ordenacao(coId), 50);
+  Assert.AreEqual(1, Integer(Length(LClientes)));
   Assert.AreEqual('Campinas', LClientes[0].Cidade);
   Assert.AreEqual('SP', LClientes[0].Uf);
   Assert.AreEqual('São Paulo', LClientes[0].Estado);
-  Assert.AreEqual('Salvador', LClientes[1].Cidade);
-  Assert.AreEqual('BA', LClientes[1].Uf);
-  Assert.AreEqual('Bahia', LClientes[1].Estado);
-  Assert.AreEqual('Campinas', LClientes[2].Cidade);
-  Assert.AreEqual('SP', LClientes[2].Uf);
-  Assert.AreEqual('São Paulo', LClientes[2].Estado);
+  LClientes := FRepositorio.Pesquisar(Filtro('bianca', [cpNome]), Ordenacao(coId), 50);
+  Assert.AreEqual(1, Integer(Length(LClientes)));
+  Assert.AreEqual('', LClientes[0].Cidade);
+  Assert.AreEqual('', LClientes[0].Uf);
+  Assert.AreEqual('', LClientes[0].Estado);
 end;
 
 initialization
