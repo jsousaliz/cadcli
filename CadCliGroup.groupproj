@@ -26,23 +26,23 @@
     <Target Name="CadCli:Make">
         <MSBuild Projects="CadCli.dproj" Targets="Make"/>
     </Target>
-    <Target Name="CadCli.Testes">
+    <Target Name="CadCli_Testes">
         <MSBuild Projects="tests\CadCli.Testes.dproj"/>
     </Target>
-    <Target Name="CadCli.Testes:Clean">
+    <Target Name="CadCli_Testes:Clean">
         <MSBuild Projects="tests\CadCli.Testes.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="CadCli.Testes:Make">
+    <Target Name="CadCli_Testes:Make">
         <MSBuild Projects="tests\CadCli.Testes.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="CadCli;CadCli.Testes"/>
+        <CallTarget Targets="CadCli;CadCli_Testes"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="CadCli:Clean;CadCli.Testes:Clean"/>
+        <CallTarget Targets="CadCli:Clean;CadCli_Testes:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="CadCli:Make;CadCli.Testes:Make"/>
+        <CallTarget Targets="CadCli:Make;CadCli_Testes:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

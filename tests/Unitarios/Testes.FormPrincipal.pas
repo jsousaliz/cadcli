@@ -263,8 +263,7 @@ begin
   Assert.AreNotEqual('', LVersao);
   Assert.AreNotEqual('1.0.0.0', LVersao,
     'O runner precisa de um FileVersion diferente do CadCli.exe para esta prova.');
-  Assert.AreEqual('CadCli', FForm.Caption);
-  Assert.AreEqual('CadCli - Cadastro de Clientes', FForm.RotuloCabecalho.Caption);
+  Assert.AreEqual('Cadastro de Clientes', FForm.Caption);
   Assert.AreEqual('Bem-vindo! Use o menu para acessar o cadastro e o relatório de clientes.',
     FForm.RotuloBoasVindas.Caption);
   Assert.AreEqual(1, FForm.BarraStatus.Panels.Count);
@@ -277,18 +276,15 @@ var
 begin
   LMenu := MenuPrincipal(FForm);
   Assert.IsTrue(LMenu.DockingStyle = dsTop, 'A barra de menu deve ficar no topo.');
-  Assert.IsTrue(FForm.RotuloCabecalho.Align = alTop, 'O cabeçalho deve ter Align = alTop.');
   Assert.IsTrue(FForm.RotuloBoasVindas.Align = alClient, 'As boas-vindas devem ter Align = alClient.');
   Assert.IsTrue(FForm.BarraStatus.Align = alBottom, 'A barra de status deve ter Align = alBottom.');
   FForm.Show;
   Application.ProcessMessages;
   Assert.IsTrue(Assigned(LMenu.RealDockControl), 'A barra de menu deve estar ancorada.');
-  Assert.IsTrue(LMenu.RealDockControl.Top + LMenu.RealDockControl.Height <= FForm.RotuloCabecalho.Top,
-    Format('A barra de menu deve ficar acima do cabeçalho (menu %s %d+%d, cabeçalho %d).',
+  Assert.IsTrue(LMenu.RealDockControl.Top + LMenu.RealDockControl.Height <= FForm.RotuloBoasVindas.Top,
+    Format('A barra de menu deve ficar acima das boas-vindas (menu %s %d+%d, boas-vindas %d).',
     [LMenu.RealDockControl.ClassName, LMenu.RealDockControl.Top, LMenu.RealDockControl.Height,
-    FForm.RotuloCabecalho.Top]));
-  Assert.IsTrue(FForm.RotuloCabecalho.Top < FForm.RotuloBoasVindas.Top,
-    'O cabeçalho deve ficar acima das boas-vindas.');
+    FForm.RotuloBoasVindas.Top]));
   Assert.IsTrue(FForm.RotuloBoasVindas.Top < FForm.BarraStatus.Top,
     'As boas-vindas devem ficar acima da barra de status.');
 end;

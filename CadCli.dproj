@@ -101,6 +101,7 @@
         <DCCReference Include="src\Infraestrutura\Infraestrutura.RegistroErroInicializacao.pas"/>
         <DCCReference Include="src\Migracoes\Migracao.V001.EsquemaInicial.pas"/>
         <DCCReference Include="src\Migracoes\Migracao.V002.DadosReferencia.pas"/>
+        <DCCReference Include="src\Migracoes\Migracao.V003.ClientesProtegidos.pas"/>
         <DCCReference Include="src\Visao\Visao.ApresentadorErro.pas"/>
         <DCCReference Include="src\Visao\Visao.ComposicaoAplicacao.pas"/>
         <DCCReference Include="src\Visao\Visao.FormPrincipal.pas">
