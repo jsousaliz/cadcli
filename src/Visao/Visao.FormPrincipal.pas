@@ -30,7 +30,6 @@ type
     ItemSair: TdxBarButton;
     ItemCliente: TdxBarButton;
     ItemRelatorio: TdxBarButton;
-    RotuloCabecalho: TcxLabel;
     RotuloBoasVindas: TcxLabel;
     BarraStatus: TdxStatusBar;
     procedure ItemSairClick(Sender: TObject);

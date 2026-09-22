@@ -1,7 +1,7 @@
 object FormPrincipal: TFormPrincipal
   Left = 0
   Top = 0
-  Caption = 'CadCli'
+  Caption = 'Cadastro de Clientes'
   ClientHeight = 500
   ClientWidth = 800
   Color = clBtnFace
@@ -12,26 +12,9 @@ object FormPrincipal: TFormPrincipal
   Font.Style = []
   Position = poScreenCenter
   TextHeight = 15
-  object RotuloCabecalho: TcxLabel
-    Left = 0
-    Top = 25
-    Align = alTop
-    Caption = 'CadCli - Cadastro de Clientes'
-    ParentFont = False
-    Style.Font.Charset = DEFAULT_CHARSET
-    Style.Font.Color = clWindowText
-    Style.Font.Height = -21
-    Style.Font.Name = 'Segoe UI'
-    Style.Font.Style = [fsBold]
-    Style.IsFontAssigned = True
-    Properties.Alignment.Horz = taCenter
-    TabOrder = 0
-    ExplicitWidth = 798
-    AnchorX = 400
-  end
   object RotuloBoasVindas: TcxLabel
     Left = 0
-    Top = 59
+    Top = 25
     Align = alClient
     Caption = 
       'Bem-vindo! Use o menu para acessar o cadastro e o relat'#243'rio de c' +
@@ -39,12 +22,12 @@ object FormPrincipal: TFormPrincipal
     Properties.Alignment.Horz = taCenter
     Properties.Alignment.Vert = taVCenter
     Properties.WordWrap = True
-    TabOrder = 1
-    ExplicitWidth = 798
-    ExplicitHeight = 413
+    TabOrder = 0
+    ExplicitTop = 59
+    ExplicitHeight = 421
     Width = 800
     AnchorX = 400
-    AnchorY = 270
+    AnchorY = 253
   end
   object BarraStatus: TdxStatusBar
     Left = 0
@@ -56,8 +39,6 @@ object FormPrincipal: TFormPrincipal
         PanelStyleClassName = 'TdxStatusBarTextPanelStyle'
         Text = 'Vers'#227'o'
       end>
-    ExplicitTop = 472
-    ExplicitWidth = 798
   end
   object GerenciadorBarras: TdxBarManager
     Font.Charset = DEFAULT_CHARSET
