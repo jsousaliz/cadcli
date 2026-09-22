@@ -7,6 +7,7 @@ uses
   System.SysUtils,
   Dominio.Cliente,
   Dominio.FiltroCliente,
+  Dominio.FiltroRelatorioCliente,
   Aplicacao.Confirmacao,
   Aplicacao.ControladorCadastroCliente,
   Aplicacao.ControladorPesquisaCliente,
@@ -35,7 +36,17 @@ type
     FalharAlterar: Boolean;
     FalharExcluir: Boolean;
     FalharObter: Boolean;
+    FalharRelatorio: Boolean;
+    FalharEstados: Boolean;
+    FalharCidades: Boolean;
     MensagemFalha: string;
+    Estados: TEstados;
+    Cidades: TCidades;
+    ChamadasRelatorio: Integer;
+    ChamadasEstados: Integer;
+    ChamadasCidades: Integer;
+    FiltrosRelatorio: TArray<TFiltroRelatorioCliente>;
+    EstadosConsultados: TArray<Integer>;
     IdGerado: Integer;
     CidadeResolvida: Integer;
     UltimoIncluido: TCliente;
@@ -52,6 +63,10 @@ type
     function Pesquisar(const AFiltro: TFiltroCliente; const AOrdenacao: TOrdenacaoCliente;
       ALimite: Integer): TClientes;
     function ResolverCidade(const ANomeCidade, AUf, ANomeEstado: string): Integer;
+    function ListarParaRelatorio(const AFiltro: TFiltroRelatorioCliente): TClientes;
+    function ListarEstados: TEstados;
+    function ListarCidades(AEstadoId: Integer): TCidades;
+    function UltimoFiltroRelatorio: TFiltroRelatorioCliente;
     function TotalChamadas: Integer;
     function UltimoFiltro: TFiltroCliente;
     function UltimaOrdenacao: TOrdenacaoCliente;
@@ -347,10 +362,45 @@ begin
   Result := CidadeResolvida;
 end;
 
+function TRepositorioClienteFake.ListarParaRelatorio(
+  const AFiltro: TFiltroRelatorioCliente): TClientes;
+begin
+  Inc(ChamadasRelatorio);
+  FiltrosRelatorio := FiltrosRelatorio + [AFiltro];
+  Registrar(FRegistro, 'ListarParaRelatorio');
+  if FalharRelatorio then
+    raise Exception.Create(MensagemFalha);
+  Result := Copy(Clientes);
+end;
+
+function TRepositorioClienteFake.ListarEstados: TEstados;
+begin
+  Inc(ChamadasEstados);
+  Registrar(FRegistro, 'ListarEstados');
+  if FalharEstados then
+    raise Exception.Create(MensagemFalha);
+  Result := Copy(Estados);
+end;
+
+function TRepositorioClienteFake.ListarCidades(AEstadoId: Integer): TCidades;
+begin
+  Inc(ChamadasCidades);
+  EstadosConsultados := EstadosConsultados + [AEstadoId];
+  Registrar(FRegistro, 'ListarCidades');
+  if FalharCidades then
+    raise Exception.Create(MensagemFalha);
+  Result := Copy(Cidades);
+end;
+
+function TRepositorioClienteFake.UltimoFiltroRelatorio: TFiltroRelatorioCliente;
+begin
+  Result := FiltrosRelatorio[High(FiltrosRelatorio)];
+end;
+
 function TRepositorioClienteFake.TotalChamadas: Integer;
 begin
   Result := ChamadasPesquisar + ChamadasIncluir + ChamadasAlterar + ChamadasExcluir +
-    ChamadasResolverCidade;
+    ChamadasResolverCidade + ChamadasRelatorio;
 end;
 
 constructor TTransacaoFake.Create(ARegistro: TStrings);

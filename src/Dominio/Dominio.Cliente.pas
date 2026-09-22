@@ -21,6 +21,21 @@ type
 
   TClientes = TArray<TCliente>;
 
+  TEstado = record
+    Id: Integer;
+    Nome: string;
+    Uf: string;
+  end;
+
+  TEstados = TArray<TEstado>;
+
+  TCidade = record
+    Id: Integer;
+    Nome: string;
+  end;
+
+  TCidades = TArray<TCidade>;
+
 const
   TAMANHO_CEP = 8;
   TAMANHO_CPF = 11;

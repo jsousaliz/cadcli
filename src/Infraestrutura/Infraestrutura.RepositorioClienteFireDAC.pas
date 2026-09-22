@@ -7,6 +7,7 @@ uses
   FireDAC.Comp.Client,
   Dominio.Cliente,
   Dominio.FiltroCliente,
+  Dominio.FiltroRelatorioCliente,
   Aplicacao.RepositorioCliente,
   Aplicacao.Transacao;
 
@@ -29,6 +30,9 @@ type
     function Pesquisar(const AFiltro: TFiltroCliente; const AOrdenacao: TOrdenacaoCliente;
       ALimite: Integer): TClientes;
     function ResolverCidade(const ANomeCidade, AUf, ANomeEstado: string): Integer;
+    function ListarParaRelatorio(const AFiltro: TFiltroRelatorioCliente): TClientes;
+    function ListarEstados: TEstados;
+    function ListarCidades(AEstadoId: Integer): TCidades;
   end;
 
   TTransacaoFireDAC = class(TInterfacedObject, ITransacao)
@@ -327,6 +331,91 @@ begin
     Result := ProximoValor('SEQ_CIDADE');
     FConexao.ExecSQL('INSERT INTO CIDADE (ID, NOME, ESTADOID) VALUES (:ID, :NOME, :ESTADOID)',
       [Result, LNomeCidade, LEstadoId]);
+  end;
+end;
+
+function TRepositorioClienteFireDAC.ListarParaRelatorio(
+  const AFiltro: TFiltroRelatorioCliente): TClientes;
+var
+  LSql: string;
+  LConsulta: TFDQuery;
+begin
+  LSql := SQL_SELECAO_CLIENTES;
+  case AFiltro.Modo of
+    mrIntervalo:
+      LSql := LSql + 'WHERE C.ID BETWEEN :IDINICIAL AND :IDFINAL ';
+    mrCidadeEstado:
+      if AFiltro.CidadeId > 0 then
+        LSql := LSql + 'WHERE C.CIDADEID = :CIDADEID '
+      else
+        LSql := LSql + 'WHERE CI.ESTADOID = :ESTADOID ';
+  end;
+  LSql := LSql + 'ORDER BY C.ID';
+  LConsulta := CriarConsulta(LSql);
+  try
+    case AFiltro.Modo of
+      mrIntervalo:
+        begin
+          LConsulta.ParamByName('IDINICIAL').AsInteger := AFiltro.IdInicial;
+          LConsulta.ParamByName('IDFINAL').AsInteger := AFiltro.IdFinal;
+        end;
+      mrCidadeEstado:
+        if AFiltro.CidadeId > 0 then
+          LConsulta.ParamByName('CIDADEID').AsInteger := AFiltro.CidadeId
+        else
+          LConsulta.ParamByName('ESTADOID').AsInteger := AFiltro.EstadoId;
+    end;
+    LConsulta.Open;
+    Result := LerClientesDaConsulta(LConsulta);
+  finally
+    LConsulta.Free;
+  end;
+end;
+
+function TRepositorioClienteFireDAC.ListarEstados: TEstados;
+var
+  LConsulta: TFDQuery;
+  LEstado: TEstado;
+begin
+  Result := [];
+  LConsulta := CriarConsulta('SELECT ID, NOME, UF FROM ESTADO ORDER BY UPPER(NOME)');
+  try
+    LConsulta.Open;
+    while not LConsulta.Eof do
+    begin
+      LEstado := Default(TEstado);
+      LEstado.Id := LConsulta.FieldByName('ID').AsInteger;
+      LEstado.Nome := LConsulta.FieldByName('NOME').AsString;
+      LEstado.Uf := Trim(LConsulta.FieldByName('UF').AsString);
+      Result := Result + [LEstado];
+      LConsulta.Next;
+    end;
+  finally
+    LConsulta.Free;
+  end;
+end;
+
+function TRepositorioClienteFireDAC.ListarCidades(AEstadoId: Integer): TCidades;
+var
+  LConsulta: TFDQuery;
+  LCidade: TCidade;
+begin
+  Result := [];
+  LConsulta := CriarConsulta(
+    'SELECT ID, NOME FROM CIDADE WHERE ESTADOID = :ESTADOID ORDER BY UPPER(NOME)');
+  try
+    LConsulta.ParamByName('ESTADOID').AsInteger := AEstadoId;
+    LConsulta.Open;
+    while not LConsulta.Eof do
+    begin
+      LCidade := Default(TCidade);
+      LCidade.Id := LConsulta.FieldByName('ID').AsInteger;
+      LCidade.Nome := LConsulta.FieldByName('NOME').AsString;
+      Result := Result + [LCidade];
+      LConsulta.Next;
+    end;
+  finally
+    LConsulta.Free;
   end;
 end;
 
