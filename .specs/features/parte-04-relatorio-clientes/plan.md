@@ -19,7 +19,7 @@ Esta parte reutiliza o repositório e a conexão da parte 03, sem criar um segun
 
 | Front | What changes |
 | --- | --- |
-| domain | novo valor `TFiltroRelatorioCliente` com modos intervalo de IDs, cidade/estado e todos |
+| domain | novo valor `TFiltroRelatorioCliente` com modos intervalo de IDs, cidade/estado e todos, e os valores de leitura `TEstado` e `TCidade` usados pelos combos |
 | stored data | nothing - o relatório executa somente leitura |
 | UI | entra uma form de filtros com controlador próprio e uma pré-visualização ReportBuilder |
 
