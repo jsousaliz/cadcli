@@ -99,7 +99,8 @@ uses
   System.SysUtils,
   System.UITypes,
   Dominio.Cliente,
-  Dominio.UnidadesFederativas;
+  Dominio.UnidadesFederativas,
+  Visao.ModuloIconesAcao;
 
 {$R *.dfm}
 

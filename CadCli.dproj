@@ -56,9 +56,9 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <SanitizedProjectName>CadCli</SanitizedProjectName>
-        <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
-        <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
-        <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
+        <Icon_MainIcon>assets\marca\CadCli.ico</Icon_MainIcon>
+        <UWP_DelphiLogo44>assets\marca\logo-44.png</UWP_DelphiLogo44>
+        <UWP_DelphiLogo150>assets\marca\logo-150.png</UWP_DelphiLogo150>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_Namespace>System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
@@ -129,6 +129,11 @@
         <DCCReference Include="src\Visao\Visao.FormFiltroRelatorioCliente.pas">
             <Form>FormFiltroRelatorioCliente</Form>
         </DCCReference>
+        <DCCReference Include="src\Visao\Visao.ModuloIconesAcao.pas">
+            <Form>ModuloIconesAcao</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TDataModule</DesignClass>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -166,7 +171,7 @@
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
         <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent><![CDATA[powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\tools\CopiarBplsEntrega.ps1" -Executavel "$(MSBuildProjectDirectory)\$(DCC_ExeOutput)\$(MSBuildProjectName).exe" -Origens "$(BDS)\bin64;$(DXVCL)\Library\RS29\Win64"]]></PostBuildEvent>
+        <PostBuildEvent>powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\tools\CopiarBplsEntrega.ps1&quot; -Executavel &quot;$(MSBuildProjectDirectory)\$(DCC_ExeOutput)\$(MSBuildProjectName).exe&quot; -Origens &quot;$(BDS)\bin64;$(DXVCL)\Library\RS29\Win64&quot;</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
 </Project>
