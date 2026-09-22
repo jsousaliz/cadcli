@@ -32,7 +32,13 @@ type
     [Test]
     procedure GradeNaoVinculadaComFiltrosPropriosDesligados;
     [Test]
-    procedure CadaEntradaDoPainelFiltraAGradePeloControlador;
+    procedure CadaCampoDoComboFiltraAGradePeloControlador;
+    [Test]
+    procedure CamposPadraoSaoIdENome;
+    [Test]
+    procedure EnterNosFiltrosAcionaAPesquisa;
+    [Test]
+    procedure LimparRestauraFiltrosEPesquisaSemFiltro;
     [Test]
     procedure FalhaNaCargaMantemFiltrosEEsvaziaGrade;
     [Test]
@@ -117,12 +123,15 @@ uses
   Vcl.Controls,
   Vcl.Forms,
   cxButtons,
+  cxCheckComboBox,
   cxDateUtils,
   cxDropDownEdit,
   cxEdit,
   cxLabel,
+  cxLookAndFeelPainters,
   cxTextEdit,
   Dominio.Cliente,
+  Dominio.FiltroCliente,
   Dominio.UnidadesFederativas,
   Aplicacao.ControladorCadastroCliente,
   Aplicacao.ControladorPesquisaCliente,
@@ -143,6 +152,27 @@ begin
       Result := Result + ',';
     Result := Result + AForm.ListaClientes.Items[I].Split([AForm.ListaClientes.Delimiter])[0];
   end;
+end;
+
+procedure MarcarSomente(AForm: TFormPesquisaCliente; ACampos: TCamposPesquisa);
+var
+  LCampo: TCampoPesquisa;
+begin
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if LCampo in ACampos then
+      AForm.ComboCampos.States[Ord(LCampo)] := cbsChecked
+    else
+      AForm.ComboCampos.States[Ord(LCampo)] := cbsUnchecked;
+end;
+
+function CamposDoCombo(AForm: TFormPesquisaCliente): TCamposPesquisa;
+var
+  LCampo: TCampoPesquisa;
+begin
+  Result := [];
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if AForm.ComboCampos.States[Ord(LCampo)] = cbsChecked then
+      Include(Result, LCampo);
 end;
 
 function TextosDaClasse(AForm: TForm; AClasse: TClass): TArray<string>;
@@ -234,51 +264,93 @@ begin
   Assert.AreEqual('1,5,8', IdsDaLista(FForm), 'As linhas seguem a ordem entregue pelo controlador.');
 end;
 
-procedure TTestesFormPesquisaCliente.CadaEntradaDoPainelFiltraAGradePeloControlador;
+procedure TTestesFormPesquisaCliente.CadaCampoDoComboFiltraAGradePeloControlador;
 type
   TCaso = record
-    Entrada: Integer;
+    Campos: TCamposPesquisa;
     Valor: string;
     Esperados: string;
   end;
 const
-  CASOS: array[0..7] of TCaso = (
-    (Entrada: 0; Valor: '1'; Esperados: '1'),
-    (Entrada: 1; Valor: 'silva'; Esperados: '1,15'),
-    (Entrada: 2; Valor: '529.982.247-25'; Esperados: '1'),
-    (Entrada: 3; Valor: '01001-000'; Esperados: '23'),
-    (Entrada: 4; Valor: 'campinas'; Esperados: '15,150'),
-    (Entrada: 5; Valor: 'MG'; Esperados: '1,10'),
-    (Entrada: 6; Valor: '15/03/1990'; Esperados: '1'),
-    (Entrada: 7; Valor: 'silva campinas'; Esperados: '15'));
+  CASOS: array[0..8] of TCaso = (
+    (Campos: [cpId]; Valor: '1'; Esperados: '1'),
+    (Campos: [cpNome]; Valor: 'silva'; Esperados: '1,15'),
+    (Campos: [cpCpfCnpj]; Valor: '529.982.247-25'; Esperados: '1'),
+    (Campos: [cpCep]; Valor: '01001-000'; Esperados: '23'),
+    (Campos: [cpCidade]; Valor: 'campinas'; Esperados: '15,150'),
+    (Campos: [cpEstado]; Valor: 'MG'; Esperados: '1,10'),
+    (Campos: [cpNome, cpCidade]; Valor: 'campinas'; Esperados: '15,150'),
+    (Campos: [cpId, cpNome]; Valor: 'campinas'; Esperados: ''),
+    (Campos: []; Valor: 'SP'; Esperados: '15,150'));
 var
   LCaso: TCaso;
-  LData: TDate;
-  LEditores: TArray<TcxTextEdit>;
-  LEditor: TcxTextEdit;
 begin
   Criar;
   Assert.AreEqual('1,10,15,23,150', IdsDaLista(FForm));
-  LEditores := [FForm.EditorId, FForm.EditorNome, FForm.EditorCpfCnpj, FForm.EditorCep,
-    FForm.EditorCidade, FForm.EditorEstado, nil, FForm.EditorBuscaGeral];
   for LCaso in CASOS do
   begin
-    for LEditor in LEditores do
-      if Assigned(LEditor) then
-        LEditor.Text := '';
-    FForm.EditorDataNascimento.Clear;
-    if LCaso.Entrada = 6 then
-    begin
-      Assert.IsTrue(TentarLerData(LCaso.Valor, LData));
-      FForm.EditorDataNascimento.Date := LData;
-    end
-    else
-      LEditores[LCaso.Entrada].Text := LCaso.Valor;
+    FForm.EditorPesquisa.Text := LCaso.Valor;
+    MarcarSomente(FForm, LCaso.Campos);
     FForm.BotaoPesquisar.Click;
-    Assert.AreEqual(LCaso.Esperados, IdsDaLista(FForm), 'Entrada ' + IntToStr(LCaso.Entrada) + ': ' + LCaso.Valor);
+    Assert.AreEqual(LCaso.Esperados, IdsDaLista(FForm), 'Pesquisa: ' + LCaso.Valor);
   end;
+
+  FForm.EditorPesquisa.Text := 'silva';
+  MarcarSomente(FForm, [cpNome]);
+  FForm.EditorDataNascimento.Date := EncodeDate(1990, 3, 15);
+  FForm.BotaoPesquisar.Click;
+  Assert.AreEqual('1', IdsDaLista(FForm), 'Texto e data de nascimento combinam por AND.');
+
   Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos,
     'Filtrar pelo painel não pode consultar o repositório de novo.');
+end;
+
+procedure TTestesFormPesquisaCliente.CamposPadraoSaoIdENome;
+begin
+  Criar;
+  Assert.AreEqual(6, FForm.ComboCampos.Properties.Items.Count);
+  Assert.IsTrue(CamposDoCombo(FForm) = [cpId, cpNome], 'Ao abrir, só ID e Nome ficam marcados.');
+  FForm.EditorPesquisa.Text := 'campinas';
+  FForm.BotaoPesquisar.Click;
+  Assert.AreEqual('', IdsDaLista(FForm), 'Com o padrão, a cidade não entra na pesquisa.');
+end;
+
+procedure TTestesFormPesquisaCliente.EnterNosFiltrosAcionaAPesquisa;
+var
+  LTecla: Char;
+begin
+  Criar;
+  Assert.IsTrue(Assigned(FForm.EditorPesquisa.OnKeyPress), 'O texto da pesquisa deve tratar o Enter.');
+  Assert.IsTrue(Assigned(FForm.ComboCampos.OnKeyPress), 'O combo de campos deve tratar o Enter.');
+  Assert.IsTrue(Assigned(FForm.EditorDataNascimento.OnKeyPress), 'A data deve tratar o Enter.');
+
+  FForm.EditorPesquisa.Text := 'silva';
+  LTecla := 'a';
+  FForm.EditorPesquisa.OnKeyPress(FForm.EditorPesquisa, LTecla);
+  Assert.AreEqual('1,10,15,23,150', IdsDaLista(FForm), 'Outra tecla não pode pesquisar.');
+  Assert.AreEqual('a', LTecla);
+
+  LTecla := #13;
+  FForm.EditorPesquisa.OnKeyPress(FForm.EditorPesquisa, LTecla);
+  Assert.AreEqual('1,15', IdsDaLista(FForm), 'Enter deve acionar a pesquisa.');
+  Assert.AreEqual(#0, LTecla, 'O Enter deve ser consumido.');
+end;
+
+procedure TTestesFormPesquisaCliente.LimparRestauraFiltrosEPesquisaSemFiltro;
+begin
+  Criar;
+  FForm.EditorPesquisa.Text := 'campinas';
+  MarcarSomente(FForm, [cpCidade]);
+  FForm.EditorDataNascimento.Date := EncodeDate(2000, 11, 30);
+  FForm.BotaoPesquisar.Click;
+  Assert.AreEqual('150', IdsDaLista(FForm));
+
+  FForm.BotaoLimpar.Click;
+  Assert.AreEqual('', FForm.EditorPesquisa.Text);
+  Assert.IsTrue(CamposDoCombo(FForm) = [cpId, cpNome], 'Limpar volta aos campos padrão.');
+  Assert.AreEqual(Double(NullDate), Double(FForm.EditorDataNascimento.Date));
+  Assert.AreEqual('1,10,15,23,150', IdsDaLista(FForm), 'Limpar pesquisa de novo sem filtro.');
+  Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos);
 end;
 
 procedure TTestesFormPesquisaCliente.FalhaNaCargaMantemFiltrosEEsvaziaGrade;
@@ -287,59 +359,48 @@ begin
   FNavegadorObjeto.Salvar := True;
   Criar;
   Assert.AreEqual(5, FForm.ListaClientes.Items.Count);
-  FForm.EditorId.Text := '1';
-  FForm.EditorNome.Text := 'silva';
-  FForm.EditorCpfCnpj.Text := '529';
-  FForm.EditorCep.Text := '01001';
-  FForm.EditorCidade.Text := 'campinas';
-  FForm.EditorEstado.Text := 'SP';
+  FForm.EditorPesquisa.Text := 'silva';
+  MarcarSomente(FForm, [cpNome, cpCidade]);
   FForm.EditorDataNascimento.Date := EncodeDate(1990, 3, 15);
-  FForm.EditorBuscaGeral.Text := 'ana';
   FForm.BotaoNovo.Click;
   Assert.AreEqual(1, FApresentadorObjeto.Mensagens.Count, 'O erro deve ser apresentado exatamente 1 vez.');
   Assert.AreEqual('Não foi possível carregar os clientes.', FApresentadorObjeto.Mensagens[0]);
   Assert.AreEqual(0, FForm.ListaClientes.Items.Count, 'A grade deve ficar com 0 linhas.');
-  Assert.IsTrue(FForm.RotuloSemResultado.Visible, 'A grade deve exibir o aviso de vazio.');
+  Assert.IsTrue(FForm.PanelSemResultado.Visible, 'A grade deve exibir o aviso de vazio.');
   Assert.AreEqual('Nenhum cliente encontrado', FForm.RotuloSemResultado.Caption);
-  Assert.AreEqual('1', FForm.EditorId.Text);
-  Assert.AreEqual('silva', FForm.EditorNome.Text);
-  Assert.AreEqual('529', FForm.EditorCpfCnpj.Text);
-  Assert.AreEqual('01001', FForm.EditorCep.Text);
-  Assert.AreEqual('campinas', FForm.EditorCidade.Text);
-  Assert.AreEqual('SP', FForm.EditorEstado.Text);
+  Assert.AreEqual('silva', FForm.EditorPesquisa.Text);
+  Assert.IsTrue(CamposDoCombo(FForm) = [cpNome, cpCidade], 'Os campos marcados permanecem.');
   Assert.AreEqual(Double(EncodeDate(1990, 3, 15)), Double(FForm.EditorDataNascimento.Date));
-  Assert.AreEqual('ana', FForm.EditorBuscaGeral.Text);
 end;
 
 procedure TTestesFormPesquisaCliente.TextosDaPesquisaSaoOsDefinidos;
 const
   COLUNAS: array[0..7] of string = ('ID', 'Nome', 'CPF/CNPJ', 'CEP', 'Cidade', 'UF', 'Estado',
     'Data de nascimento');
+  CAMPOS: array[0..5] of string = ('ID', 'Nome', 'CPF/CNPJ', 'CEP', 'Cidade', 'Estado');
 var
   I: Integer;
 begin
   Criar;
-  Assert.AreEqual('Pesquisa de Clientes', FForm.Caption);
-  Assert.AreEqual('ID', FForm.RotuloId.Caption);
-  Assert.AreEqual('Nome', FForm.RotuloNome.Caption);
-  Assert.AreEqual('CPF/CNPJ', FForm.RotuloCpfCnpj.Caption);
-  Assert.AreEqual('CEP', FForm.RotuloCep.Caption);
-  Assert.AreEqual('Cidade', FForm.RotuloCidade.Caption);
-  Assert.AreEqual('Estado', FForm.RotuloEstado.Caption);
+  Assert.AreEqual('Clientes', FForm.Caption);
+  Assert.AreEqual('Pesquisar por', FForm.RotuloPesquisa.Caption);
+  Assert.AreEqual('Campos da pesquisa', FForm.RotuloCampos.Caption);
   Assert.AreEqual('Data de nascimento', FForm.RotuloDataNascimento.Caption);
-  Assert.AreEqual('Buscar em todos os campos', FForm.RotuloBuscaGeral.Caption);
-  Assert.AreEqual('Pesquisar', FForm.BotaoPesquisar.Caption);
+  for I := 0 to High(CAMPOS) do
+    Assert.AreEqual(CAMPOS[I], FForm.ComboCampos.Properties.Items[I].Description, 'Campo ' + IntToStr(I));
+  Assert.AreEqual('&Pesquisar', FForm.BotaoPesquisar.Caption);
+  Assert.AreEqual('&Limpar', FForm.BotaoLimpar.Caption);
   Assert.AreEqual('Novo', FForm.BotaoNovo.Caption);
   Assert.AreEqual('Editar', FForm.BotaoEditar.Caption);
   Assert.AreEqual('Excluir', FForm.BotaoExcluir.Caption);
   Assert.AreEqual(8, FForm.ListaClientes.HeaderSections.Count);
   for I := 0 to High(COLUNAS) do
     Assert.AreEqual(COLUNAS[I], FForm.ListaClientes.HeaderSections[I].Text, 'Coluna ' + IntToStr(I));
-  Assert.AreEqual('Nenhum cliente encontrado', FForm.RotuloSemResultado.Caption);
-  Assert.AreEqual(Ordenados(['ID', 'Nome', 'CPF/CNPJ', 'CEP', 'Cidade', 'Estado', 'Data de nascimento',
-    'Buscar em todos os campos', 'Nenhum cliente encontrado']),
+  Assert.AreEqual('Nenhum cliente encontrado...', FForm.RotuloSemResultado.Caption);
+  Assert.AreEqual(Ordenados(['Pesquisar por', 'Campos da pesquisa', 'Data de nascimento',
+    'Nenhum cliente encontrado...']),
     string.Join('|', TextosDaClasse(FForm, TcxLabel)), 'Nenhum rótulo além dos definidos.');
-  Assert.AreEqual(Ordenados(['Pesquisar', 'Novo', 'Editar', 'Excluir']),
+  Assert.AreEqual(Ordenados(['&Pesquisar', '&Limpar', 'Novo', 'Editar', 'Excluir']),
     string.Join('|', TextosDaClasse(FForm, TcxButton)), 'Nenhum botão além dos definidos.');
 end;
 
@@ -357,6 +418,8 @@ begin
   Assert.IsTrue(FForm.BotaoNovo.Left < FForm.BotaoEditar.Left, 'Novo à esquerda de Editar.');
   Assert.IsTrue(FForm.BotaoEditar.Left < FForm.BotaoExcluir.Left, 'Editar à esquerda de Excluir.');
   Assert.IsTrue(FForm.BotaoPesquisar.Parent = FForm.PainelFiltros, 'Pesquisar fica no painel de filtros.');
+  Assert.IsTrue(FForm.BotaoLimpar.Parent = FForm.PainelFiltros, 'Limpar fica no painel de filtros.');
+  Assert.IsTrue(FForm.BotaoPesquisar.Left < FForm.BotaoLimpar.Left, 'Pesquisar à esquerda de Limpar.');
 end;
 
 procedure TTestesFormCadastroCliente.Preparar;

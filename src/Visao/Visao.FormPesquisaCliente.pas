@@ -21,6 +21,7 @@ uses
   cxDropDownEdit,
   cxCalendar,
   cxButtons,
+  cxCheckComboBox,
   Dominio.Cliente,
   Dominio.FiltroCliente,
   Aplicacao.Confirmacao,
@@ -29,46 +30,46 @@ uses
   Aplicacao.RepositorioCliente,
   Aplicacao.Transacao,
   Visao.ApresentadorErro, Vcl.ComCtrls, dxCore, cxDateUtils, Vcl.Menus,
-  Vcl.StdCtrls;
+  Vcl.StdCtrls, cxGeometry, dxFramedControl, dxPanel, cxCheckBox;
 
 type
   TFormPesquisaCliente = class(TForm, IVisaoPesquisaCliente)
     PainelFiltros: TcxGroupBox;
-    RotuloId: TcxLabel;
-    EditorId: TcxTextEdit;
-    RotuloNome: TcxLabel;
-    EditorNome: TcxTextEdit;
-    RotuloCpfCnpj: TcxLabel;
-    EditorCpfCnpj: TcxTextEdit;
-    RotuloCep: TcxLabel;
-    EditorCep: TcxTextEdit;
-    RotuloCidade: TcxLabel;
-    EditorCidade: TcxTextEdit;
-    RotuloEstado: TcxLabel;
-    EditorEstado: TcxTextEdit;
+    RotuloPesquisa: TcxLabel;
+    EditorPesquisa: TcxTextEdit;
+    RotuloCampos: TcxLabel;
+    ComboCampos: TcxCheckComboBox;
     RotuloDataNascimento: TcxLabel;
     EditorDataNascimento: TcxDateEdit;
-    RotuloBuscaGeral: TcxLabel;
-    EditorBuscaGeral: TcxTextEdit;
     BotaoPesquisar: TcxButton;
     ListaClientes: TcxMCListBox;
-    RotuloSemResultado: TcxLabel;
     BarraAcoes: TcxGroupBox;
     BotaoNovo: TcxButton;
     BotaoEditar: TcxButton;
     BotaoExcluir: TcxButton;
+    BotaoLimpar: TcxButton;
+    PanelSemResultado: TdxPanel;
+    RotuloSemResultado: TcxLabel;
+    procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure BotaoPesquisarClick(Sender: TObject);
     procedure BotaoNovoClick(Sender: TObject);
     procedure BotaoEditarClick(Sender: TObject);
     procedure BotaoExcluirClick(Sender: TObject);
     procedure ListaClientesDblClick(Sender: TObject);
+    procedure BotaoLimparClick(Sender: TObject);
+    procedure FormResize(Sender: TObject);
+    procedure FiltroKeyPress(Sender: TObject; var Key: Char);
   private
     FControlador: TControladorPesquisaCliente;
     FApresentadorErro: IApresentadorErro;
     FIdsExibidos: TArray<Integer>;
     function MontarFiltro: TFiltroCliente;
     function Linha(const ACliente: TCliente): string;
+    procedure LimparFiltros;
+    procedure MarcarCamposPadrao;
+    function CamposMarcados: TCamposPesquisa;
+    procedure CentralizarSemResultado;
   public
     destructor Destroy; override;
     procedure Conectar(const ARepositorio: IRepositorioCliente; const ATransacao: ITransacao;
@@ -108,17 +109,41 @@ end;
 
 function TFormPesquisaCliente.MontarFiltro: TFiltroCliente;
 begin
-  Result.Id := EditorId.Text;
-  Result.Nome := EditorNome.Text;
-  Result.CpfCnpj := EditorCpfCnpj.Text;
-  Result.Cep := EditorCep.Text;
-  Result.Cidade := EditorCidade.Text;
-  Result.Estado := EditorEstado.Text;
+  Result := Default(TFiltroCliente);
+  Result.Texto := EditorPesquisa.Text;
+  Result.Campos := CamposMarcados;
   if EditorDataNascimento.Date = NullDate then
     Result.DataNascimento := ''
   else
     Result.DataNascimento := FormatarData(EditorDataNascimento.Date);
-  Result.BuscaGeral := EditorBuscaGeral.Text;
+end;
+
+function TFormPesquisaCliente.CamposMarcados: TCamposPesquisa;
+var
+  LCampo: TCampoPesquisa;
+begin
+  Result := [];
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if ComboCampos.States[Ord(LCampo)] = cbsChecked then
+      Include(Result, LCampo);
+end;
+
+procedure TFormPesquisaCliente.MarcarCamposPadrao;
+const
+  CAMPOS_PADRAO: TCamposPesquisa = [cpId, cpNome];
+var
+  LCampo: TCampoPesquisa;
+begin
+  for LCampo := Low(TCampoPesquisa) to High(TCampoPesquisa) do
+    if LCampo in CAMPOS_PADRAO then
+      ComboCampos.States[Ord(LCampo)] := cbsChecked
+    else
+      ComboCampos.States[Ord(LCampo)] := cbsUnchecked;
+end;
+
+procedure TFormPesquisaCliente.FormCreate(Sender: TObject);
+begin
+  MarcarCamposPadrao;
 end;
 
 procedure TFormPesquisaCliente.FormShow(Sender: TObject);
@@ -129,6 +154,41 @@ end;
 procedure TFormPesquisaCliente.BotaoPesquisarClick(Sender: TObject);
 begin
   FControlador.Pesquisar(MontarFiltro);
+end;
+
+procedure TFormPesquisaCliente.FiltroKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key <> #13 then
+    Exit;
+  Key := #0;
+  FControlador.Pesquisar(MontarFiltro);
+end;
+
+procedure TFormPesquisaCliente.BotaoLimparClick(Sender: TObject);
+begin
+  LimparFiltros;
+  FControlador.Pesquisar(MontarFiltro);
+end;
+
+procedure TFormPesquisaCliente.LimparFiltros;
+begin
+  EditorPesquisa.Clear;
+  MarcarCamposPadrao;
+  EditorDataNascimento.Clear;
+  ActiveControl := EditorPesquisa;
+end;
+
+procedure TFormPesquisaCliente.FormResize(Sender: TObject);
+begin
+  CentralizarSemResultado;
+end;
+
+procedure TFormPesquisaCliente.CentralizarSemResultado;
+begin
+  PanelSemResultado.Left := (ClientWidth - PanelSemResultado.Width) div 2;
+  PanelSemResultado.Top := (ClientHeight - PanelSemResultado.Height) div 2;
+  RotuloSemResultado.Left := (PanelSemResultado.ClientWidth - RotuloSemResultado.Width) div 2;
+  RotuloSemResultado.Top := (PanelSemResultado.ClientHeight - RotuloSemResultado.Height) div 2;
 end;
 
 procedure TFormPesquisaCliente.BotaoNovoClick(Sender: TObject);
@@ -153,6 +213,8 @@ end;
 
 procedure TFormPesquisaCliente.SinalizarCarregamento(AAtivo: Boolean);
 begin
+  BotaoPesquisar.Enabled := not AAtivo;
+  BotaoLimpar.Enabled := not AAtivo;
   ListaClientes.Enabled := not AAtivo;
   if AAtivo then
     Screen.Cursor := crHourGlass
@@ -177,7 +239,7 @@ procedure TFormPesquisaCliente.ExibirClientes(const AClientes: TClientes);
 var
   LCliente: TCliente;
 begin
-  RotuloSemResultado.Visible := False;
+  PanelSemResultado.Visible := False;
   FIdsExibidos := [];
   ListaClientes.Items.BeginUpdate;
   try
@@ -197,8 +259,9 @@ end;
 procedure TFormPesquisaCliente.ExibirSemResultado(const AMensagem: string);
 begin
   RotuloSemResultado.Caption := AMensagem;
-  RotuloSemResultado.Visible := True;
-  RotuloSemResultado.BringToFront;
+  CentralizarSemResultado;
+  PanelSemResultado.Visible := True;
+  PanelSemResultado.BringToFront;
 end;
 
 procedure TFormPesquisaCliente.HabilitarEdicaoEExclusao(AHabilitar: Boolean);

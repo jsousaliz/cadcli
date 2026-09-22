@@ -58,10 +58,16 @@ uses
   Dominio.Cliente,
   Dominio.FiltroCliente;
 
-function FiltroNome(const ANome: string): TFiltroCliente;
+function FiltroPor(ACampo: TCampoPesquisa; const ATexto: string): TFiltroCliente;
 begin
   Result := Default(TFiltroCliente);
-  Result.Nome := ANome;
+  Result.Texto := ATexto;
+  Result.Campos := [ACampo];
+end;
+
+function FiltroNome(const ANome: string): TFiltroCliente;
+begin
+  Result := FiltroPor(cpNome, ANome);
 end;
 
 procedure TTestesControladorPesquisaCliente.Preparar;
@@ -126,8 +132,6 @@ begin
 end;
 
 procedure TTestesControladorPesquisaCliente.FiltrarNaoConsultaORepositorio;
-var
-  LFiltro: TFiltroCliente;
 begin
   FRepositorioObjeto.Clientes := ClientesDaFixture;
   FControlador.Abrir;
@@ -135,18 +139,16 @@ begin
 
   FControlador.Pesquisar(FiltroNome('silva'));
   Assert.AreEqual('1,15', FVisaoObjeto.IdsExibidos);
-  LFiltro := Default(TFiltroCliente);
-  LFiltro.Cidade := 'campinas';
-  FControlador.Pesquisar(LFiltro);
+  FControlador.Pesquisar(FiltroPor(cpCidade, 'campinas'));
   Assert.AreEqual('15,150', FVisaoObjeto.IdsExibidos);
-  LFiltro := Default(TFiltroCliente);
-  LFiltro.Estado := 'MG';
-  FControlador.Pesquisar(LFiltro);
+  FControlador.Pesquisar(FiltroPor(cpEstado, 'MG'));
   Assert.AreEqual('1,10', FVisaoObjeto.IdsExibidos);
 
   Assert.AreEqual(1, FRepositorioObjeto.ChamadasListarTodos,
     'Filtrar não pode consultar o repositório de novo.');
   Assert.AreEqual(1, FRepositorioObjeto.TotalChamadas, 'Filtrar não pode chamar o repositório.');
+  Assert.AreEqual(4, FVisaoObjeto.CargasSinalizadas, 'Cada pesquisa deve sinalizar carregamento.');
+  Assert.IsFalse(FVisaoObjeto.Carregando, 'A pesquisa deve terminar com o carregamento desligado.');
 end;
 
 procedure TTestesControladorPesquisaCliente.SemResultadoExibeMensagemEDesabilitaAcoes;

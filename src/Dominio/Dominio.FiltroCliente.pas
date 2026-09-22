@@ -6,15 +6,13 @@ uses
   Dominio.Cliente;
 
 type
+  TCampoPesquisa = (cpId, cpNome, cpCpfCnpj, cpCep, cpCidade, cpEstado);
+  TCamposPesquisa = set of TCampoPesquisa;
+
   TFiltroCliente = record
-    Id: string;
-    Nome: string;
-    CpfCnpj: string;
-    Cep: string;
-    Cidade: string;
-    Estado: string;
+    Texto: string;
+    Campos: TCamposPesquisa;
     DataNascimento: string;
-    BuscaGeral: string;
     function Atende(const ACliente: TCliente): Boolean;
   end;
 
@@ -42,54 +40,52 @@ begin
   Result := SameText(AFiltro, ACliente.Uf) or ContainsText(ACliente.Estado, AFiltro);
 end;
 
-function PalavraEncontrada(const APalavra: string; const ACliente: TCliente): Boolean;
+function AtendeCampo(ACampo: TCampoPesquisa; const ATexto: string;
+  const ACliente: TCliente): Boolean;
 var
   LDigitos: string;
 begin
-  Result := ContainsStr(IntToStr(ACliente.Id), APalavra) or
-    ContainsText(ACliente.Nome, APalavra) or
-    ContainsText(ACliente.Cidade, APalavra) or
-    ContainsText(ACliente.Uf, APalavra) or
-    ContainsText(ACliente.Estado, APalavra) or
-    ContainsStr(FormatarData(ACliente.DataNascimento), APalavra);
-  if Result then
-    Exit;
-  LDigitos := SomenteDigitos(APalavra);
-  Result := (LDigitos <> '') and
-    (ContainsStr(SomenteDigitos(ACliente.CpfCnpj), LDigitos) or
-     ContainsStr(SomenteDigitos(ACliente.Cep), LDigitos));
+  case ACampo of
+    cpId:
+      Result := AtendeId(ATexto, ACliente);
+    cpNome:
+      Result := ContainsText(ACliente.Nome, ATexto);
+    cpCpfCnpj:
+      begin
+        LDigitos := SomenteDigitos(ATexto);
+        Result := (LDigitos <> '') and (LDigitos = SomenteDigitos(ACliente.CpfCnpj));
+      end;
+    cpCep:
+      Result := AtendeCep(ATexto, ACliente);
+    cpCidade:
+      Result := ContainsText(ACliente.Cidade, ATexto);
+    cpEstado:
+      Result := AtendeEstado(ATexto, ACliente);
+  else
+    Result := False;
+  end;
 end;
 
-function AtendeBuscaGeral(const ABusca: string; const ACliente: TCliente): Boolean;
+function AtendeTexto(const ATexto: string; ACampos: TCamposPesquisa;
+  const ACliente: TCliente): Boolean;
 var
-  LPalavra: string;
+  LCampo: TCampoPesquisa;
 begin
-  for LPalavra in ABusca.Split([' '], TStringSplitOptions.ExcludeEmpty) do
-    if not PalavraEncontrada(LPalavra, ACliente) then
-      Exit(False);
-  Result := True;
+  if ACampos = [] then
+    ACampos := [Low(TCampoPesquisa)..High(TCampoPesquisa)];
+  for LCampo in ACampos do
+    if AtendeCampo(LCampo, ATexto, ACliente) then
+      Exit(True);
+  Result := False;
 end;
 
 function TFiltroCliente.Atende(const ACliente: TCliente): Boolean;
 begin
   Result := False;
-  if (Trim(Id) <> '') and not AtendeId(Trim(Id), ACliente) then
-    Exit;
-  if (Trim(Nome) <> '') and not ContainsText(ACliente.Nome, Trim(Nome)) then
-    Exit;
-  if (Trim(CpfCnpj) <> '') and
-     (SomenteDigitos(CpfCnpj) <> SomenteDigitos(ACliente.CpfCnpj)) then
-    Exit;
-  if (Trim(Cep) <> '') and not AtendeCep(Cep, ACliente) then
-    Exit;
-  if (Trim(Cidade) <> '') and not ContainsText(ACliente.Cidade, Trim(Cidade)) then
-    Exit;
-  if (Trim(Estado) <> '') and not AtendeEstado(Trim(Estado), ACliente) then
-    Exit;
   if (Trim(DataNascimento) <> '') and
      (Trim(DataNascimento) <> FormatarData(ACliente.DataNascimento)) then
     Exit;
-  Result := AtendeBuscaGeral(BuscaGeral, ACliente);
+  Result := (Trim(Texto) = '') or AtendeTexto(Trim(Texto), Campos, ACliente);
 end;
 
 end.

@@ -164,7 +164,12 @@ end;
 procedure TControladorPesquisaCliente.Pesquisar(const AFiltro: TFiltroCliente);
 begin
   FFiltro := AFiltro;
-  AplicarFiltro;
+  FVisao.SinalizarCarregamento(True);
+  try
+    AplicarFiltro;
+  finally
+    FVisao.SinalizarCarregamento(False);
+  end;
 end;
 
 procedure TControladorPesquisaCliente.Novo;
